@@ -1,0 +1,226 @@
+---
+title: Drawer
+description: A native dialog that slides in from any edge. Use the CSS, the functions or the custom element.
+---
+
+import { Aside, Tabs, TabItem } from "@astrojs/starlight/components"
+import Demo from "../../../components/demo.astro"
+
+A drawer is a native `<dialog>` with a `data-drawer` attribute. The dialog stays the source of truth: open state lives in `dialog.open`, and nothing mirrors it.
+
+You can use it at three levels. Each one adds to the one before.
+
+| Level                                  | You import                       | You get                                                                    |
+| -------------------------------------- | -------------------------------- | -------------------------------------------------------------------------- |
+| [1. HTML + CSS](#1-html--css)          | `dialog-drawer.css`              | Layout, edges, enter and exit transitions where the browser supports them. |
+| [2. Functions](#2-functions)           | `surface-elements/dialog`        | Fallbacks for light dismiss and exit animations, plus the scroll lock.     |
+| [3. Custom element](#3-custom-element) | `surface-elements/dialog-drawer` | Level 2 wired up for you, the styles included, and a small API.            |
+
+## Edges
+
+`data-drawer` sets the edge: `end` (the default, also the empty value), `start`, `top` or `bottom`. Inline edges follow the writing direction, so `end` is on the left in RTL.
+
+<Demo label="Edges">
+  <button type="button" commandfor="edge-end" command="show-modal">end</button>
+  <button type="button" commandfor="edge-start" command="show-modal">start</button>
+  <button type="button" commandfor="edge-top" command="show-modal">top</button>
+  <button type="button" commandfor="edge-bottom" command="show-modal">bottom</button>
+  <button type="button" data-action="toggle-dir">Toggle LTR / RTL</button>
+
+  <dialog-drawer>
+    <dialog id="edge-end" data-drawer="end" closedby="any" aria-labelledby="edge-end-title">
+      <div class="drawer-head">
+        <h2 id="edge-end-title">end</h2>
+        <button type="button" commandfor="edge-end" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </dialog-drawer>
+  <dialog-drawer>
+    <dialog id="edge-start" data-drawer="start" closedby="any" aria-labelledby="edge-start-title">
+      <div class="drawer-head">
+        <h2 id="edge-start-title">start</h2>
+        <button type="button" commandfor="edge-start" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </dialog-drawer>
+  <dialog-drawer>
+    <dialog id="edge-top" data-drawer="top" closedby="any" aria-labelledby="edge-top-title">
+      <div class="drawer-head">
+        <h2 id="edge-top-title">top</h2>
+        <button type="button" commandfor="edge-top" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </dialog-drawer>
+  <dialog-drawer>
+    <dialog id="edge-bottom" data-drawer="bottom" closedby="any" aria-labelledby="edge-bottom-title">
+      <div class="drawer-head">
+        <h2 id="edge-bottom-title">bottom</h2>
+        <button type="button" commandfor="edge-bottom" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </dialog-drawer>
+</Demo>
+
+## 1. HTML + CSS
+
+Load the stylesheet and write the dialog. No JavaScript from this library runs.
+
+<Tabs syncKey="css">
+  <TabItem label="JS import">
+    ```js import "surface-elements/dialog-drawer.css" ```
+  </TabItem>
+  <TabItem label="CSS @import">
+    ```css @import "surface-elements/dialog-drawer.css"; ```
+  </TabItem>
+</Tabs>
+
+```html
+<button commandfor="cart" command="show-modal">Cart</button>
+
+<dialog id="cart" data-drawer="end" closedby="any" aria-labelledby="cart-title">
+  <h2 id="cart-title">Cart</h2>
+  <button commandfor="cart" command="close">Close</button>
+</dialog>
+```
+
+- `command="show-modal"` opens it as a modal, in the top layer, with focus moved inside.
+- `closedby="any"` closes it on Esc and on a click on the backdrop.
+- `<form method="dialog">` closes it and sets `returnValue` from the submit button.
+
+<Aside>
+  At this level the exit transition and `closedby` only work where the browser
+  supports them natively. Elsewhere the drawer closes without animating, and a
+  backdrop click does nothing. Level 2 fills both gaps.
+</Aside>
+
+## 2. Functions
+
+Call `enhanceDialog()` on the dialog. It adds the fallbacks where the browser needs them and locks page scroll while the drawer is open.
+
+```js
+import "surface-elements/dialog-drawer.css"
+import { enhanceDialog, closeAnimated } from "surface-elements/dialog"
+
+const dialog = document.querySelector("#cart")
+const cleanup = enhanceDialog(dialog) // { lockScroll: false } to opt out
+
+// Later, from your own code:
+await closeAnimated(dialog, "done")
+
+// When the dialog leaves the page:
+cleanup()
+```
+
+<Demo label="Functions only, no custom element">
+  <button type="button" commandfor="fn-drawer" command="show-modal">Open</button>
+  <output for="fn-drawer"></output>
+
+  <dialog id="fn-drawer" data-drawer="end" data-enhance closedby="any" aria-labelledby="fn-drawer-title">
+    <div class="drawer-layout">
+      <div class="drawer-head">
+        <h2 id="fn-drawer-title">Enhanced dialog</h2>
+        <button type="button" commandfor="fn-drawer" command="close" aria-label="Close">✕</button>
+      </div>
+      <p>This dialog has no wrapper. <code>enhanceDialog()</code> was called on it directly.</p>
+      <form method="dialog" class="drawer-actions">
+        <button type="submit" value="confirm" class="primary">Confirm</button>
+        <button type="submit" value="cancel">Cancel</button>
+      </form>
+    </div>
+  </dialog>
+</Demo>
+
+See [Dialog functions](/functions/dialog/) for each function on its own.
+
+## 3. Custom element
+
+Wrap the dialog in `<dialog-drawer>`. The element calls `enhanceDialog()` on its direct child dialog and adds the styles to the document, so you do not import the CSS.
+
+```js
+import "surface-elements/dialog-drawer"
+```
+
+```html
+<dialog-drawer>
+  <dialog
+    id="cart"
+    data-drawer="end"
+    closedby="any"
+    aria-labelledby="cart-title"
+  >
+    …
+  </dialog>
+</dialog-drawer>
+```
+
+It rebinds when you swap the dialog, and cleans up when it leaves the page.
+
+<Demo label="Element API">
+  <button type="button" data-action="show" data-target="#api-drawer">show()</button>
+  <button type="button" data-action="toggle" data-target="#api-drawer">toggle()</button>
+  <button type="button" data-action="auto-close" data-target="#api-drawer">show(), then close("timeout") after 2 s</button>
+  <output for="api-dialog"></output>
+
+  <dialog-drawer id="api-drawer">
+    <dialog id="api-dialog" data-drawer="start" closedby="any" aria-labelledby="api-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="api-title">Driven from JS</h2>
+          <button type="button" commandfor="api-dialog" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>The element methods call the same functions as level 2.</p>
+      </div>
+    </dialog>
+  </dialog-drawer>
+</Demo>
+
+### API
+
+| Member                | Type                                   | Does                                                      |
+| --------------------- | -------------------------------------- | --------------------------------------------------------- |
+| `show()`              | `() => void`                           | Opens the dialog as a modal. Cancels an exit in progress. |
+| `close(returnValue?)` | `(string?) => Promise<void>`           | Closes after the exit transition. Resolves when closed.   |
+| `toggle()`            | `() => void`                           | Calls `show()` or `close()`.                              |
+| `open`                | `boolean`, read-only                   | `dialog.open`.                                            |
+| `dialog`              | `HTMLDialogElement \| null`, read-only | The direct child dialog.                                  |
+
+### Attributes
+
+| Attribute        | Does                                               |
+| ---------------- | -------------------------------------------------- |
+| `no-scroll-lock` | Leaves page scroll alone while the drawer is open. |
+
+### Styling hooks
+
+| Selector                            | Matches                                           |
+| ----------------------------------- | ------------------------------------------------- |
+| `dialog-drawer:state(open)`         | The element while its dialog is open.             |
+| `dialog[data-drawer][data-closing]` | The dialog while a fallback exit animation plays. |
+
+The element itself is `display: contents`, so it adds no box to the layout.
+
+<Demo label="Scroll lock opt-out">
+  <button type="button" commandfor="unlocked" command="show-modal">Open without scroll lock</button>
+  <span data-lock-status></span>
+
+  <dialog-drawer no-scroll-lock>
+    <dialog id="unlocked" data-drawer="bottom" closedby="any" aria-labelledby="unlocked-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="unlocked-title">no-scroll-lock</h2>
+          <button type="button" commandfor="unlocked" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>The page behind can still scroll.</p>
+      </div>
+    </dialog>
+  </dialog-drawer>
+</Demo>
+
+## Accessibility
+
+- Label the dialog. Point `aria-labelledby` at its heading, or set `aria-label`.
+- Give it a visible close button. Esc and the backdrop are not discoverable for everyone.
+- Focus, the inert page behind and Esc come from the native modal dialog. The library does not reimplement them.
+- Under `prefers-reduced-motion: reduce` the drawer fades instead of sliding.
+
+Why the dialog lives in light DOM: [ADR 0001](https://github.com/anuarhdz/surface-elements/blob/main/docs/adr/0001-light-dom-dialog-enhancement.md).

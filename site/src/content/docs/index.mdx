@@ -1,0 +1,95 @@
+---
+title: surface-elements
+description: Vanilla web components and utilities for common interface surfaces.
+template: splash
+hero:
+  tagline: Drawers, sticky headers and dialog helpers built on the platform. Light DOM, no framework, a few kilobytes.
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/anuarhdz/surface-elements
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components"
+import Demo from "../../components/demo.astro"
+
+<Demo label="Try it">
+  <button type="button" class="primary" commandfor="home-end" command="show-modal">Open drawer</button>
+  <button type="button" commandfor="home-start" command="show-modal">From the start</button>
+  <button type="button" commandfor="home-bottom" command="show-modal">Bottom sheet</button>
+  <button type="button" commandfor="home-top" command="show-modal">From the top</button>
+
+  <dialog-drawer>
+    <dialog id="home-end" data-drawer="end" closedby="any" aria-labelledby="home-end-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="home-end-title">Cart</h2>
+          <button type="button" commandfor="home-end" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>A native <code>&lt;dialog&gt;</code>. Esc, a click on the backdrop and the close button all animate out.</p>
+        <form method="dialog" class="drawer-actions">
+          <button type="submit" value="checkout" class="primary">Checkout</button>
+          <button type="submit" value="later">Later</button>
+        </form>
+      </div>
+    </dialog>
+  </dialog-drawer>
+
+  <dialog-drawer>
+    <dialog id="home-start" data-drawer="start" closedby="any" aria-labelledby="home-start-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="home-start-title">Menu</h2>
+          <button type="button" commandfor="home-start" command="close" aria-label="Close">✕</button>
+        </div>
+        <ul>
+          <li>Home</li>
+          <li>Catalog</li>
+          <li>About</li>
+        </ul>
+      </div>
+    </dialog>
+  </dialog-drawer>
+
+  <dialog-drawer>
+    <dialog id="home-bottom" data-drawer="bottom" closedby="any" aria-labelledby="home-bottom-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="home-bottom-title">Filters</h2>
+          <button type="button" commandfor="home-bottom" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>Bottom sheets size to their content up to <code>--drawer-max-size</code>.</p>
+      </div>
+    </dialog>
+  </dialog-drawer>
+
+  <dialog-drawer>
+    <dialog id="home-top" data-drawer="top" closedby="any" aria-labelledby="home-top-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="home-top-title">Search</h2>
+          <button type="button" commandfor="home-top" command="close" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </dialog>
+  </dialog-drawer>
+</Demo>
+
+<CardGrid>
+  <Card title="Platform first" icon="seti:html">
+    A drawer is a `<dialog>`. Invoker commands, `closedby` and `<form method="dialog">` work with no JavaScript.
+  </Card>
+  <Card title="Pick your level" icon="puzzle">
+    Use the CSS alone, the functions, or the custom element. Each level builds on the one before.
+  </Card>
+  <Card title="Accessible by default" icon="approve-check">
+    Light DOM keeps `aria-labelledby` and focus handling native. Reduced motion is respected.
+  </Card>
+  <Card title="Yours to style" icon="setting">
+    Styles live in `@layer surface-elements`. Any unlayered rule wins, and `--drawer-*` properties cover the rest.
+  </Card>
+</CardGrid>
