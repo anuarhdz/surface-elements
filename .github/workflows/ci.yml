@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
-          node-version-file: .nvmrc
+          node-version: 24
           cache: pnpm
 
       - name: Install
@@ -49,6 +49,14 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      - name: Agent skill is up to date
+        run: |
+          if [ -n "$(git status --porcelain -- skills)" ]; then
+            git status --short -- skills
+            echo "::error::skills/ is stale. Run pnpm build and commit the result."
+            exit 1
+          fi
 
       - name: Docs build
         run: pnpm docs:build

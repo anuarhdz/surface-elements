@@ -80,6 +80,51 @@ describe("dialog-drawer", () => {
     await el.close()
   })
 
+  it("stops locking when no-scroll-lock is added while open", async () => {
+    const el = await drawer()
+
+    el.show()
+    await flush()
+    expect(isScrollLocked()).toBe(true)
+
+    el.setAttribute("no-scroll-lock", "")
+    expect(isScrollLocked()).toBe(false)
+    await el.close()
+  })
+
+  it("locks when no-scroll-lock is removed while open", async () => {
+    const el = await fixture<DialogDrawer>(
+      html`<dialog-drawer no-scroll-lock><dialog></dialog></dialog-drawer>`
+    )
+
+    el.show()
+    await flush()
+    expect(isScrollLocked()).toBe(false)
+
+    el.removeAttribute("no-scroll-lock")
+    expect(isScrollLocked()).toBe(true)
+    await el.close()
+    await flush()
+    expect(isScrollLocked()).toBe(false)
+  })
+
+  it("honours no-scroll-lock toggled while closed", async () => {
+    const el = await drawer()
+
+    el.setAttribute("no-scroll-lock", "")
+    el.show()
+    await flush()
+    expect(isScrollLocked()).toBe(false)
+    await el.close()
+
+    el.removeAttribute("no-scroll-lock")
+    el.show()
+    await flush()
+    expect(isScrollLocked()).toBe(true)
+    await el.close()
+    await flush()
+  })
+
   it("releases the lock when removed while open", async () => {
     const el = await drawer()
 

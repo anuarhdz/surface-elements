@@ -20,6 +20,7 @@ export function lockScroll(): () => void {
   }
 }
 
+/** Whether any caller currently holds a {@link lockScroll} lock. */
 export function isScrollLocked(): boolean {
   return locks > 0
 }
