@@ -102,4 +102,68 @@ describe("dialog-drawer", () => {
     await el.close()
     await flush()
   })
+
+  it("closes on Escape (cancel) through the animated path", async () => {
+    const el = await drawer()
+
+    el.show()
+    el.dialog?.dispatchEvent(new Event("cancel", { cancelable: true }))
+    await flush()
+    expect(el.open).toBe(false)
+  })
+
+  it("closes on a backdrop click when closedby is any", async () => {
+    const el = await fixture<DialogDrawer>(
+      html`<dialog-drawer><dialog closedby="any">Hi</dialog></dialog-drawer>`
+    )
+    el.show()
+    const dialog = el.dialog!
+    dialog.dispatchEvent(
+      new MouseEvent("pointerdown", { clientX: -1, clientY: -1 })
+    )
+    dialog.dispatchEvent(new MouseEvent("click", { clientX: -1, clientY: -1 }))
+    await flush()
+    expect(el.open).toBe(false)
+  })
+
+  it("keeps the drawer open on a click inside the dialog", async () => {
+    const el = await fixture<DialogDrawer>(
+      html`<dialog-drawer><dialog closedby="any">Hi</dialog></dialog-drawer>`
+    )
+    el.show()
+    const dialog = el.dialog!
+    dialog.dispatchEvent(
+      new MouseEvent("pointerdown", { clientX: 0, clientY: 0 })
+    )
+    dialog.dispatchEvent(new MouseEvent("click", { clientX: 0, clientY: 0 }))
+    await flush()
+    expect(el.open).toBe(true)
+    await el.close()
+  })
+
+  it("binds the new dialog when the old one is replaced", async () => {
+    const el = await drawer()
+
+    el.dialog?.remove()
+    el.append(document.createElement("dialog"))
+    await flush()
+
+    el.show()
+    await flush()
+    expect(isScrollLocked()).toBe(true)
+    await el.close()
+    await flush()
+    expect(isScrollLocked()).toBe(false)
+  })
+
+  it("does not throw or lock without a dialog child", async () => {
+    const el = await fixture<DialogDrawer>(
+      html`<dialog-drawer></dialog-drawer>`
+    )
+
+    expect(() => el.show()).not.toThrow()
+    await expect(el.close()).resolves.toBeUndefined()
+    expect(el.open).toBe(false)
+    expect(isScrollLocked()).toBe(false)
+  })
 })
