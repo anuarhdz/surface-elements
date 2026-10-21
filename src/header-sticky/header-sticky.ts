@@ -1,4 +1,4 @@
-import { defineElement } from "../utils/define.js";
+import { defineElement } from "../utils/define.js"
 
 export class HeaderSticky extends HTMLElement {
   static readonly tagName = "header-sticky"

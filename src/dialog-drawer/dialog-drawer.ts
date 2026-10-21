@@ -1,4 +1,4 @@
-import { defineElement } from "../utils/define.js";
+import { defineElement } from "../utils/define.js"
 
 export class DialogDrawer extends HTMLElement {
   static readonly tagName = "dialog-drawer"

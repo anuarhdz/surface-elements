@@ -9,5 +9,15 @@
   "bracketSameLine": false,
   "bracketSpacing": true,
   "arrowParens": "always",
-  "ignorePatterns": ["dist/**", "pnpm-lock.yaml"]
+  "ignorePatterns": [
+    "dist/**",
+    ".vscode",
+    ".claude",
+    ".agents",
+    ".github",
+    "demo/**",
+    "scripts",
+    "pnpm-lock.yaml",
+    "**/*.md"
+  ]
 }
