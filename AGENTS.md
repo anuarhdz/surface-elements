@@ -13,3 +13,7 @@ Default canonical labels: `needs-triage`, `needs-info`, `ready-for-agent`, `read
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+## Browser support
+
+Baseline newly available features are allowed when feature-detected, with a lightweight fallback where the library depends on them. No polyfills ship in the bundle; document the ones consumers may load. Deliberate deviations from platform guidance are recorded in `docs/adr/`.

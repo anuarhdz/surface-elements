@@ -26,7 +26,10 @@
   ],
   "type": "module",
   "sideEffects": [
-    "./dist/**/*.js"
+    "./dist/*.js",
+    "./dist/dialog-drawer/*.js",
+    "./dist/header-sticky/*.js",
+    "*.css"
   ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -44,6 +47,15 @@
       "types": "./dist/dialog-drawer/dialog-drawer.d.ts",
       "import": "./dist/dialog-drawer/dialog-drawer.js"
     },
+    "./dialog-drawer.css": "./dist/dialog-drawer.css",
+    "./dialog": {
+      "types": "./dist/dialog/dialog.d.ts",
+      "import": "./dist/dialog/dialog.js"
+    },
+    "./scroll-lock": {
+      "types": "./dist/scroll-lock/scroll-lock.d.ts",
+      "import": "./dist/scroll-lock/scroll-lock.js"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -51,7 +63,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsdown",
+    "build": "tsdown && node scripts/emit-css.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",

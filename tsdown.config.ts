@@ -5,6 +5,8 @@ export default defineConfig({
     index: "src/index.ts",
     "header-sticky/header-sticky": "src/header-sticky/header-sticky.ts",
     "dialog-drawer/dialog-drawer": "src/dialog-drawer/dialog-drawer.ts",
+    "dialog/dialog": "src/dialog/dialog.ts",
+    "scroll-lock/scroll-lock": "src/scroll-lock/scroll-lock.ts",
   },
   format: ["esm"],
   dts: true,
