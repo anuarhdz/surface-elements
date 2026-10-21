@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>surface-elements demo</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 1.5rem;
+      }
+
+      header-sticky {
+        display: block;
+        position: sticky;
+        top: 0;
+        padding: 0.75rem 1.5rem;
+        background: Canvas;
+        border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+      }
+
+      dialog-drawer {
+        display: block;
+        margin-top: 1rem;
+        padding: 1rem;
+        border: 1px dashed color-mix(in srgb, CanvasText 30%, transparent);
+      }
+    </style>
+  </head>
+  <body>
+    <header-sticky>
+      <strong>surface-elements</strong>
+    </header-sticky>
+
+    <main>
+      <h1>Demo</h1>
+      <p>
+        Stubs for <code>header-sticky</code> and <code>dialog-drawer</code>.
+        Behavior comes next.
+      </p>
+
+      <dialog-drawer>
+        <p>dialog-drawer placeholder</p>
+      </dialog-drawer>
+
+      <section aria-hidden="true">
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+        <p>Scroll fodder.</p>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

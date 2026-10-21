@@ -1,0 +1,79 @@
+{
+  "name": "surface-elements",
+  "version": "0.0.1",
+  "description": "Web Components for common interface surfaces.",
+  "keywords": [
+    "custom-elements",
+    "dialog",
+    "drawer",
+    "header",
+    "sticky",
+    "web-components"
+  ],
+  "homepage": "https://github.com/anuarhdz/surface-elements#readme",
+  "bugs": {
+    "url": "https://github.com/anuarhdz/surface-elements/issues"
+  },
+  "license": "MIT",
+  "author": "Anuar Reyes <anuar@hey.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anuarhdz/surface-elements.git"
+  },
+  "files": [
+    "CHANGELOG.md",
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/**/*.js"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./header-sticky": {
+      "types": "./dist/header-sticky/header-sticky.d.ts",
+      "import": "./dist/header-sticky/header-sticky.js"
+    },
+    "./dialog-drawer": {
+      "types": "./dist/dialog-drawer/dialog-drawer.d.ts",
+      "import": "./dist/dialog-drawer/dialog-drawer.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "fmt": "oxfmt .",
+    "fmt:check": "oxfmt --check .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "pnpm run typecheck && pnpm run build",
+    "release": "bash scripts/release.sh"
+  },
+  "devDependencies": {
+    "@open-wc/testing-helpers": "^3.0.1",
+    "jsdom": "^30.0.1",
+    "oxfmt": "^0.65.0",
+    "oxlint": "^1.80.0",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": "^22.18.0 || >=24.11.0"
+  },
+  "packageManager": "pnpm@11.24.0"
+}
