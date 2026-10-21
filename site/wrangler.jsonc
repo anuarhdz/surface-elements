@@ -6,4 +6,6 @@
     "directory": "./dist",
     "not_found_handling": "404-page",
   },
+  // Lets Workers Builds run `wrangler preview` for non-production branches.
+  "previews": {},
 }

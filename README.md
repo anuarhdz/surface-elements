@@ -91,6 +91,16 @@ if (!("commandForElement" in HTMLButtonElement.prototype)) {
 }
 ```
 
+## Agent skill
+
+The package ships a skill that teaches coding agents how to use it, generated from the source and the docs on every build.
+
+```bash
+npx skills add anuarhdz/surface-elements
+```
+
+Or point your agent at `node_modules/surface-elements/skills/surface-elements/SKILL.md`. A [Custom Elements Manifest](https://github.com/webcomponents/custom-elements-manifest) ships at `surface-elements/custom-elements.json` for editors and tooling.
+
 ## Develop
 
 ```bash

@@ -191,6 +191,7 @@ export function lockScrollWhileOpen(dialog: HTMLDialogElement): Cleanup {
   }
 }
 
+/** Whether the browser supports `closedby` on dialogs. */
 export function supportsClosedBy(): boolean {
   return "closedBy" in HTMLDialogElement.prototype
 }
