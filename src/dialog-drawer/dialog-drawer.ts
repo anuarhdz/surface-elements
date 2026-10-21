@@ -1,6 +1,7 @@
 import {
   closeAnimated,
   enhanceDialog,
+  lockScrollWhileOpen,
   showModal,
   type EnhanceDialogOptions,
 } from "../dialog/dialog.js"
@@ -18,10 +19,12 @@ import { adoptDrawerStyles } from "./styles.js"
  */
 export class DialogDrawer extends HTMLElement {
   static readonly tagName = "dialog-drawer"
+  static readonly observedAttributes = ["no-scroll-lock"]
 
   #internals: ElementInternals | undefined
   #dialog: HTMLDialogElement | null = null
   #cleanup: (() => void) | undefined
+  #releaseScrollLock: (() => void) | undefined
   #observer: MutationObserver | undefined
 
   constructor() {
@@ -66,6 +69,10 @@ export class DialogDrawer extends HTMLElement {
     this.#sync()
   }
 
+  attributeChangedCallback(): void {
+    this.#syncScrollLock()
+  }
+
   disconnectedCallback(): void {
     this.#observer?.disconnect()
     this.#unbind()
@@ -81,14 +88,27 @@ export class DialogDrawer extends HTMLElement {
   }
 
   #bind(dialog: HTMLDialogElement): void {
-    const options: EnhanceDialogOptions = {
-      lockScroll: !this.hasAttribute("no-scroll-lock"),
-    }
+    // The scroll lock is managed here so `no-scroll-lock` can change at runtime.
+    const options: EnhanceDialogOptions = { lockScroll: false }
     this.#dialog = dialog
     this.#cleanup = enhanceDialog(dialog, options)
+    this.#syncScrollLock()
+  }
+
+  #syncScrollLock(): void {
+    const dialog = this.#dialog
+    const wanted = dialog !== null && !this.hasAttribute("no-scroll-lock")
+    if (wanted && !this.#releaseScrollLock) {
+      this.#releaseScrollLock = lockScrollWhileOpen(dialog)
+    } else if (!wanted && this.#releaseScrollLock) {
+      this.#releaseScrollLock()
+      this.#releaseScrollLock = undefined
+    }
   }
 
   #unbind(): void {
+    this.#releaseScrollLock?.()
+    this.#releaseScrollLock = undefined
     this.#cleanup?.()
     this.#cleanup = undefined
     this.#dialog = null
