@@ -95,6 +95,7 @@ if (!("commandForElement" in HTMLButtonElement.prototype)) {
 
 ```bash
 pnpm install
+pnpm exec playwright install chromium # browser tests need Chromium, once
 pnpm dev      # demo at demo/
 pnpm docs:dev # docs site at site/
 pnpm test
