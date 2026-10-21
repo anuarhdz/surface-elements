@@ -105,6 +105,7 @@ Or point your agent at `node_modules/surface-elements/skills/surface-elements/SK
 
 ```bash
 pnpm install
+pnpm exec playwright install chromium # browser tests need Chromium, once
 pnpm dev      # demo at demo/
 pnpm docs:dev # docs site at site/
 pnpm test
