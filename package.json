@@ -78,9 +78,12 @@
   },
   "devDependencies": {
     "@open-wc/testing-helpers": "^3.0.1",
+    "@vitest/browser-playwright": "4.1.11",
+    "axe-core": "4.10.2",
     "jsdom": "^30.0.1",
     "oxfmt": "^0.65.0",
     "oxlint": "^1.80.0",
+    "playwright": "1.56.1",
     "tsdown": "^0.22.14",
     "typescript": "^7.0.2",
     "vite": "^8.2.2",
