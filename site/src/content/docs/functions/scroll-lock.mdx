@@ -1,0 +1,67 @@
+---
+title: Scroll lock
+description: A ref-counted lock that stops the page from scrolling.
+---
+
+import Demo from "../../../components/demo.astro"
+
+```js
+import { lockScroll, isScrollLocked } from "surface-elements/scroll-lock"
+
+const release = lockScroll()
+// …
+release()
+```
+
+## `lockScroll()`
+
+Sets `overflow: hidden` on `<html>` and `<body>` and returns a release function.
+
+- **Ref-counted.** The page unlocks when every caller has released. Stacked drawers each hold their own lock.
+- **Idempotent release.** Calling a release twice is harmless.
+- **No layout shift.** With a classic scrollbar it sets `scrollbar-gutter: stable` so the page does not jump sideways.
+- **Restores what it found.** Inline `overflow` and `scrollbar-gutter` values you had set come back on unlock.
+
+```ts
+function lockScroll(): () => void
+```
+
+## `isScrollLocked()`
+
+Whether any lock is held.
+
+```ts
+function isScrollLocked(): boolean
+```
+
+<Demo label="Two stacked drawers, one lock count">
+  <button type="button" commandfor="lock-a" command="show-modal">Open first drawer</button>
+  <span data-lock-status></span>
+
+  <dialog-drawer>
+    <dialog id="lock-a" data-drawer="end" closedby="any" aria-labelledby="lock-a-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="lock-a-title">First</h2>
+          <button type="button" commandfor="lock-a" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>Open the second drawer, close it, and the page stays locked until this one closes too.</p>
+        <div class="drawer-actions">
+          <button type="button" commandfor="lock-b" command="show-modal">Open second drawer</button>
+        </div>
+      </div>
+    </dialog>
+  </dialog-drawer>
+  <dialog-drawer>
+    <dialog id="lock-b" data-drawer="bottom" closedby="any" aria-labelledby="lock-b-title">
+      <div class="drawer-head">
+        <h2 id="lock-b-title">Second</h2>
+        <button type="button" commandfor="lock-b" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </dialog-drawer>
+</Demo>
+
+## Why root overflow
+
+Platform guidance prefers `overscroll-behavior: contain` on the dialog and its backdrop. Safari ignores it on containers that do not scroll, so the page behind still scrolls there. The library keeps the CSS containment and adds this lock on top. The trade-offs are in [ADR 0002](https://github.com/anuarhdz/surface-elements/blob/main/docs/adr/0002-scroll-lock-on-root-overflow.md).

@@ -63,6 +63,8 @@
   },
   "scripts": {
     "dev": "vite",
+    "docs:dev": "pnpm --filter surface-elements-site dev",
+    "docs:build": "pnpm --filter surface-elements-site build",
     "build": "tsdown && node scripts/emit-css.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",

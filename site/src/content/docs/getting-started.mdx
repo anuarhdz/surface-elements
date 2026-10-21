@@ -1,0 +1,71 @@
+---
+title: Getting started
+description: Install surface-elements and open your first drawer.
+---
+
+import {
+  Tabs,
+  TabItem,
+  LinkCard,
+  CardGrid,
+} from "@astrojs/starlight/components"
+
+## Install
+
+<Tabs syncKey="pkg">
+  <TabItem label="pnpm">```sh pnpm add surface-elements ```</TabItem>
+  <TabItem label="npm">```sh npm install surface-elements ```</TabItem>
+  <TabItem label="yarn">```sh yarn add surface-elements ```</TabItem>
+</Tabs>
+
+The package is ESM only and has no dependencies.
+
+## Entry points
+
+| Import                               | Contains                                                   |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `surface-elements`                   | Everything below.                                          |
+| `surface-elements/dialog-drawer`     | The `<dialog-drawer>` element. Registers itself on import. |
+| `surface-elements/dialog-drawer.css` | The drawer styles for CSS-only use.                        |
+| `surface-elements/dialog`            | Dialog enhancement functions.                              |
+| `surface-elements/scroll-lock`       | The ref-counted page scroll lock.                          |
+| `surface-elements/header-sticky`     | The `<header-sticky>` element. Registers itself on import. |
+
+Importing an element module defines the element once. Importing it twice, or alongside the root entry, is safe.
+
+## Your first drawer
+
+```js
+import "surface-elements/dialog-drawer"
+```
+
+```html
+<button commandfor="cart" command="show-modal">Cart</button>
+
+<dialog-drawer>
+  <dialog
+    id="cart"
+    data-drawer="end"
+    closedby="any"
+    aria-labelledby="cart-title"
+  >
+    <h2 id="cart-title">Cart</h2>
+    <button commandfor="cart" command="close">Close</button>
+  </dialog>
+</dialog-drawer>
+```
+
+The button opens the dialog through [invoker commands](https://developer.mozilla.org/docs/Web/API/Invoker_Commands_API). The custom element adds the styles, the animated close and the scroll lock. Read [Browser support](/guides/browser-support/) before you ship to older browsers.
+
+<CardGrid>
+  <LinkCard
+    title="Drawer"
+    description="The three ways to use it, with live demos."
+    href="/components/dialog-drawer/"
+  />
+  <LinkCard
+    title="Dialog functions"
+    description="Enhance any dialog without the custom element."
+    href="/functions/dialog/"
+  />
+</CardGrid>

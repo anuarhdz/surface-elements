@@ -18,6 +18,7 @@
     "demo/**",
     "scripts",
     "pnpm-lock.yaml",
-    "**/*.md"
+    "**/*.md",
+    "**/*.mdx"
   ]
 }

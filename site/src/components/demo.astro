@@ -1,0 +1,22 @@
+---
+/**
+ * Live preview frame. Children render as-is outside Starlight's prose
+ * styles, and the shared demo script wires up the library.
+ */
+interface Props {
+  label?: string
+}
+
+const { label = "Live demo" } = Astro.props
+---
+
+<figure class="demo not-content">
+  <figcaption>{label}</figcaption>
+  <div class="demo-stage">
+    <slot />
+  </div>
+</figure>
+
+<script>
+  import "../scripts/demos.ts"
+</script>

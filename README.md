@@ -2,6 +2,8 @@
 
 Vanilla web components and utilities for common interface surfaces.
 
+**Docs and live demos:** https://surface-elements-docs.iniciatico.workers.dev
+
 ## Install
 
 ```bash
@@ -94,6 +96,7 @@ if (!("commandForElement" in HTMLButtonElement.prototype)) {
 ```bash
 pnpm install
 pnpm dev      # demo at demo/
+pnpm docs:dev # docs site at site/
 pnpm test
 pnpm build
 ```
