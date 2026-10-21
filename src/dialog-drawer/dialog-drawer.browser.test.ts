@@ -3,6 +3,7 @@ import axe from "axe-core"
 import type { AxeResults } from "axe-core"
 import { afterEach, describe, expect, it } from "vitest"
 
+import "./dialog-drawer.js"
 import type { DialogDrawer } from "./dialog-drawer.js"
 
 // Real layout is available here, so color contrast is checked too.
