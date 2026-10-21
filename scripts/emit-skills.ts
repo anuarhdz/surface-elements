@@ -57,7 +57,11 @@ interface Declaration {
 interface Module {
   path: string
   declarations?: Declaration[]
-  exports?: { kind: string; name: string }[]
+  exports?: {
+    kind: string
+    name: string
+    declaration?: { name: string; module?: string }
+  }[]
 }
 
 interface Page {
@@ -70,6 +74,8 @@ interface Page {
 const manifest: { modules: Module[] } = JSON.parse(
   readFileSync("dist/custom-elements.json", "utf8")
 )
+// The analyzer does not emit modules in a stable order.
+manifest.modules.sort((a, b) => a.path.localeCompare(b.path))
 const pkg = JSON.parse(readFileSync("package.json", "utf8"))
 
 // Public entry points: package export "./x" maps to source module src/x/x.ts.
@@ -84,6 +90,18 @@ const entries = Object.entries<string | { types?: string }>(pkg.exports)
     return { key, specifier, source }
   })
 
+// Declarations only the root entry re-exports, keyed by their source module.
+const root = manifest.modules.find(
+  (mod) => mod.path === entries.find((e) => e.key === ".")?.source
+)
+const rootExports = new Map<string, Set<string>>()
+for (const e of root?.exports ?? []) {
+  const from = e.declaration?.module
+  if (!from) continue
+  const path = join(dirname(root!.path), from).replace(/\.js$/, ".ts")
+  rootExports.set(path, (rootExports.get(path) ?? new Set()).add(e.name))
+}
+
 const pages = readPages(DOCS)
 const pageBySlug = new Map(pages.map((page) => [page.slug, page]))
 
@@ -92,7 +110,7 @@ const pageBySlug = new Map(pages.map((page) => [page.slug, page]))
 const modulesBySlug = new Map<string, Module[]>()
 for (const mod of manifest.modules) {
   const slug = basename(dirname(mod.path))
-  if (slug === "src" || !mod.declarations?.length) continue
+  if (slug === "src" || publicDeclarations(mod).length === 0) continue
   modulesBySlug.set(slug, [...(modulesBySlug.get(slug) ?? []), mod])
 }
 
@@ -120,7 +138,7 @@ for (const slug of slugs) {
 }
 
 const elements = manifest.modules
-  .flatMap((mod) => mod.declarations ?? [])
+  .flatMap((mod) => publicDeclarations(mod))
   .filter((decl) => decl.customElement && decl.tagName)
 const functions = manifest.modules
   .flatMap((mod) => publicDeclarations(mod))
@@ -187,8 +205,12 @@ function referenceFor(decl: Declaration): string {
   return ""
 }
 
+// What consumers can import: everything a package entry exports, plus what
+// the root entry re-exports from modules that have no entry of their own.
 function publicDeclarations(mod: Module): Declaration[] {
-  const exported = new Set(mod.exports?.map((e) => e.name))
+  const exported = entries.some((e) => e.source === mod.path)
+    ? new Set(mod.exports?.map((e) => e.name))
+    : (rootExports.get(mod.path) ?? new Set())
   return (mod.declarations ?? []).filter((decl) => exported.has(decl.name))
 }
 

@@ -1,6 +1,6 @@
 ---
 name: surface-elements
-description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<dialog-drawer>, <header-sticky> and enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptDrawerStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
+description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<dialog-drawer>, <header-sticky> and adoptDrawerStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
 ---
 
 # surface-elements
