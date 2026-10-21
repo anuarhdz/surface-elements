@@ -10,11 +10,24 @@ import { adoptDrawerStyles } from "./styles.js"
 /**
  * Progressive enhancement for a drawer `<dialog>` placed as its direct child.
  * The dialog stays the source of truth: open state lives in `dialog.open`.
+ * Adds the drawer styles to the document, so no CSS import is needed.
  *
- * Attributes:
- * - `no-scroll-lock`: leave page scroll untouched while open.
- *
- * Exposes `:state(open)` for styling.
+ * @tag dialog-drawer
+ * @slot - The drawer `<dialog data-drawer>`, as the direct child.
+ * @attr {boolean} no-scroll-lock - Leave page scroll untouched while open.
+ * @cssstate open - The child dialog is open.
+ * @cssprop [--drawer-size=28rem] - Inline size for `start`/`end`, block size for `top`/`bottom` (`auto`).
+ * @cssprop [--drawer-max-size=calc(100% - 3rem)] - Upper bound for the size.
+ * @cssprop [--drawer-padding=1rem] - Padding of the dialog.
+ * @cssprop [--drawer-background=Canvas] - Background of the dialog.
+ * @cssprop [--drawer-color=CanvasText] - Text color of the dialog.
+ * @cssprop [--drawer-border=none] - Border of the dialog.
+ * @cssprop [--drawer-radius=0] - Border radius of the dialog.
+ * @cssprop [--drawer-shadow=0 0 2rem rgb(0 0 0 / 0.2)] - Shadow of the dialog.
+ * @cssprop [--drawer-backdrop=rgb(0 0 0 / 0.5)] - Backdrop background.
+ * @cssprop [--drawer-backdrop-filter=none] - Backdrop filter.
+ * @cssprop [--drawer-duration=0.3s] - Enter and exit transition duration.
+ * @cssprop [--drawer-easing=cubic-bezier(0.38, 0.005, 0.215, 1)] - Enter and exit easing.
  */
 export class DialogDrawer extends HTMLElement {
   static readonly tagName = "dialog-drawer"
@@ -29,24 +42,29 @@ export class DialogDrawer extends HTMLElement {
     this.#internals = this.attachInternals?.()
   }
 
+  /** The direct child `<dialog>`, if any. */
   get dialog(): HTMLDialogElement | null {
     return this.querySelector(":scope > dialog")
   }
 
+  /** Mirrors `dialog.open`. */
   get open(): boolean {
     return this.dialog?.open ?? false
   }
 
+  /** Opens the dialog as a modal, cancelling an exit in progress. */
   show(): void {
     const dialog = this.dialog
     if (dialog) showModal(dialog)
   }
 
+  /** Closes after the exit transition. Resolves when closed. */
   close(returnValue?: string): Promise<void> {
     const dialog = this.dialog
     return dialog ? closeAnimated(dialog, returnValue) : Promise.resolve()
   }
 
+  /** Calls `show()` or `close()`. */
   toggle(): void {
     if (this.open) void this.close()
     else this.show()

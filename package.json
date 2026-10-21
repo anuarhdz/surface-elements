@@ -22,7 +22,8 @@
   },
   "files": [
     "CHANGELOG.md",
-    "dist"
+    "dist",
+    "skills"
   ],
   "type": "module",
   "sideEffects": [
@@ -56,6 +57,7 @@
       "types": "./dist/scroll-lock/scroll-lock.d.ts",
       "import": "./dist/scroll-lock/scroll-lock.js"
     },
+    "./custom-elements.json": "./dist/custom-elements.json",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -65,7 +67,8 @@
     "dev": "vite",
     "docs:dev": "pnpm --filter surface-elements-site dev",
     "docs:build": "pnpm --filter surface-elements-site build",
-    "build": "tsdown && node scripts/emit-css.ts",
+    "build": "tsdown && node scripts/emit-css.ts && pnpm run skills",
+    "skills": "cem analyze && node scripts/emit-skills.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",
@@ -77,6 +80,7 @@
     "release": "bash scripts/release.sh"
   },
   "devDependencies": {
+    "@custom-elements-manifest/analyzer": "^0.11.0",
     "@open-wc/testing-helpers": "^3.0.1",
     "jsdom": "^30.0.1",
     "oxfmt": "^0.65.0",
@@ -89,5 +93,6 @@
   "engines": {
     "node": "^22.18.0 || >=24.11.0"
   },
-  "packageManager": "pnpm@12.14.0"
+  "packageManager": "pnpm@12.14.0",
+  "customElements": "./dist/custom-elements.json"
 }
