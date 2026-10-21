@@ -1,72 +1,476 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>surface-elements demo</title>
+    <link rel="icon" href="data:," />
     <style>
       :root {
         color-scheme: light dark;
         font-family: system-ui, sans-serif;
         line-height: 1.5;
+        --border: color-mix(in srgb, CanvasText 15%, transparent);
+        --muted: color-mix(in srgb, CanvasText 60%, transparent);
+        --accent: #2563eb;
       }
 
       body {
         margin: 0;
       }
 
-      main {
-        max-width: 40rem;
-        margin: 0 auto;
-        padding: 1.5rem;
+      button {
+        font: inherit;
+        padding: 0.5rem 0.875rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: color-mix(in srgb, CanvasText 5%, Canvas);
+        color: inherit;
+        cursor: pointer;
+      }
+
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
       }
 
       header-sticky {
-        display: block;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         position: sticky;
         top: 0;
-        padding: 0.75rem 1.5rem;
+        z-index: 1;
+        padding: 0.75rem 1rem;
         background: Canvas;
-        border-bottom: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+        border-bottom: 1px solid var(--border);
       }
 
-      dialog-drawer {
-        display: block;
-        margin-top: 1rem;
+      header-sticky strong {
+        flex: 1;
+      }
+
+      main {
+        max-width: 48rem;
+        margin: 0 auto;
         padding: 1rem;
-        border: 1px dashed color-mix(in srgb, CanvasText 30%, transparent);
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+        gap: 0.75rem;
+      }
+
+      .control {
+        display: grid;
+        gap: 0.5rem;
+        align-content: start;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+      }
+
+      .control p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: var(--muted);
+      }
+
+      code {
+        font-size: 0.85em;
+      }
+
+      .status {
+        position: fixed;
+        inset-inline-start: 0.75rem;
+        inset-block-end: 0.75rem;
+        z-index: 1;
+        margin: 0;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        background: Canvas;
+        font: 0.75rem/1.4 ui-monospace, monospace;
+        white-space: pre;
+      }
+
+      #log {
+        max-height: 10rem;
+        overflow: auto;
+        padding: 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+        font: 0.75rem/1.4 ui-monospace, monospace;
+      }
+
+      .filler article {
+        padding: 1rem;
+        margin-block: 1rem;
+        border: 1px solid var(--border);
+        border-radius: 0.75rem;
+      }
+
+      .filler h3 {
+        margin: 0 0 0.25rem;
+      }
+
+      .filler p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      /* Drawer content layout */
+      .drawer-layout {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        gap: 1rem;
+        min-block-size: 100%;
+      }
+
+      .drawer-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .drawer-head h2 {
+        margin: 0;
+        font-size: 1.25rem;
+      }
+
+      .drawer-foot {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .drawer-list {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .drawer-list li {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      nav ul {
+        display: grid;
+        gap: 0.25rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      nav a {
+        display: block;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+        color: inherit;
+        text-decoration: none;
+      }
+
+      nav a:hover {
+        background: color-mix(in srgb, CanvasText 8%, transparent);
+      }
+
+      /* Customization through the public custom properties */
+      #sheet {
+        --drawer-radius: 1rem 1rem 0 0;
+        --drawer-max-size: 85dvh;
+        --drawer-padding: 1.25rem;
+      }
+
+      #search {
+        --drawer-backdrop: rgb(37 99 235 / 0.25);
+        --drawer-backdrop-filter: blur(4px);
+      }
+
+      #menu {
+        --drawer-size: 18rem;
+      }
+
+      /* Styling from the element's custom state */
+      body:has(dialog-drawer:state(open)) header-sticky strong::after {
+        content: " · drawer abierto";
+        color: var(--accent);
       }
     </style>
   </head>
   <body>
     <header-sticky>
+      <button
+        type="button"
+        commandfor="menu"
+        command="show-modal"
+        aria-label="Abrir menú"
+      >
+        ☰
+      </button>
       <strong>surface-elements</strong>
+      <button type="button" commandfor="cart" command="show-modal">
+        Carrito
+      </button>
     </header-sticky>
 
     <main>
-      <h1>Demo</h1>
+      <h1>dialog-drawer</h1>
       <p>
-        Stubs for <code>header-sticky</code> and <code>dialog-drawer</code>.
-        Behavior comes next.
+        Abre un drawer e intenta hacer scroll en la página (rueda, touch,
+        teclado). El indicador de abajo a la izquierda muestra
+        <code>scrollY</code>: no debe moverse mientras haya un drawer abierto,
+        y la página no debe saltar de lado al desaparecer la barra de scroll.
       </p>
 
-      <dialog-drawer>
-        <p>dialog-drawer placeholder</p>
-      </dialog-drawer>
+      <section class="controls" aria-label="Pruebas">
+        <div class="control">
+          <strong>Declarativo (end)</strong>
+          <p>
+            <code>commandfor</code> + <code>command="show-modal"</code>, sin
+            JS propio. <code>closedby="any"</code>, form
+            <code>method="dialog"</code>.
+          </p>
+          <button
+            type="button"
+            class="primary"
+            commandfor="cart"
+            command="show-modal"
+          >
+            Abrir carrito
+          </button>
+        </div>
 
-      <section aria-hidden="true">
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
-        <p>Scroll fodder.</p>
+        <div class="control">
+          <strong>API del elemento (start)</strong>
+          <p><code>drawer.show()</code>, <code>.toggle()</code>.</p>
+          <button type="button" data-action="show-menu">show()</button>
+          <button type="button" data-action="toggle-menu">toggle()</button>
+        </div>
+
+        <div class="control">
+          <strong>Bottom sheet</strong>
+          <p>
+            <code>data-drawer="bottom"</code>, contenido largo con scroll
+            interno.
+          </p>
+          <button type="button" commandfor="sheet" command="show-modal">
+            Abrir sheet
+          </button>
+        </div>
+
+        <div class="control">
+          <strong>Top + backdrop custom</strong>
+          <p>
+            <code>data-drawer="top"</code>, <code>--drawer-backdrop</code>.
+          </p>
+          <button type="button" commandfor="search" command="show-modal">
+            Abrir búsqueda
+          </button>
+        </div>
+
+        <div class="control">
+          <strong>Solo funciones</strong>
+          <p>
+            <code>&lt;dialog&gt;</code> sin custom element +
+            <code>enhanceDialog()</code>.
+          </p>
+          <button type="button" commandfor="bare" command="show-modal">
+            Abrir dialog
+          </button>
+        </div>
+
+        <div class="control">
+          <strong>Sin bloqueo de scroll</strong>
+          <p>
+            <code>no-scroll-lock</code>, para comparar contra el resto.
+          </p>
+          <button type="button" commandfor="unlocked" command="show-modal">
+            Abrir
+          </button>
+        </div>
+
+        <div class="control">
+          <strong>Cierre programático</strong>
+          <p>Abre el carrito y lo cierra con <code>close("timeout")</code> a los 2 s.</p>
+          <button type="button" data-action="auto-close">Abrir y cerrar</button>
+        </div>
+
+        <div class="control">
+          <strong>Dirección</strong>
+          <p>Alterna <code>dir="rtl"</code>: start/end se invierten.</p>
+          <button type="button" data-action="toggle-dir">LTR / RTL</button>
+        </div>
       </section>
+
+      <h2>Soporte del navegador</h2>
+      <ul id="support"></ul>
+
+      <h2>Eventos</h2>
+      <div id="log" role="log" aria-live="polite"></div>
+
+      <section class="filler" aria-label="Contenido de relleno"></section>
     </main>
+
+    <!-- Cart: declarative, light dismiss, form method="dialog", nested drawer -->
+    <dialog-drawer>
+      <dialog
+        id="cart"
+        data-drawer="end"
+        closedby="any"
+        aria-labelledby="cart-title"
+      >
+        <form method="dialog" class="drawer-layout">
+          <div class="drawer-head">
+            <h2 id="cart-title">Carrito</h2>
+            <button
+              type="button"
+              commandfor="cart"
+              command="close"
+              aria-label="Cerrar carrito"
+            >
+              ✕
+            </button>
+          </div>
+          <ul class="drawer-list" id="cart-items"></ul>
+          <div class="drawer-foot">
+            <button type="submit" value="checkout" class="primary">
+              Pagar
+            </button>
+            <button type="submit" value="later">Después</button>
+            <button type="button" commandfor="sheet" command="show-modal">
+              Abrir sheet encima
+            </button>
+          </div>
+        </form>
+      </dialog>
+    </dialog-drawer>
+
+    <!-- Menu: start edge, opened from the element API and the header -->
+    <dialog-drawer id="menu-drawer">
+      <dialog
+        id="menu"
+        data-drawer="start"
+        closedby="any"
+        aria-labelledby="menu-title"
+      >
+        <div class="drawer-head">
+          <h2 id="menu-title">Menú</h2>
+          <button
+            type="button"
+            commandfor="menu"
+            command="close"
+            aria-label="Cerrar menú"
+          >
+            ✕
+          </button>
+        </div>
+        <nav aria-label="Principal">
+          <ul>
+            <li><a href="#">Inicio</a></li>
+            <li><a href="#">Productos</a></li>
+            <li><a href="#">Ofertas</a></li>
+            <li><a href="#">Cuenta</a></li>
+            <li><a href="#">Ayuda</a></li>
+          </ul>
+        </nav>
+      </dialog>
+    </dialog-drawer>
+
+    <!-- Bottom sheet with long inner content -->
+    <dialog-drawer>
+      <dialog
+        id="sheet"
+        data-drawer="bottom"
+        closedby="any"
+        aria-labelledby="sheet-title"
+      >
+        <div class="drawer-head">
+          <h2 id="sheet-title">Filtros</h2>
+          <button
+            type="button"
+            commandfor="sheet"
+            command="close"
+            aria-label="Cerrar filtros"
+          >
+            ✕
+          </button>
+        </div>
+        <ul class="drawer-list" id="sheet-items"></ul>
+      </dialog>
+    </dialog-drawer>
+
+    <!-- Top drawer -->
+    <dialog-drawer>
+      <dialog
+        id="search"
+        data-drawer="top"
+        closedby="any"
+        aria-labelledby="search-title"
+      >
+        <form method="dialog" class="drawer-head">
+          <h2 id="search-title">Buscar</h2>
+          <input type="search" name="q" aria-labelledby="search-title" />
+          <button type="submit" value="search">Ir</button>
+        </form>
+      </dialog>
+    </dialog-drawer>
+
+    <!-- No custom element: enhanceDialog() from main.ts -->
+    <dialog
+      id="bare"
+      data-drawer="end"
+      closedby="any"
+      aria-labelledby="bare-title"
+    >
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="bare-title">Solo funciones</h2>
+          <button
+            type="button"
+            commandfor="bare"
+            command="close"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+        <p>
+          Este <code>&lt;dialog&gt;</code> no tiene
+          <code>&lt;dialog-drawer&gt;</code>: los estilos vienen de
+          <code>data-drawer</code> y el comportamiento de
+          <code>enhanceDialog(dialog)</code>.
+        </p>
+      </div>
+    </dialog>
+
+    <!-- Scroll lock disabled -->
+    <dialog-drawer no-scroll-lock>
+      <dialog
+        id="unlocked"
+        data-drawer="end"
+        closedby="any"
+        aria-labelledby="unlocked-title"
+      >
+        <div class="drawer-head">
+          <h2 id="unlocked-title">Sin bloqueo</h2>
+          <button
+            type="button"
+            commandfor="unlocked"
+            command="close"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+        <p>Con este drawer abierto la página de atrás sí hace scroll.</p>
+      </dialog>
+    </dialog-drawer>
+
+    <output class="status" id="status" aria-hidden="true"></output>
 
     <script type="module" src="./main.ts"></script>
   </body>
