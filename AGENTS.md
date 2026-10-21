@@ -16,4 +16,4 @@ Single-context: one `GLOSSARY.md` + `docs/adr/` at the repo root. See `docs/agen
 
 ## Browser support
 
-Baseline newly available features are allowed when feature-detected, with a lightweight fallback where the library depends on them. No polyfills ship in the bundle; document the ones consumers may load. Deliberate deviations from platform guidance are recorded in `docs/adr/`.
+**Browser Support:** Baseline Newly available. Such features may be used when feature-detected, with a lightweight fallback where the library depends on them. No polyfills ship in the bundle; document the ones consumers may load. Deliberate deviations from platform guidance are recorded in `docs/adr/`.
