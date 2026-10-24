@@ -7,7 +7,7 @@ import {
   type DialogDrawer,
 } from "surface-elements"
 import "surface-elements/dialog-drawer"
-import "surface-elements/header-sticky"
+import "surface-elements/header"
 
 // Invoker commands polyfill, only where missing. The library does not ship it.
 if (!("commandForElement" in HTMLButtonElement.prototype)) {

@@ -29,7 +29,7 @@
   "sideEffects": [
     "./dist/*.js",
     "./dist/dialog-drawer/*.js",
-    "./dist/header-sticky/*.js",
+    "./dist/header/*.js",
     "*.css"
   ],
   "main": "./dist/index.js",
@@ -40,10 +40,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
-    "./header-sticky": {
-      "types": "./dist/header-sticky/header-sticky.d.ts",
-      "import": "./dist/header-sticky/header-sticky.js"
+    "./header": {
+      "types": "./dist/header/header.d.ts",
+      "import": "./dist/header/header.js"
     },
+    "./header.css": "./dist/header.css",
     "./dialog-drawer": {
       "types": "./dist/dialog-drawer/dialog-drawer.d.ts",
       "import": "./dist/dialog-drawer/dialog-drawer.js"

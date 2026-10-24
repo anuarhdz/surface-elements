@@ -1,6 +1,6 @@
 ---
 name: surface-elements
-description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<dialog-drawer>, <header-sticky> and adoptDrawerStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
+description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<dialog-drawer>, <surface-header> and adoptDrawerStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptHeaderStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
 ---
 
 # surface-elements
@@ -20,7 +20,8 @@ pnpm add surface-elements
 | Import | Contains |
 | --- | --- |
 | `surface-elements` | Everything below. |
-| `surface-elements/header-sticky` | `<header-sticky>` (registers itself on import) |
+| `surface-elements/header` | `<surface-header>` (registers itself on import) |
+| `surface-elements/header.css` | Stylesheet for CSS-only use. |
 | `surface-elements/dialog-drawer` | `<dialog-drawer>` (registers itself on import) |
 | `surface-elements/dialog-drawer.css` | Stylesheet for CSS-only use. |
 | `surface-elements/dialog` | `CLOSING_ATTRIBUTE`, `enhanceDialog`, `lightDismiss`, `routeCloseRequests`, `closeAnimated`, `showModal`, `lockScrollWhileOpen`, `supportsClosedBy`, `supportsTopLayerExit` |
@@ -62,7 +63,7 @@ import "surface-elements/dialog-drawer"
 | Element | What it is | Reference |
 | --- | --- | --- |
 | `<dialog-drawer>` | Progressive enhancement for a drawer `<dialog>` placed as its direct child. | [dialog-drawer.md](references/dialog-drawer.md) |
-| `<header-sticky>` | A page header that sticks to the top. | [header-sticky.md](references/header-sticky.md) |
+| `<surface-header>` | A page header that sticks to the top of its scroll container. | [surface-header.md](references/header.md) |
 
 ## References
 
@@ -71,6 +72,6 @@ Read only the one you need.
 - [references/browser-support.md](references/browser-support.md): What is native, what the library fills in, and what you load yourself.
 - [references/dialog.md](references/dialog.md): Enhance any native dialog with light-dismiss and exit-animation fallbacks and a scroll lock.
 - [references/dialog-drawer.md](references/dialog-drawer.md): A native dialog that slides in from any edge. Use the CSS, the functions or the custom element.
-- [references/header-sticky.md](references/header-sticky.md): A custom element for a page header that sticks to the top.
+- [references/header.md](references/header.md): A page header that sticks to the top, reports when it is stuck, and can hide while you scroll down.
 - [references/scroll-lock.md](references/scroll-lock.md): A ref-counted lock that stops the page from scrolling.
 - [references/styling.md](references/styling.md): Custom properties, cascade layers and state hooks for theming the drawer.

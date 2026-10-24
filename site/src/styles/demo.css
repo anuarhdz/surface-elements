@@ -109,15 +109,18 @@ dialog[data-drawer="bottom"] .drawer-layout {
   border-radius: 0.5rem;
 }
 
-.sticky-frame header-sticky {
+.sticky-frame header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  position: sticky;
-  top: 0;
   padding: 0.75rem 1rem;
   background: var(--sl-color-bg-nav);
   border-block-end: 1px solid var(--sl-color-gray-5);
+  transition: box-shadow 0.2s;
+}
+
+.sticky-frame surface-header:state(stuck) header {
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.25);
 }
 
 .sticky-frame p {

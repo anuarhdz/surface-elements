@@ -1,7 +1,9 @@
-// Writes the drawer styles to dist/ for CSS-only consumers.
+// Writes the component styles to dist/ for CSS-only consumers.
 import { mkdirSync, writeFileSync } from "node:fs"
 
 import { drawerStyles } from "../src/dialog-drawer/styles.ts"
+import { headerStyles } from "../src/header/styles.ts"
 
 mkdirSync("dist", { recursive: true })
 writeFileSync("dist/dialog-drawer.css", drawerStyles.trimStart())
+writeFileSync("dist/header.css", headerStyles.trimStart())

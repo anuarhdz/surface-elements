@@ -35,19 +35,23 @@
         color: white;
       }
 
-      header-sticky {
+      html {
+        scroll-padding-block-start: var(--surface-header-height, 0px);
+      }
+
+      surface-header header {
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        position: sticky;
-        top: 0;
-        z-index: 1;
         padding: 0.75rem 1rem;
-        background: Canvas;
         border-bottom: 1px solid var(--border);
       }
 
-      header-sticky strong {
+      surface-header:state(stuck) header {
+        box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.1);
+      }
+
+      surface-header strong {
         flex: 1;
       }
 
@@ -195,27 +199,29 @@
       }
 
       /* Styling from the element's custom state */
-      body:has(dialog-drawer:state(open)) header-sticky strong::after {
+      body:has(dialog-drawer:state(open)) surface-header strong::after {
         content: " · drawer abierto";
         color: var(--accent);
       }
     </style>
   </head>
   <body>
-    <header-sticky>
-      <button
-        type="button"
-        commandfor="menu"
-        command="show-modal"
-        aria-label="Abrir menú"
-      >
-        ☰
-      </button>
-      <strong>surface-elements</strong>
-      <button type="button" commandfor="cart" command="show-modal">
-        Carrito
-      </button>
-    </header-sticky>
+    <surface-header hide-on-scroll>
+      <header>
+        <button
+          type="button"
+          commandfor="menu"
+          command="show-modal"
+          aria-label="Abrir menú"
+        >
+          ☰
+        </button>
+        <strong>surface-elements</strong>
+        <button type="button" commandfor="cart" command="show-modal">
+          Carrito
+        </button>
+      </header>
+    </surface-header>
 
     <main>
       <h1>dialog-drawer</h1>

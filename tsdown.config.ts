@@ -3,7 +3,7 @@ import { defineConfig } from "tsdown"
 export default defineConfig({
   entry: {
     index: "src/index.ts",
-    "header-sticky/header-sticky": "src/header-sticky/header-sticky.ts",
+    "header/header": "src/header/header.ts",
     "dialog-drawer/dialog-drawer": "src/dialog-drawer/dialog-drawer.ts",
     "dialog/dialog": "src/dialog/dialog.ts",
     "scroll-lock/scroll-lock": "src/scroll-lock/scroll-lock.ts",
