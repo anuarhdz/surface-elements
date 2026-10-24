@@ -61,9 +61,9 @@
 }
 
 /* Drawer content */
-dialog[data-drawer] {
-  --drawer-background: var(--sl-color-bg);
-  --drawer-color: var(--sl-color-white);
+surface-drawer > dialog {
+  --surface-drawer-background: var(--sl-color-bg);
+  --surface-drawer-color: var(--sl-color-white);
 }
 
 .drawer-layout {
@@ -73,8 +73,7 @@ dialog[data-drawer] {
   min-block-size: 100%;
 }
 
-dialog[data-drawer="top"] .drawer-layout,
-dialog[data-drawer="bottom"] .drawer-layout {
+surface-drawer:is([edge="top"], [edge="bottom"]) .drawer-layout {
   min-block-size: auto;
 }
 

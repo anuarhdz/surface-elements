@@ -3,22 +3,22 @@ import axe from "axe-core"
 import type { AxeResults } from "axe-core"
 import { afterEach, describe, expect, it } from "vitest"
 
-import "./dialog-drawer.js"
-import type { DialogDrawer } from "./dialog-drawer.js"
+import "./drawer.js"
+import type { SurfaceDrawer } from "./drawer.js"
 
 // Real layout is available here, so color contrast is checked too.
 const audit = (el: Element): Promise<AxeResults> => axe.run(el)
 
-describe("dialog-drawer accessibility", () => {
+describe("surface-drawer accessibility", () => {
   afterEach(() => fixtureCleanup())
 
   it("has no violations when open", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer
         ><dialog aria-labelledby="title">
           <h2 id="title">Menu</h2>
           <button>Close</button>
-        </dialog></dialog-drawer
+        </dialog></surface-drawer
       >`
     )
 
@@ -30,10 +30,10 @@ describe("dialog-drawer accessibility", () => {
   })
 
   it("reports an unlabeled button, so the audit is really running", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer
         ><dialog><button></button></dialog
-      ></dialog-drawer>`
+      ></surface-drawer>`
     )
 
     el.show()

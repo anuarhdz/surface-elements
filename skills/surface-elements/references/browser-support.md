@@ -8,11 +8,11 @@ The target is [Baseline](https://web.dev/baseline) newly available. Newer featur
 
 | Feature                               | Native                                              | Fallback                                                         |
 | ------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------- |
-| `closedby="any"`                      | Light dismiss                                       | `lightDismiss()`, inside `enhanceDialog()` and `<dialog-drawer>` |
+| `closedby="any"`                      | Light dismiss                                       | `lightDismiss()`, inside `enhanceDialog()` and `<surface-drawer>` |
 | Exit transitions out of the top layer | `overlay` and `transition-behavior: allow-discrete` | `routeCloseRequests()` and `closeAnimated()` via `data-closing`  |
 | Entry transitions                     | `@starting-style`                                   | None. The drawer appears without sliding in.                     |
 | Invoker commands (`commandfor`)       | Opens and closes from HTML                          | **Not included.** Load a polyfill (below).                       |
-| `:state()`                            | `dialog-drawer:state(open)`                         | None. Style `dialog[open]` instead.                              |
+| `:state()`                            | `surface-drawer:state(open)`                         | None. Style `dialog[open]` instead.                              |
 | `:modal`                              | Modal detection                                     | Treats any open dialog as modal.                                 |
 
 ## Invoker commands polyfill

@@ -1,6 +1,6 @@
 ---
 name: surface-elements
-description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<dialog-drawer>, <header-sticky> and adoptDrawerStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
+description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<surface-drawer>, <header-sticky> and enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptDrawerStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
 ---
 
 # surface-elements
@@ -21,8 +21,8 @@ pnpm add surface-elements
 | --- | --- |
 | `surface-elements` | Everything below. |
 | `surface-elements/header-sticky` | `<header-sticky>` (registers itself on import) |
-| `surface-elements/dialog-drawer` | `<dialog-drawer>` (registers itself on import) |
-| `surface-elements/dialog-drawer.css` | Stylesheet for CSS-only use. |
+| `surface-elements/drawer` | `<surface-drawer>` (registers itself on import) |
+| `surface-elements/drawer.css` | Stylesheet for CSS-only use. |
 | `surface-elements/dialog` | `CLOSING_ATTRIBUTE`, `enhanceDialog`, `lightDismiss`, `routeCloseRequests`, `closeAnimated`, `showModal`, `lockScrollWhileOpen`, `supportsClosedBy`, `supportsTopLayerExit` |
 | `surface-elements/scroll-lock` | `lockScroll`, `isScrollLocked` |
 | `surface-elements/custom-elements.json` |  |
@@ -32,36 +32,36 @@ pnpm add surface-elements
 - **The `<dialog>` is the source of truth.** Open state lives in `dialog.open`. Never mirror it in your own state, and never set `open` by hand.
 - **Open as a modal.** Use `<button commandfor="id" command="show-modal">`, `showModal(dialog)` or `element.show()`. A plain `dialog.show()` is non-modal: no top layer, no backdrop, no scroll lock.
 - **Close through the library** with `command="close"`, `<form method="dialog">`, `closeAnimated(dialog)` or `element.close()`. A direct `dialog.close()` skips the exit animation in browsers that need the fallback.
-- **Pick one level per dialog.** CSS only (`dialog-drawer.css`), functions (`enhanceDialog()` from `surface-elements/dialog`), or the `<dialog-drawer>` element, which wraps a direct child `<dialog data-drawer>` and needs no CSS import. Do not also call `enhanceDialog()` on a dialog inside `<dialog-drawer>`: the element already does it.
+- **Always write the wrapper.** The drawer is `<surface-drawer>` around a direct child `<dialog>`. Importing `surface-elements/drawer` defines the web component, which adds the styles and the behavior. Without it, import `drawer.css` for the styles and optionally call `enhanceDialog()` from `surface-elements/dialog`. Never call `enhanceDialog()` on a dialog inside a defined `<surface-drawer>`: it already does it.
 - **Clean up.** Every function that attaches listeners returns a cleanup. Call it when the dialog leaves the page. The element cleans up by itself.
 - **Accessibility.** Label every dialog (`aria-labelledby` or `aria-label`), give it a visible close button, and use `closedby="any"` for Esc and backdrop dismiss. Focus and inertness come from the native modal; do not reimplement them.
-- **Styling.** All rules live in `@layer surface-elements`, so any unlayered rule wins. Theme with the `--drawer-*` custom properties. Never use `!important`.
+- **Styling.** All rules live in `@layer surface-elements`, so any unlayered rule wins. Theme with the `--surface-drawer-*` custom properties. Never use `!important`.
 - **No polyfills ship.** Fallbacks are feature-detected. Read the browser-support reference before targeting older browsers.
 
 ## Minimal drawer
 
 ```js
-import "surface-elements/dialog-drawer"
+import "surface-elements/drawer"
 ```
 
 ```html
 <button commandfor="cart" command="show-modal">Cart</button>
 
-<dialog-drawer>
-  <dialog id="cart" data-drawer="end" closedby="any" aria-labelledby="cart-title">
+<surface-drawer>
+  <dialog id="cart" closedby="any" aria-labelledby="cart-title">
     <h2 id="cart-title">Cart</h2>
     <button commandfor="cart" command="close">Close</button>
   </dialog>
-</dialog-drawer>
+</surface-drawer>
 ```
 
-`data-drawer` is the edge: `end` (default), `start`, `top` or `bottom`. Inline edges follow the writing direction.
+`edge` on `<surface-drawer>` is the edge: `end` (default), `start`, `top` or `bottom`. Inline edges follow the writing direction.
 
 ## Elements
 
 | Element | What it is | Reference |
 | --- | --- | --- |
-| `<dialog-drawer>` | Progressive enhancement for a drawer `<dialog>` placed as its direct child. | [dialog-drawer.md](references/dialog-drawer.md) |
+| `<surface-drawer>` | Web component that turns its direct child `<dialog>` into a drawer. | [surface-drawer.md](references/drawer.md) |
 | `<header-sticky>` | A page header that sticks to the top. | [header-sticky.md](references/header-sticky.md) |
 
 ## References
@@ -70,7 +70,7 @@ Read only the one you need.
 
 - [references/browser-support.md](references/browser-support.md): What is native, what the library fills in, and what you load yourself.
 - [references/dialog.md](references/dialog.md): Enhance any native dialog with light-dismiss and exit-animation fallbacks and a scroll lock.
-- [references/dialog-drawer.md](references/dialog-drawer.md): A native dialog that slides in from any edge. Use the CSS, the functions or the custom element.
+- [references/drawer.md](references/drawer.md): The surface-drawer web component, a native dialog that slides in from any edge.
 - [references/header-sticky.md](references/header-sticky.md): A custom element for a page header that sticks to the top.
 - [references/scroll-lock.md](references/scroll-lock.md): A ref-counted lock that stops the page from scrolling.
 - [references/styling.md](references/styling.md): Custom properties, cascade layers and state hooks for theming the drawer.

@@ -38,8 +38,8 @@ function isScrollLocked(): boolean
   <button type="button" commandfor="lock-a" command="show-modal">Open first drawer</button>
   <span data-lock-status></span>
 
-  <dialog-drawer>
-    <dialog id="lock-a" data-drawer="end" closedby="any" aria-labelledby="lock-a-title">
+  <surface-drawer>
+    <dialog id="lock-a" closedby="any" aria-labelledby="lock-a-title">
       <div class="drawer-layout">
         <div class="drawer-head">
           <h2 id="lock-a-title">First</h2>
@@ -51,15 +51,15 @@ function isScrollLocked(): boolean
         </div>
       </div>
     </dialog>
-  </dialog-drawer>
-  <dialog-drawer>
-    <dialog id="lock-b" data-drawer="bottom" closedby="any" aria-labelledby="lock-b-title">
+  </surface-drawer>
+  <surface-drawer edge="bottom">
+    <dialog id="lock-b" closedby="any" aria-labelledby="lock-b-title">
       <div class="drawer-head">
         <h2 id="lock-b-title">Second</h2>
         <button type="button" commandfor="lock-b" command="close" aria-label="Close">✕</button>
       </div>
     </dialog>
-  </dialog-drawer>
+  </surface-drawer>
 </Demo>
 
 ## Why root overflow
