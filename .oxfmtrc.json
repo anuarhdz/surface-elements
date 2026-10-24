@@ -19,6 +19,8 @@
     "scripts",
     "pnpm-lock.yaml",
     "**/*.md",
-    "**/*.mdx"
+    "**/*.mdx",
+    ".remember",
+    "tools/oxlint/anti-slop"
   ]
 }
