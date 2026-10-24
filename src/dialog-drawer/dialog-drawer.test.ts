@@ -138,6 +138,7 @@ describe("dialog-drawer", () => {
     const el = await fixture<DialogDrawer>(
       html`<dialog-drawer></dialog-drawer>`
     )
+
     el.append(document.createElement("dialog"))
     await flush()
 
@@ -161,6 +162,7 @@ describe("dialog-drawer", () => {
     const el = await fixture<DialogDrawer>(
       html`<dialog-drawer><dialog closedby="any">Hi</dialog></dialog-drawer>`
     )
+
     el.show()
     const dialog = el.dialog!
     dialog.dispatchEvent(
@@ -175,6 +177,7 @@ describe("dialog-drawer", () => {
     const el = await fixture<DialogDrawer>(
       html`<dialog-drawer><dialog closedby="any">Hi</dialog></dialog-drawer>`
     )
+
     el.show()
     const dialog = el.dialog!
     dialog.dispatchEvent(

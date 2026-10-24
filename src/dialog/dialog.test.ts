@@ -27,9 +27,11 @@ async function modal(): Promise<HTMLDialogElement> {
       </form>
     </dialog>`
   )
+
   // A 100×100 box at the origin.
   dialog.getBoundingClientRect = () => new DOMRect(0, 0, 100, 100)
   dialog.showModal()
+
   return dialog
 }
 
@@ -40,6 +42,20 @@ function press(target: Element, x: number, y: number): void {
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve))
+
+/** An animation stub whose `finished` settles when `finish()` is called. */
+function pendingAnimation() {
+  let finish!: () => void
+
+  const finished = new Promise<Animation>(
+    (resolve) => (finish = () => resolve(animation))
+  )
+
+  // SAFETY: closeAnimated only awaits `finished`; jsdom has no Animation.
+  const animation = { finished } as Animation
+
+  return { animation, finish }
+}
 
 describe("lightDismiss", () => {
   it("closes on a backdrop click", async () => {
@@ -102,9 +118,8 @@ describe("closeAnimated", () => {
 
   it("waits for exit animations before closing", async () => {
     const dialog = await modal()
-    let finish!: () => void
-    const finished = new Promise<void>((resolve) => (finish = resolve))
-    dialog.getAnimations = () => [{ finished } as unknown as Animation]
+    const { animation, finish } = pendingAnimation()
+    dialog.getAnimations = () => [animation]
 
     const closing = closeAnimated(dialog)
     expect(dialog.hasAttribute("data-closing")).toBe(true)
@@ -118,9 +133,8 @@ describe("closeAnimated", () => {
 
   it("is cancelled by showModal() during the exit", async () => {
     const dialog = await modal()
-    let finish!: () => void
-    const finished = new Promise<void>((resolve) => (finish = resolve))
-    dialog.getAnimations = () => [{ finished } as unknown as Animation]
+    const { animation, finish } = pendingAnimation()
+    dialog.getAnimations = () => [animation]
 
     const closing = closeAnimated(dialog)
     showModal(dialog)
@@ -150,6 +164,7 @@ describe("routeCloseRequests", () => {
     const command = Object.assign(new Event("command", { cancelable: true }), {
       command: "close",
     })
+
     dialog.dispatchEvent(command)
 
     expect(command.defaultPrevented).toBe(true)
@@ -162,11 +177,13 @@ describe("routeCloseRequests", () => {
 
     const form = dialog.querySelector("form")!
     const submitter = dialog.querySelector("button")!
+
     const submit = new SubmitEvent("submit", {
       cancelable: true,
       bubbles: true,
       submitter,
     })
+
     form.dispatchEvent(submit)
 
     expect(submit.defaultPrevented).toBe(true)

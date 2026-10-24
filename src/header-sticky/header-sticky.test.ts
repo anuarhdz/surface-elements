@@ -12,6 +12,7 @@ describe("header-sticky", () => {
     const el = await fixture<HeaderSticky>(
       html`<header-sticky></header-sticky>`
     )
+
     expect(el).toBeInstanceOf(HeaderSticky)
   })
 })
