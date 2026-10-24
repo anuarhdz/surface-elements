@@ -21,6 +21,7 @@ export function enhanceDialog(
   options: EnhanceDialogOptions = {}
 ): Cleanup {
   const cleanups = [lightDismiss(dialog), routeCloseRequests(dialog)]
+
   if (options.lockScroll ?? true) cleanups.push(lockScrollWhileOpen(dialog))
 
   return () => {
@@ -34,7 +35,7 @@ export function enhanceDialog(
  */
 export function lightDismiss(
   dialog: HTMLDialogElement,
-  close: () => unknown = () => closeAnimated(dialog)
+  close: () => void = () => closeAnimated(dialog)
 ): Cleanup {
   if (supportsClosedBy()) return noop
 
@@ -45,6 +46,7 @@ export function lightDismiss(
   const isBackdrop = (event: MouseEvent): boolean => {
     if (event.target !== dialog) return false
     const rect = dialog.getBoundingClientRect()
+
     return (
       event.clientX < rect.left ||
       event.clientX > rect.right ||
@@ -68,7 +70,9 @@ export function lightDismiss(
     (event) => {
       const shouldClose = pressedBackdrop && isBackdrop(event)
       pressedBackdrop = false
+
       if (!shouldClose) return
+
       if (dialog.getAttribute("closedby") !== "any" || !isModal(dialog)) return
       void close()
     },
@@ -102,7 +106,8 @@ export function routeCloseRequests(dialog: HTMLDialogElement): Cleanup {
   dialog.addEventListener(
     "command",
     (event) => {
-      const command = (event as Event & { command?: string }).command
+      const command = "command" in event ? event.command : undefined
+
       if (command === "close") {
         event.preventDefault()
         void closeAnimated(dialog)
@@ -116,10 +121,13 @@ export function routeCloseRequests(dialog: HTMLDialogElement): Cleanup {
   dialog.addEventListener(
     "submit",
     (event) => {
+      // SAFETY: `submit` is only dispatched at form elements.
       const form = event.target as HTMLFormElement
       const submitter = event.submitter
+
       const method =
         submitter?.getAttribute("formmethod") ?? form.getAttribute("method")
+
       if (method?.toLowerCase() !== "dialog") return
       event.preventDefault()
       void closeAnimated(dialog, submitter?.getAttribute("value") ?? undefined)
@@ -146,12 +154,14 @@ export async function closeAnimated(
   if (!supportsTopLayerExit()) {
     dialog.setAttribute(CLOSING_ATTRIBUTE, "")
     const animations = dialog.getAnimations?.({ subtree: true }) ?? []
+
     if (animations.length > 0) {
       await Promise.race([
         Promise.allSettled(animations.map((animation) => animation.finished)),
         new Promise((resolve) => setTimeout(resolve, EXIT_TIMEOUT)),
       ])
     }
+
     // Reopened while the exit transition was playing.
     if (!dialog.hasAttribute(CLOSING_ATTRIBUTE)) return
     dialog.removeAttribute(CLOSING_ATTRIBUTE)
@@ -163,6 +173,7 @@ export async function closeAnimated(
 /** Opens the dialog as a modal, cancelling an exit transition in progress. */
 export function showModal(dialog: HTMLDialogElement): void {
   dialog.removeAttribute(CLOSING_ATTRIBUTE)
+
   if (!dialog.open) dialog.showModal()
 }
 
@@ -172,6 +183,7 @@ export function lockScrollWhileOpen(dialog: HTMLDialogElement): Cleanup {
 
   const sync = () => {
     const open = dialog.open && isModal(dialog)
+
     if (open && !release) {
       release = lockScroll()
     } else if (!open && release) {
@@ -203,6 +215,7 @@ export function supportsTopLayerExit(): boolean {
   topLayerExit ??=
     (globalThis.CSS?.supports?.("overlay", "auto") ?? false) &&
     canTransitionDisplay()
+
   return topLayerExit
 }
 
@@ -212,6 +225,7 @@ function canTransitionDisplay(): boolean {
   if (!globalThis.CSS?.supports?.("transition-behavior", "allow-discrete")) {
     return false
   }
+
   const probe = document.createElement("div")
   probe.style.cssText =
     "transition: display 1s allow-discrete !important; display: block;"
@@ -220,6 +234,7 @@ function canTransitionDisplay(): boolean {
   probe.style.display = "none"
   const supported = getComputedStyle(probe).display === "block"
   probe.remove()
+
   return supported
 }
 

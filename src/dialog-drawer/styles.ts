@@ -145,6 +145,7 @@ export function adoptDrawerStyles(root: Document = document): void {
     const sheet = new CSSStyleSheet()
     sheet.replaceSync(drawerStyles)
     root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet]
+
     return
   }
 

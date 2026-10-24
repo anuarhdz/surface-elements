@@ -58,12 +58,14 @@ export class DialogDrawer extends HTMLElement {
   /** Opens the dialog as a modal, cancelling an exit in progress. */
   show(): void {
     const dialog = this.dialog
+
     if (dialog) showModal(dialog)
   }
 
   /** Closes after the exit transition. Resolves when closed. */
   close(returnValue?: string): Promise<void> {
     const dialog = this.dialog
+
     return dialog ? closeAnimated(dialog, returnValue) : Promise.resolve()
   }
 
@@ -98,10 +100,13 @@ export class DialogDrawer extends HTMLElement {
 
   #sync(): void {
     const dialog = this.dialog
+
     if (dialog !== this.#dialog) {
       this.#unbind()
+
       if (dialog) this.#bind(dialog)
     }
+
     this.#setState("open", dialog?.open ?? false)
   }
 
@@ -116,6 +121,7 @@ export class DialogDrawer extends HTMLElement {
   #syncScrollLock(): void {
     const dialog = this.#dialog
     const wanted = dialog !== null && !this.hasAttribute("no-scroll-lock")
+
     if (wanted && !this.#releaseScrollLock) {
       this.#releaseScrollLock = lockScrollWhileOpen(dialog)
     } else if (!wanted && this.#releaseScrollLock) {
@@ -134,7 +140,9 @@ export class DialogDrawer extends HTMLElement {
 
   #setState(state: string, on: boolean): void {
     const states = this.#internals?.states
+
     if (!states) return
+
     if (on) states.add(state)
     else states.delete(state)
   }

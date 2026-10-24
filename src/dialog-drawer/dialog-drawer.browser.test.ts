@@ -21,6 +21,7 @@ describe("dialog-drawer accessibility", () => {
         </dialog></dialog-drawer
       >`
     )
+
     el.show()
 
     const { violations } = await audit(el)
@@ -34,6 +35,7 @@ describe("dialog-drawer accessibility", () => {
         ><dialog><button></button></dialog
       ></dialog-drawer>`
     )
+
     el.show()
 
     const { violations } = await audit(el)

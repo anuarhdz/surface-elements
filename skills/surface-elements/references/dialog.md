@@ -124,7 +124,7 @@ dialog when a click starts and ends on the backdrop. No-op where native.
 ```ts
 import { lightDismiss } from "surface-elements/dialog"
 
-function lightDismiss(dialog: HTMLDialogElement, close?: () => unknown): Cleanup
+function lightDismiss(dialog: HTMLDialogElement, close?: () => void): Cleanup
 ```
 
 ### `routeCloseRequests()`

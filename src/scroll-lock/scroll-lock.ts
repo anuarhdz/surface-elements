@@ -10,9 +10,11 @@ export function lockScroll(): () => void {
   if (locks++ === 0) unlock = applyLock()
 
   let released = false
+
   return () => {
     if (released) return
     released = true
+
     if (--locks === 0) {
       unlock?.()
       unlock = undefined
@@ -28,6 +30,7 @@ export function isScrollLocked(): boolean {
 function applyLock(): () => void {
   const html = document.documentElement
   const body = document.body
+
   const previous = {
     htmlOverflow: html.style.getPropertyValue("overflow"),
     bodyOverflow: body.style.getPropertyValue("overflow"),
@@ -39,6 +42,7 @@ function applyLock(): () => void {
   if (window.innerWidth - html.clientWidth > 0) {
     html.style.setProperty("scrollbar-gutter", "stable")
   }
+
   html.style.setProperty("overflow", "hidden")
   body.style.setProperty("overflow", "hidden")
 

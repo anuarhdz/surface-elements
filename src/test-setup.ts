@@ -22,6 +22,7 @@ proto.showModal = function (this: HTMLDialogElement) {
 
 proto.close = function (this: HTMLDialogElement, returnValue?: string) {
   if (!this.open) return
+
   if (returnValue !== undefined) this.returnValue = returnValue
   modals.delete(this)
   this.removeAttribute("open")
@@ -29,8 +30,12 @@ proto.close = function (this: HTMLDialogElement, returnValue?: string) {
 }
 
 const matches = Element.prototype.matches
+
+// SAFETY: the tag-name overloads only narrow on the boolean, which this
+// override returns unchanged from the native method for every other selector.
 Element.prototype.matches = function (this: Element, selectors: string) {
   if (selectors === ":modal")
     return modals.has(this) && this.hasAttribute("open")
+
   return matches.call(this, selectors)
 } as typeof matches

@@ -10,8 +10,10 @@ const librarySource = {
   enforce: "pre",
   resolveId(id) {
     const match = /^surface-elements(?:\/(.+))?$/.exec(id)
+
     if (!match) return null
     const path = match[1] ? `${match[1]}/${match[1]}.ts` : "index.ts"
+
     return {
       id: fileURLToPath(new URL(`../src/${path}`, import.meta.url)),
       moduleSideEffects: true,
