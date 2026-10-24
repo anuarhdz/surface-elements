@@ -170,6 +170,7 @@ import "surface-elements/header"
 | `--surface-header-offset` | `0px` | Distance from the top edge where the header sticks. |
 | `--surface-header-duration` | `0.2s` | Hide and show transition duration. |
 | `--surface-header-easing` | `ease-out` | Hide and show easing. |
+| `--surface-header-height` |  | Output, not input: the element writes its height here, on its scroll container. |
 
 ### `headerStyles`
 
