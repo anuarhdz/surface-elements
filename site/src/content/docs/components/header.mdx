@@ -1,0 +1,223 @@
+---
+title: Sticky header
+description: A page header that sticks to the top, reports when it is stuck, and can hide while you scroll down.
+---
+
+import { Aside } from "@astrojs/starlight/components"
+import Demo from "../../../components/demo.astro"
+
+## Install and use
+
+```js
+import "surface-elements/header"
+```
+
+```html
+<surface-header>
+  <header>
+    <a href="/">Store</a>
+    <button commandfor="cart" command="show-modal">Cart</button>
+  </header>
+</surface-header>
+```
+
+Wrap your page `<header>` in `<surface-header>`. The `<header>` stays native, so it keeps its `banner` landmark. The element sticks to the top of its scroll container and adds its styles to the document, so you do not import the CSS.
+
+<Demo label="Scroll inside the frame">
+  <div class="sticky-frame">
+    <surface-header hide-on-scroll>
+      <header>
+        <strong>Store</strong>
+        <a href="#sticky-content">Content</a>
+      </header>
+    </surface-header>
+    <p id="sticky-content">Scroll this frame down: the header hides. Scroll up: it comes back, with a shadow while it is stuck.</p>
+    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+    <p>Sed do eiusmod tempor incididunt ut labore et dolore.</p>
+    <p>Ut enim ad minim veniam, quis nostrud exercitation.</p>
+    <p>Duis aute irure dolor in reprehenderit in voluptate.</p>
+    <p>Excepteur sint occaecat cupidatat non proident.</p>
+    <p>Sunt in culpa qui officia deserunt mollit anim.</p>
+    <p>Curabitur pretium tincidunt lacus, nulla gravida orci.</p>
+    <p>Integer vitae libero ac risus egestas placerat.</p>
+  </div>
+</Demo>
+
+### Hide on scroll
+
+Add `hide-on-scroll` to move the header out of view while the reader scrolls down. It comes back as soon as they scroll up, and whenever focus moves inside it, so keyboard users never tab into a hidden header.
+
+```html
+<surface-header hide-on-scroll>…</surface-header>
+```
+
+It never hides what the reader is using: focus inside, an open `<details>` or an open popover inside keep it visible.
+
+### Keep it visible from outside
+
+For a menu that lives outside the header, call `hold()`. It returns a release function; the header stays visible until every hold is released.
+
+```js
+const header = document.querySelector("surface-header")
+let release
+
+menu.addEventListener("toggle", (event) => {
+  if (event.newState === "open") release = header.hold()
+  else release?.()
+})
+```
+
+### Hide over a section
+
+Mark a section with `data-surface-header="hidden"` and the header hides while that section is under it, whichever way the reader scrolls. It works with or without `hide-on-scroll`, and it still shows when focus moves inside the header.
+
+```html
+<section data-surface-header="hidden" style="min-block-size: 100vh">…</section>
+```
+
+### Transparent over the hero
+
+Add `overlay` and the header sits on top of the content below it, see-through, until it sticks. Once stuck, and every time it comes back on scroll up, it takes the solid background.
+
+```html
+<surface-header overlay hide-on-scroll>…</surface-header>
+<div class="hero">…</div>
+```
+
+```css
+surface-header {
+  --surface-header-background: white;
+  --surface-header-color: black;
+  --surface-header-top-background: transparent;
+  --surface-header-top-color: white;
+}
+```
+
+The header does not copy the hero's color: a transparent background shows whatever is behind it, images and gradients included. Give the hero enough padding at the top for the header, for example `padding-block-start: var(--surface-header-height)`.
+
+The element measures its height with JavaScript, so on first paint the variable does not exist yet and the hero would jump up once it loads. Give it a fallback per breakpoint that matches your header:
+
+```css
+surface-header {
+  margin-block-end: calc(-1 * var(--surface-header-height, 50px));
+}
+
+@media (width >= 64rem) {
+  surface-header {
+    margin-block-end: calc(-1 * var(--surface-header-height, 120px));
+  }
+}
+```
+
+After that, every size change (breakpoints, rotation, a header that wraps) is measured live: hiding, the overlay and `--surface-header-height` follow the current height.
+
+### Style the stuck state
+
+`:state(stuck)` matches while the header is stuck. Style the header inside it, for example to add a shadow or make it smaller.
+
+```css
+surface-header:state(stuck) header {
+  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.1);
+}
+```
+
+If you change its size when stuck, set `overflow-anchor: none` on the element's parent. Without it, scroll anchoring compensates for the size change, pushes the header out of its stuck position, and it flickers.
+
+### Keep anchors visible
+
+The element publishes its height as `--surface-header-height` on its scroll container (`<html>` for the page). Use it so links to `#anchors` do not land under the header:
+
+```css
+html {
+  scroll-padding-block-start: var(--surface-header-height, 0px);
+}
+```
+
+## API
+
+| Member   | Type                 | Does                                                        |
+| -------- | -------------------- | ----------------------------------------------------------- |
+| `stuck`  | `boolean`, read-only | Whether the header is stuck to the top of its container.    |
+| `hold()` | `() => () => void`   | Keeps it visible until the returned release is called.      |
+
+| Attribute        | Does                                                                         |
+| ---------------- | ---------------------------------------------------------------------------- |
+| `hide-on-scroll` | Hides while scrolling down; shows on scroll up or when focus moves inside.   |
+| `overlay`        | Overlays the content below, with the top colors until stuck.                 |
+
+| Selector                        | Matches                                         |
+| ------------------------------- | ----------------------------------------------- |
+| `surface-header:state(stuck)`   | The element while it is stuck.                  |
+| `surface-header:state(hidden)`  | The element while it is hidden, by `hide-on-scroll` or a hidden section. |
+
+| Data attribute                     | On        | Does                                      |
+| ---------------------------------- | --------- | ----------------------------------------- |
+| `data-surface-header="hidden"`     | A section | Hides the header while it is under it.    |
+
+| Property                    | Default    | Sets                                       |
+| --------------------------- | ---------- | ------------------------------------------ |
+| `--surface-header-background` | `Canvas` | Background while stuck, always without `overlay`. |
+| `--surface-header-color` | `CanvasText` | Text color while stuck, always without `overlay`. |
+| `--surface-header-top-background` | `transparent` | Background with `overlay` before it sticks. |
+| `--surface-header-top-color` | `--surface-header-color` | Text color with `overlay` before it sticks. |
+| `--surface-header-offset`   | `0px`      | Distance from the top edge where it sticks. |
+| `--surface-header-duration` | `0.2s`     | Hide and show transition duration.         |
+| `--surface-header-easing`   | `ease-out` | Hide and show easing.                      |
+| `--surface-header-height`   | (output)   | Set by the element on its scroll container. |
+
+Set the offset with `--surface-header-offset`, not `top`: the hide transition needs it to move the header fully out of view.
+
+The styles are in the `surface-elements` cascade layer, so your own rules win. For CSS-only use, import `surface-elements/header.css`.
+
+## If you implement it by hand
+
+Minimal markup: a sticky wrapper around a native `<header>`.
+
+```html
+<div class="site-header">
+  <header>…</header>
+</div>
+```
+
+Minimal CSS. The `scroll-state` container lets descendants style the stuck state with no JavaScript, where the browser supports it:
+
+```css
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: Canvas;
+  container: site-header / scroll-state;
+}
+
+@container site-header scroll-state(stuck: top) {
+  header {
+    box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.1);
+  }
+}
+```
+
+What the JavaScript adds, and what happens without it:
+
+- **Stuck state everywhere.** A `scroll` listener, throttled to one read per frame, compares the element's position with its sticky offset and sets `:state(stuck)`. Without it, only browsers with scroll-state queries (Chromium) get stuck styles; the header still sticks everywhere.
+- **Overlay.** `margin-block-end: calc(-1 * height)` pulls the hero under the header; the stuck state switches the colors. Without JS there is no stuck state, so use `@container scroll-state(stuck: top)` for the colors.
+- **Hidden sections and holds.** The same frame checks for marked sections under the header's band, open `<details>`/popovers inside it, and active holds.
+- **Hide on scroll.** The same listener compares each scroll position with the last one: down past the header's own height hides it (`translate` past the top edge), up shows it. `focusin` shows it. Without it, the header simply stays.
+- **Height variable.** A `ResizeObserver` writes `--surface-header-height`. Without it, hard-code the height in `scroll-padding-block-start`.
+
+Accessibility checklist:
+
+- Keep a native `<header>` (top level, not inside `<main>` or `<article>`) so it is the `banner` landmark.
+- Never leave focus on a hidden header: show it on `focusin`, and do not hide while it holds focus.
+- Under `prefers-reduced-motion: reduce`, hide and show without sliding.
+- Set `scroll-padding-block-start` so focused elements and anchor targets are not covered.
+
+Browser support and fallbacks:
+
+- `position: sticky` and custom states (`:state()`) are Baseline.
+- Scroll-state container queries are Chromium only. The element's `:state(stuck)` covers the other browsers.
+
+<Aside>
+  One page, one `<surface-header>`: the height variable is written by the last
+  one connected.
+</Aside>

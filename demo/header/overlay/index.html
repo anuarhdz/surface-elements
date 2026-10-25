@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>surface-header overlay · playground</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        scroll-padding-block-start: var(--surface-header-height, 0px);
+      }
+
+      body {
+        margin: 0;
+      }
+
+      surface-header {
+        --surface-header-background: Canvas;
+        --surface-header-color: CanvasText;
+        --surface-header-top-color: white;
+      }
+
+      surface-header header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+      }
+
+      surface-header:state(stuck) header {
+        box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
+      }
+
+      surface-header strong {
+        flex: 1;
+      }
+
+      surface-header a {
+        color: inherit;
+      }
+
+      details {
+        position: relative;
+      }
+
+      details ul {
+        position: absolute;
+        inset-inline-end: 0;
+        margin: 0.5rem 0 0;
+        padding: 0.5rem 1rem;
+        list-style: none;
+        background: Canvas;
+        color: CanvasText;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.2);
+      }
+
+      .hero {
+        display: grid;
+        place-items: center;
+        min-block-size: 80vh;
+        padding-block-start: var(--surface-header-height, 0px);
+        background: linear-gradient(135deg, #4f46e5, #db2777);
+        color: white;
+        font-size: 2.5rem;
+      }
+
+      main {
+        display: grid;
+        gap: 2rem;
+        padding: 2rem 1rem;
+      }
+
+      .block {
+        display: grid;
+        place-items: center;
+        block-size: 80vh;
+        border-radius: 0.75rem;
+        background: color-mix(in srgb, CanvasText 6%, Canvas);
+        font-size: 2rem;
+      }
+
+      .block[data-surface-header="hidden"] {
+        block-size: 100vh;
+        background: #111;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <surface-header overlay hide-on-scroll>
+      <header>
+        <strong>overlay</strong>
+        <a href="#full">#full</a>
+        <button type="button" data-action="hold">hold()</button>
+        <details>
+          <summary>Menú</summary>
+          <ul>
+            <li><a href="#b2">Uno</a></li>
+            <li><a href="#b3">Dos</a></li>
+          </ul>
+        </details>
+      </header>
+    </surface-header>
+
+    <div class="hero">Hero</div>
+
+    <main>
+      <div class="block" id="b2">2</div>
+      <div class="block" id="b3">3</div>
+      <div class="block" id="full" data-surface-header="hidden">
+        100vh · data-surface-header="hidden"
+      </div>
+      <div class="block" id="b5">5</div>
+      <div class="block" id="b6">6</div>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

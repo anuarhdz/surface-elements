@@ -5,7 +5,7 @@ import {
   type SurfaceDrawer,
 } from "surface-elements"
 import "surface-elements/drawer"
-import "surface-elements/header-sticky"
+import "surface-elements/header"
 
 // Invoker commands polyfill, only where missing. The library does not ship it.
 if (!("commandForElement" in HTMLButtonElement.prototype)) {

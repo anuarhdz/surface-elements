@@ -14,6 +14,8 @@ export {
   type EnhanceDialogOptions,
 } from "./dialog/dialog.js"
 
-export { HeaderSticky } from "./header-sticky/header-sticky.js"
+export { SurfaceHeader } from "./header/header.js"
+
+export { adoptHeaderStyles, headerStyles } from "./header/styles.js"
 
 export { isScrollLocked, lockScroll } from "./scroll-lock/scroll-lock.js"
