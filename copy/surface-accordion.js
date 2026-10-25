@@ -27,6 +27,11 @@ const accordionStyles = `
     display: block;
   }
 
+  /* Disabled by the author, or the last open item with the persist attribute. */
+  surface-accordion > details > summary[aria-disabled="true"] {
+    cursor: default;
+  }
+
   @supports (interpolate-size: allow-keywords) and selector(::details-content) {
     surface-accordion > details {
       interpolate-size: allow-keywords;
@@ -87,15 +92,22 @@ const CLOSING_ATTRIBUTE = "data-closing";
 * the content's opacity with the Web Animations API, and keeps the closing
 * `<details>` open, marked with `data-closing`, until the animation ends.
 *
+* A `<summary aria-disabled="true">` disables its item: clicks, keys and
+* {@link SurfaceAccordion.toggle} leave it as it is.
+*
 * @tag surface-accordion
 * @slot - The `<details>` elements, as direct children.
+* @attr {boolean} persist - Keep at least one item open: the last open item cannot be closed, and the first item opens if none is. Its summary gets `aria-disabled="true"` while it is the only one open.
 * @cssprop [--surface-accordion-duration=0.3s] - Open and close duration.
 * @cssprop [--surface-accordion-easing=ease] - Open and close easing.
 */
 var SurfaceAccordion = class extends HTMLElement {
 	static tagName = "surface-accordion";
+	static observedAttributes = ["persist"];
+	#observer;
 	#animations = /* @__PURE__ */ new WeakMap();
 	#names = /* @__PURE__ */ new WeakMap();
+	#persisted = /* @__PURE__ */ new WeakSet();
 	/** The direct child `<details>` elements. */
 	get items() {
 		return [...this.querySelectorAll(":scope > details")];
@@ -103,34 +115,74 @@ var SurfaceAccordion = class extends HTMLElement {
 	/**
 	* Opens or closes `item`, one of {@link SurfaceAccordion.items}, with the
 	* animation. Without `force` it flips the current state. Resolves when the
-	* animation ends or another toggle of the same item replaces it.
+	* animation ends or another toggle of the same item replaces it. Does
+	* nothing to a disabled item, or to the last open one with `persist`.
 	*/
 	toggle(item, force) {
 		const open = force ?? !isOpen(item);
+		if (open === isOpen(item) || isDisabled(item)) return Promise.resolve();
 		if (this.#animates()) return this.#animate(item, open);
 		this.#finish(item, open);
 		item.open = open;
-		return Promise.resolve();
+		return transitionsOf(item);
 	}
 	connectedCallback() {
 		adoptAccordionStyles();
 		this.addEventListener("click", this.#onClick);
+		this.addEventListener("toggle", this.#onToggle, true);
+		this.#observer ??= new MutationObserver(() => this.#syncPersist());
+		this.#observer.observe(this, { childList: true });
+		this.#syncPersist();
+	}
+	attributeChangedCallback() {
+		if (this.isConnected) this.#syncPersist();
 	}
 	disconnectedCallback() {
 		this.removeEventListener("click", this.#onClick);
+		this.removeEventListener("toggle", this.#onToggle, true);
+		this.#observer?.disconnect();
 		for (const item of this.items) this.#finish(item, isOpen(item));
 	}
 	#onClick = (event) => {
-		if (event.defaultPrevented || !this.#animates()) return;
+		if (event.defaultPrevented) return;
 		const target = event.target;
 		if (!(target instanceof Element)) return;
 		const summary = target.closest("summary");
 		const item = summary?.parentElement;
-		if (!(item instanceof HTMLDetailsElement) || item.parentElement !== this || item.querySelector(":scope > summary") !== summary) return;
+		if (!(item instanceof HTMLDetailsElement) || item.parentElement !== this || summaryOf(item) !== summary) return;
 		if (target.closest("a, button, input, select, textarea, label") !== null) return;
+		if (isDisabled(item)) {
+			event.preventDefault();
+			return;
+		}
+		if (!this.#animates()) return;
 		event.preventDefault();
 		this.#animate(item, !isOpen(item));
 	};
+	#onToggle = (event) => {
+		if (event.target instanceof HTMLDetailsElement) this.#syncPersist();
+	};
+	#syncPersist() {
+		const items = this.items;
+		const persist = this.hasAttribute("persist");
+		if (persist && !items.some(isOpen)) {
+			const first = items.find((item) => !isDisabled(item));
+			if (first) first.open = true;
+		}
+		const open = items.filter(isOpen);
+		for (const item of items) {
+			const summary = summaryOf(item);
+			if (!summary) continue;
+			const lock = persist && open.length === 1 && open[0] === item;
+			if (lock && !isDisabled(item)) {
+				summary.setAttribute("aria-disabled", "true");
+				this.#persisted.add(summary);
+			} else if (!lock && this.#persisted.has(summary)) {
+				summary.removeAttribute("aria-disabled");
+				this.#persisted.delete(summary);
+			}
+		}
+	}
 	#animates() {
 		return "animate" in Element.prototype && !supportsDetailsAnimation() && !matchMedia("(prefers-reduced-motion: reduce)").matches;
 	}
@@ -173,6 +225,7 @@ var SurfaceAccordion = class extends HTMLElement {
 			blockSize: `${to}px`
 		}], timing), ...content.map((el, i) => el.animate({ opacity: [opacity[i] ?? "1", open ? "1" : "0"] }, timing))];
 		this.#animations.set(item, animations);
+		this.#syncPersist();
 		try {
 			await Promise.all(animations.map((animation) => animation.finished));
 		} catch {
@@ -202,15 +255,27 @@ var SurfaceAccordion = class extends HTMLElement {
 	}
 };
 const isOpen = (item) => item.open && !item.hasAttribute("data-closing");
+const summaryOf = (item) => item.querySelector(":scope > summary");
+const isDisabled = (item) => summaryOf(item)?.getAttribute("aria-disabled") === "true";
 /** Whether the styles alone animate `<details>` (Chromium). */
 function supportsDetailsAnimation() {
 	if (!("CSS" in globalThis)) return false;
 	return CSS.supports("interpolate-size", "allow-keywords") && CSS.supports("selector(::details-content)");
 }
+async function transitionsOf(item) {
+	if (!supportsDetailsAnimation()) return;
+	const style = getComputedStyle(item, "::details-content");
+	const delays = style.transitionDelay.split(",").map(milliseconds);
+	const total = Math.max(0, ...style.transitionDuration.split(",").map((duration, i) => milliseconds(duration) + (delays[i] ?? 0)));
+	if (total === 0) return;
+	await new Promise(requestAnimationFrame);
+	await new Promise((resolve) => setTimeout(resolve, total));
+	await new Promise(requestAnimationFrame);
+}
 const panels = (item) => [...item.children].filter((el) => el instanceof HTMLElement && el.localName !== "summary");
 function closedHeight(item) {
 	const style = getComputedStyle(item);
-	const summary = item.querySelector(":scope > summary");
+	const summary = summaryOf(item);
 	let height = [
 		style.paddingBlockStart,
 		style.paddingBlockEnd,
@@ -234,7 +299,7 @@ function timingOf(item) {
 }
 const milliseconds = (time) => {
 	const value = Number.parseFloat(time) || 0;
-	return time.endsWith("ms") ? value : value * 1e3;
+	return time.trim().endsWith("ms") ? value : value * 1e3;
 };
 defineElement(SurfaceAccordion.tagName, SurfaceAccordion);
 //#endregion

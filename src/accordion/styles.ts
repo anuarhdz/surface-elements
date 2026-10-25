@@ -14,6 +14,11 @@ export const accordionStyles = /* css */ `
     display: block;
   }
 
+  /* Disabled by the author, or the last open item with the persist attribute. */
+  surface-accordion > details > summary[aria-disabled="true"] {
+    cursor: default;
+  }
+
   @supports (interpolate-size: allow-keywords) and selector(::details-content) {
     surface-accordion > details {
       interpolate-size: allow-keywords;

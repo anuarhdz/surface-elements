@@ -61,5 +61,7 @@ hud(() => ({
     .map((d, i) => (d.hasAttribute("data-closing") ? `${i}↓` : d.hasAttribute("open") ? `${i}` : ""))
     .filter(Boolean)
     .join(" ") || "-",
+  "persist locked": [...document.querySelectorAll("#persist > details > summary")]
+    .findIndex((summary) => summary.getAttribute("aria-disabled") === "true" && summary.parentElement?.hasAttribute("open")),
   "reduced motion": matchMedia("(prefers-reduced-motion: reduce)").matches,
 }))

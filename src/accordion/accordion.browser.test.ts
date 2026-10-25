@@ -81,6 +81,18 @@ describe("surface-accordion in a browser", () => {
     expect(size).toBeLessThan(200)
   })
 
+  it("resolves toggle() when the CSS transition ends", async () => {
+    const el = await accordion()
+    const [first] = items(el)
+
+    await el.toggle(first, true)
+
+    expect(first.getAnimations({ subtree: true })).toHaveLength(0)
+    expect(
+      Number.parseFloat(getComputedStyle(first, "::details-content").blockSize)
+    ).toBe(200)
+  })
+
   it("has no accessibility violations", async () => {
     const el = await accordion()
     const [first] = items(el)
@@ -186,5 +198,117 @@ describe("surface-accordion in a browser", () => {
       first?.querySelector("button")?.click()
       expect(first?.open).toBe(false)
     })
+  })
+})
+
+describe("surface-accordion disabled and persist", () => {
+  afterEach(() => {
+    fixtureCleanup()
+    vi.restoreAllMocks()
+  })
+
+  it("leaves an item with an aria-disabled summary as it is", async () => {
+    const el = await fixture<SurfaceAccordion>(html`
+      <surface-accordion>
+        <details>
+          <summary aria-disabled="true">Locked</summary>
+          <p>Content</p>
+        </details>
+      </surface-accordion>
+    `)
+
+    const [item] = el.items
+
+    if (!item) throw new Error("Missing item")
+
+    summaryOf(item).click()
+    expect(item.open).toBe(false)
+
+    await el.toggle(item, true)
+    expect(item.open).toBe(false)
+  })
+
+  it("opens the first item and keeps the last open one open", async () => {
+    const el = await fixture<SurfaceAccordion>(html`
+      <surface-accordion persist>
+        <details name="p">
+          <summary>One</summary>
+          <p>First</p>
+        </details>
+        <details name="p">
+          <summary>Two</summary>
+          <p>Second</p>
+        </details>
+      </surface-accordion>
+    `)
+
+    const [first, second] = items(el)
+
+    expect(first.open).toBe(true)
+    expect(summaryOf(first).getAttribute("aria-disabled")).toBe("true")
+
+    summaryOf(first).click()
+    expect(first.open).toBe(true)
+
+    summaryOf(second).click()
+    await frame()
+    await settle(el)
+
+    expect(first.open).toBe(false)
+    expect(second.open).toBe(true)
+    expect(summaryOf(first).hasAttribute("aria-disabled")).toBe(false)
+    expect(summaryOf(second).getAttribute("aria-disabled")).toBe("true")
+  })
+
+  it("gives the summary back when persist is removed", async () => {
+    const el = await fixture<SurfaceAccordion>(html`
+      <surface-accordion persist>
+        <details>
+          <summary>One</summary>
+          <p>First</p>
+        </details>
+      </surface-accordion>
+    `)
+
+    const [item] = el.items
+
+    if (!item) throw new Error("Missing item")
+
+    el.removeAttribute("persist")
+    expect(summaryOf(item).hasAttribute("aria-disabled")).toBe(false)
+
+    summaryOf(item).click()
+    expect(item.open).toBe(false)
+  })
+
+  it("keeps an item open in the fallback too", async () => {
+    fallback()
+
+    const el = await fixture<SurfaceAccordion>(html`
+      <surface-accordion persist>
+        <details>
+          <summary>One</summary>
+          <p>First</p>
+        </details>
+        <details>
+          <summary>Two</summary>
+          <p>Second</p>
+        </details>
+      </surface-accordion>
+    `)
+
+    const [first, second] = items(el)
+
+    summaryOf(second).click()
+    await settle(el)
+    summaryOf(first).click()
+    await settle(el)
+
+    expect(first.open).toBe(false)
+    expect(second.open).toBe(true)
+
+    summaryOf(second).click()
+    await settle(el)
+    expect(second.open).toBe(true)
   })
 })

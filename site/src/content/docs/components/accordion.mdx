@@ -57,9 +57,43 @@ Give the `<details>` the same `name` and opening one closes the others. That is 
 </surface-accordion>
 ```
 
+### Always keep one open
+
+Add `persist` and the last open item cannot be closed: clicking its summary does nothing until another item opens. If no item is open when the element connects, the first one opens. With a shared `name` that means exactly one open at all times.
+
+```html
+<surface-accordion persist>
+  <details name="plan" open><summary>Monthly</summary>…</details>
+  <details name="plan"><summary>Yearly</summary>…</details>
+</surface-accordion>
+```
+
+The locked summary gets `aria-disabled="true"` while it is the only one open, so screen readers announce that it cannot be collapsed. The attribute is removed as soon as another item opens or `persist` goes away.
+
+### Disable an item
+
+Mark the summary with `aria-disabled="true"`. Clicks, Enter and Space, and `toggle()` leave that item as it is, open or closed. The summary stays focusable, so the item can still be found and read.
+
+```html
+<details>
+  <summary aria-disabled="true">Express shipping (unavailable)</summary>
+  <p>…</p>
+</details>
+```
+
+To dim disabled items, match closed ones only, since with `persist` the open item's summary carries `aria-disabled` too:
+
+```css
+details:not([open]) > summary[aria-disabled="true"] {
+  opacity: 0.6;
+}
+```
+
+In a `name` group, opening another item still closes a disabled one: that is the browser's exclusivity, and only the item's own summary is locked. Without the script, `aria-disabled` is only announced; the item still toggles.
+
 ### Open and close from JavaScript
 
-`toggle(item, force?)` animates like a click. Without `force` it flips the item; with it, it opens (`true`) or closes (`false`). It resolves when the animation ends.
+`toggle(item, force?)` animates like a click. Without `force` it flips the item; with it, it opens (`true`) or closes (`false`). It resolves when the animation ends, and does nothing to a disabled item or, with `persist`, to the last open one.
 
 ```js
 const accordion = document.querySelector("surface-accordion")
@@ -140,6 +174,7 @@ What the JavaScript adds, and what happens without it:
 - **Animation where CSS cannot.** Where the CSS above is not supported, a click on a `<summary>` is intercepted (`preventDefault`). Opening sets `open`, then animates the `<details>` height from its closed size to its full size with `element.animate()` and fades the content in. Closing animates down to the summary's height and removes `open` at the end. Without it, the items open and close at once, which is still correct.
 - **Exclusive groups during the animation.** Setting `open` on one item of a `name` group closes the others immediately, before they could animate. So the closing sibling loses its `name` while it animates and gets it back when done.
 - **Interruptions.** A click while an item animates starts the new animation from its current height.
+- **`persist` and disabled items.** Native `<details>` cannot refuse to toggle, so the click on a locked summary is cancelled. A `toggle` listener keeps `aria-disabled` on the only open item's summary.
 - Clicks on links and controls inside the `<summary>` are left alone, and nested accordions handle their own items.
 
 Accessibility checklist:
@@ -148,6 +183,8 @@ Accessibility checklist:
 - Put a heading inside the `<summary>` if the panels are page sections (`<summary><h3>Shipping</h3></summary>`).
 - Respect `prefers-reduced-motion`.
 - Keep `open` on the item until it has visibly closed, so what is read and what is seen agree.
+- Use `aria-disabled`, not `disabled` (summaries have none), and keep disabled summaries focusable.
+- An expanded item that cannot be collapsed gets `aria-disabled="true"` on its summary (APG accordion pattern).
 
 Browser support and fallbacks:
 

@@ -65,6 +65,11 @@
         padding: 0 1rem 1rem;
       }
 
+      /* Closed only: with persist the open item's summary is aria-disabled too. */
+      details:not([open]) > summary[aria-disabled="true"] {
+        opacity: 0.6;
+      }
+
       #slow {
         --surface-accordion-duration: 1.2s;
         --surface-accordion-easing: cubic-bezier(0.2, 0.9, 0.3, 1.2);
@@ -120,6 +125,22 @@
       <details>
         <summary>Third</summary>
         <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+      </details>
+    </surface-accordion>
+
+    <h2><code>persist</code> and a disabled item</h2>
+    <surface-accordion persist id="persist">
+      <details name="plan">
+        <summary>Monthly</summary>
+        <p>Pay every month, cancel any time.</p>
+      </details>
+      <details name="plan">
+        <summary>Yearly</summary>
+        <p>Two months free.</p>
+      </details>
+      <details name="plan">
+        <summary aria-disabled="true">Lifetime (sold out)</summary>
+        <p>Not available.</p>
       </details>
     </surface-accordion>
 
