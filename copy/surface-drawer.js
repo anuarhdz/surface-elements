@@ -198,6 +198,75 @@ function defineElement(tagName, constructor) {
 	if (customElements.get(tagName) === void 0) customElements.define(tagName, constructor);
 }
 //#endregion
+//#region src/utils/dialog-host.ts
+/** The direct child `<dialog>` of a web component, if any. */
+function childDialog(host) {
+	return host.querySelector(":scope > dialog");
+}
+/**
+* Shared wiring for web components that wrap a direct child `<dialog>`:
+* enhances it, rebinds when it is swapped, holds the scroll lock unless the
+* host has `no-scroll-lock`, and mirrors `dialog.open` as `:state(open)`.
+* `bind` adds host-specific behavior to each dialog and returns its cleanup.
+*/
+function dialogHost(host, internals, bind) {
+	let current = null;
+	let cleanup;
+	let releaseScrollLock;
+	let observer;
+	const syncScrollLock = () => {
+		const wanted = current !== null && !host.hasAttribute("no-scroll-lock");
+		if (current && wanted && !releaseScrollLock) releaseScrollLock = lockScrollWhileOpen(current);
+		else if (!wanted && releaseScrollLock) {
+			releaseScrollLock();
+			releaseScrollLock = void 0;
+		}
+	};
+	const unbind = () => {
+		releaseScrollLock?.();
+		releaseScrollLock = void 0;
+		cleanup?.();
+		cleanup = void 0;
+		current = null;
+	};
+	const sync = () => {
+		const dialog = childDialog(host);
+		if (dialog !== current) {
+			unbind();
+			if (dialog) {
+				const cleanups = [enhanceDialog(dialog, { lockScroll: false })];
+				if (bind) cleanups.push(bind(dialog));
+				current = dialog;
+				cleanup = () => {
+					for (const fn of cleanups) fn();
+				};
+				syncScrollLock();
+			}
+		}
+		const states = internals?.states;
+		if (!states) return;
+		if (dialog?.open) states.add("open");
+		else states.delete("open");
+	};
+	return {
+		connect() {
+			observer ??= new MutationObserver(sync);
+			observer.observe(host, {
+				childList: true,
+				subtree: true,
+				attributes: true,
+				attributeFilter: ["open"]
+			});
+			sync();
+		},
+		disconnect() {
+			observer?.disconnect();
+			unbind();
+		},
+		syncScrollLock
+	};
+}
+//#endregion
 //#region src/drawer/styles.ts
 /**
 * Drawer styles for the `<dialog>` directly inside `<surface-drawer>`. Light
@@ -383,18 +452,10 @@ function adoptDrawerStyles(root = document) {
 var SurfaceDrawer = class extends HTMLElement {
 	static tagName = "surface-drawer";
 	static observedAttributes = ["no-scroll-lock"];
-	#internals;
-	#dialog = null;
-	#cleanup;
-	#releaseScrollLock;
-	#observer;
-	constructor() {
-		super();
-		this.#internals = this.attachInternals?.();
-	}
+	#host = dialogHost(this, this.attachInternals?.());
 	/** The direct child `<dialog>`, if any. */
 	get dialog() {
-		return this.querySelector(":scope > dialog");
+		return childDialog(this);
 	}
 	/** Mirrors `dialog.open`. */
 	get open() {
@@ -417,57 +478,13 @@ var SurfaceDrawer = class extends HTMLElement {
 	}
 	connectedCallback() {
 		adoptDrawerStyles();
-		this.#observer ??= new MutationObserver(() => this.#sync());
-		this.#observer.observe(this, {
-			childList: true,
-			subtree: true,
-			attributes: true,
-			attributeFilter: ["open"]
-		});
-		this.#sync();
+		this.#host.connect();
 	}
 	attributeChangedCallback() {
-		this.#syncScrollLock();
+		this.#host.syncScrollLock();
 	}
 	disconnectedCallback() {
-		this.#observer?.disconnect();
-		this.#unbind();
-	}
-	#sync() {
-		const dialog = this.dialog;
-		if (dialog !== this.#dialog) {
-			this.#unbind();
-			if (dialog) this.#bind(dialog);
-		}
-		this.#setState("open", dialog?.open ?? false);
-	}
-	#bind(dialog) {
-		const options = { lockScroll: false };
-		this.#dialog = dialog;
-		this.#cleanup = enhanceDialog(dialog, options);
-		this.#syncScrollLock();
-	}
-	#syncScrollLock() {
-		const dialog = this.#dialog;
-		const wanted = dialog !== null && !this.hasAttribute("no-scroll-lock");
-		if (wanted && !this.#releaseScrollLock) this.#releaseScrollLock = lockScrollWhileOpen(dialog);
-		else if (!wanted && this.#releaseScrollLock) {
-			this.#releaseScrollLock();
-			this.#releaseScrollLock = void 0;
-		}
-	}
-	#unbind() {
-		this.#releaseScrollLock?.();
-		this.#releaseScrollLock = void 0;
-		this.#cleanup?.();
-		this.#cleanup = void 0;
-		this.#dialog = null;
-	}
-	#setState(state, on) {
-		const states = this.#internals?.states;
-		if (!states) return;
-		if (on) states.add(state);
-		else states.delete(state);
+		this.#host.disconnect();
 	}
 };
 defineElement(SurfaceDrawer.tagName, SurfaceDrawer);

@@ -1,11 +1,6 @@
-import {
-  closeAnimated,
-  enhanceDialog,
-  lockScrollWhileOpen,
-  showModal,
-  type EnhanceDialogOptions,
-} from "../dialog/dialog.js"
+import { closeAnimated, showModal } from "../dialog/dialog.js"
 import { defineElement } from "../utils/define.js"
+import { childDialog, dialogHost } from "../utils/dialog-host.js"
 import { adoptModalStyles } from "./styles.js"
 
 /**
@@ -37,20 +32,13 @@ export class SurfaceModal extends HTMLElement {
   static readonly tagName = "surface-modal"
   static readonly observedAttributes = ["no-scroll-lock"]
 
-  #internals: ElementInternals | undefined
-  #dialog: HTMLDialogElement | null = null
-  #cleanup: (() => void) | undefined
-  #releaseScrollLock: (() => void) | undefined
-  #observer: MutationObserver | undefined
-
-  constructor() {
-    super()
-    this.#internals = this.attachInternals?.()
-  }
+  #host = dialogHost(this, this.attachInternals?.(), (dialog) =>
+    dismissFromPageLayer(this, dialog)
+  )
 
   /** The direct child `<dialog>`, if any. */
   get dialog(): HTMLDialogElement | null {
-    return this.querySelector(":scope > dialog")
+    return childDialog(this)
   }
 
   /** Mirrors `dialog.open`. */
@@ -80,122 +68,57 @@ export class SurfaceModal extends HTMLElement {
 
   connectedCallback(): void {
     adoptModalStyles()
-
-    // Children may arrive after connection, and the dialog may be swapped.
-    this.#observer ??= new MutationObserver(() => this.#sync())
-    this.#observer.observe(this, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["open"],
-    })
-    this.#sync()
+    this.#host.connect()
   }
 
   attributeChangedCallback(): void {
-    this.#syncScrollLock()
+    this.#host.syncScrollLock()
   }
 
   disconnectedCallback(): void {
-    this.#observer?.disconnect()
-    this.#unbind()
+    this.#host.disconnect()
   }
+}
 
-  #sync(): void {
-    const dialog = this.dialog
+// With scroll="page" the dialog covers the backdrop, so neither native
+// closedby="any" nor lightDismiss() sees a backdrop click. A click that
+// starts and ends on the dialog itself, outside its scrollbar, is one.
+function dismissFromPageLayer(
+  host: Element,
+  dialog: HTMLDialogElement
+): () => void {
+  const controller = new AbortController()
+  const { signal } = controller
+  let pressedLayer = false
 
-    if (dialog !== this.#dialog) {
-      this.#unbind()
+  const isLayer = (event: MouseEvent): boolean =>
+    host.getAttribute("scroll") === "page" &&
+    event.target === dialog &&
+    event.offsetX <= dialog.clientWidth &&
+    event.offsetY <= dialog.clientHeight
 
-      if (dialog) this.#bind(dialog)
-    }
+  dialog.addEventListener(
+    "pointerdown",
+    (event) => {
+      pressedLayer = isLayer(event)
+    },
+    { signal }
+  )
 
-    this.#setState("open", dialog?.open ?? false)
-  }
+  dialog.addEventListener(
+    "click",
+    (event) => {
+      const shouldClose = pressedLayer && isLayer(event)
+      pressedLayer = false
 
-  #bind(dialog: HTMLDialogElement): void {
-    // The scroll lock is managed here so `no-scroll-lock` can change at runtime.
-    const options: EnhanceDialogOptions = { lockScroll: false }
+      if (shouldClose && dialog.getAttribute("closedby") === "any") {
+        void closeAnimated(dialog)
+      }
+    },
+    { signal }
+  )
 
-    const cleanups = [
-      enhanceDialog(dialog, options),
-      this.#dismissFromPageLayer(dialog),
-    ]
-
-    this.#dialog = dialog
-    this.#cleanup = () => {
-      for (const cleanup of cleanups) cleanup()
-    }
-
-    this.#syncScrollLock()
-  }
-
-  // With scroll="page" the dialog covers the backdrop, so neither native
-  // closedby="any" nor lightDismiss() sees a backdrop click. A click that
-  // starts and ends on the dialog itself, outside its scrollbar, is one.
-  #dismissFromPageLayer(dialog: HTMLDialogElement): () => void {
-    const controller = new AbortController()
-    const { signal } = controller
-    let pressedLayer = false
-
-    const isLayer = (event: MouseEvent): boolean =>
-      this.getAttribute("scroll") === "page" &&
-      event.target === dialog &&
-      event.offsetX <= dialog.clientWidth &&
-      event.offsetY <= dialog.clientHeight
-
-    dialog.addEventListener(
-      "pointerdown",
-      (event) => {
-        pressedLayer = isLayer(event)
-      },
-      { signal }
-    )
-
-    dialog.addEventListener(
-      "click",
-      (event) => {
-        const shouldClose = pressedLayer && isLayer(event)
-        pressedLayer = false
-
-        if (shouldClose && dialog.getAttribute("closedby") === "any") {
-          void closeAnimated(dialog)
-        }
-      },
-      { signal }
-    )
-
-    return () => controller.abort()
-  }
-
-  #syncScrollLock(): void {
-    const dialog = this.#dialog
-    const wanted = dialog !== null && !this.hasAttribute("no-scroll-lock")
-
-    if (wanted && !this.#releaseScrollLock) {
-      this.#releaseScrollLock = lockScrollWhileOpen(dialog)
-    } else if (!wanted && this.#releaseScrollLock) {
-      this.#releaseScrollLock()
-      this.#releaseScrollLock = undefined
-    }
-  }
-
-  #unbind(): void {
-    this.#releaseScrollLock?.()
-    this.#releaseScrollLock = undefined
-    this.#cleanup?.()
-    this.#cleanup = undefined
-    this.#dialog = null
-  }
-
-  #setState(state: string, on: boolean): void {
-    const states = this.#internals?.states
-
-    if (!states) return
-
-    if (on) states.add(state)
-    else states.delete(state)
-  }
+  return () => controller.abort()
 }
 
 defineElement(SurfaceModal.tagName, SurfaceModal)
