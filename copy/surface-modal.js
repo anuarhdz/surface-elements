@@ -207,9 +207,8 @@ function childDialog(host) {
 * Shared wiring for web components that wrap a direct child `<dialog>`:
 * enhances it, rebinds when it is swapped, holds the scroll lock unless the
 * host has `no-scroll-lock`, and mirrors `dialog.open` as `:state(open)`.
-* `bind` adds host-specific behavior to each dialog and returns its cleanup.
 */
-function dialogHost(host, internals, bind) {
+function dialogHost(host, internals) {
 	let current = null;
 	let cleanup;
 	let releaseScrollLock;
@@ -234,12 +233,9 @@ function dialogHost(host, internals, bind) {
 		if (dialog !== current) {
 			unbind();
 			if (dialog) {
-				const cleanups = [enhanceDialog(dialog, { lockScroll: false })];
-				if (bind) cleanups.push(bind(dialog));
+				const options = { lockScroll: false };
 				current = dialog;
-				cleanup = () => {
-					for (const fn of cleanups) fn();
-				};
+				cleanup = enhanceDialog(dialog, options);
 				syncScrollLock();
 			}
 		}
@@ -275,8 +271,7 @@ function dialogHost(host, internals, bind) {
 * so the styles also work without its JavaScript.
 *
 * `size` on the tag picks a preset width: `small`, `medium` (default, also
-* missing or empty), `large` or `full`. `scroll="page"` turns the dialog into
-* a transparent scrolling layer and styles its only child as the panel.
+* missing or empty), `large` or `full`. Long content scrolls inside.
 */
 const modalStyles = `
 @layer surface-elements {
@@ -331,43 +326,6 @@ const modalStyles = `
     max-inline-size: none;
     block-size: 100%;
     max-block-size: none;
-    border-radius: 0;
-  }
-
-  /* Page scroll: the dialog covers the viewport and scrolls; the panel is its
-     only child and grows with its content. */
-  surface-modal[scroll="page"] > dialog {
-    inline-size: 100%;
-    max-inline-size: none;
-    block-size: 100%;
-    max-block-size: none;
-    padding: var(--_gutter);
-    border: none;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-  }
-
-  surface-modal[scroll="page"] > dialog > * {
-    box-sizing: border-box;
-    inline-size: var(--_size);
-    max-inline-size: 100%;
-    margin-inline: auto;
-    padding: var(--surface-modal-padding, 1.5rem);
-    border: var(--surface-modal-border, none);
-    border-radius: var(--surface-modal-radius, 0.75rem);
-    background: var(--surface-modal-background, Canvas);
-    color: var(--surface-modal-color, CanvasText);
-    box-shadow: var(--surface-modal-shadow, 0 1rem 3rem rgb(0 0 0 / 0.25));
-  }
-
-  surface-modal[scroll="page"][size="full"] > dialog {
-    padding: 0;
-  }
-
-  surface-modal[scroll="page"][size="full"] > dialog > * {
-    inline-size: 100%;
-    min-block-size: 100%;
     border-radius: 0;
   }
 
@@ -445,13 +403,12 @@ function adoptModalStyles(root = document) {
 * styles key on the tag, so the markup works with `modal.css` and no JS too.
 *
 * @tag surface-modal
-* @slot - The modal `<dialog>`, as the direct child. With `scroll="page"`, wrap its content in one element: that element is the panel.
+* @slot - The modal `<dialog>`, as the direct child.
 * @attr {"small" | "medium" | "large" | "full"} size - Preset width: `24rem`, `32rem` (default), `48rem`, or the whole viewport.
-* @attr {"inside" | "page"} scroll - Where long content scrolls. `inside` (default) caps the dialog at the viewport and scrolls it; `page` lets the panel grow and scrolls the layer around it.
 * @attr {boolean} no-scroll-lock - Leave page scroll untouched while open.
 * @cssstate open - The child dialog is open.
 * @cssprop [--surface-modal-size=32rem] - Inline size when `size` is not set.
-* @cssprop [--surface-modal-gutter=1rem] - Minimum space between the modal and the viewport edges.
+* @cssprop [--surface-modal-gutter=1rem] - Minimum space between the modal and the viewport edges. Long content scrolls inside the modal.
 * @cssprop [--surface-modal-padding=1.5rem] - Padding of the panel.
 * @cssprop [--surface-modal-background=Canvas] - Background of the panel.
 * @cssprop [--surface-modal-color=CanvasText] - Text color of the panel.
@@ -466,7 +423,7 @@ function adoptModalStyles(root = document) {
 var SurfaceModal = class extends HTMLElement {
 	static tagName = "surface-modal";
 	static observedAttributes = ["no-scroll-lock"];
-	#host = dialogHost(this, this.attachInternals?.(), (dialog) => dismissFromPageLayer(this, dialog));
+	#host = dialogHost(this, this.attachInternals?.());
 	/** The direct child `<dialog>`, if any. */
 	get dialog() {
 		return childDialog(this);
@@ -501,21 +458,6 @@ var SurfaceModal = class extends HTMLElement {
 		this.#host.disconnect();
 	}
 };
-function dismissFromPageLayer(host, dialog) {
-	const controller = new AbortController();
-	const { signal } = controller;
-	let pressedLayer = false;
-	const isLayer = (event) => host.getAttribute("scroll") === "page" && event.target === dialog && event.offsetX <= dialog.clientWidth && event.offsetY <= dialog.clientHeight;
-	dialog.addEventListener("pointerdown", (event) => {
-		pressedLayer = isLayer(event);
-	}, { signal });
-	dialog.addEventListener("click", (event) => {
-		const shouldClose = pressedLayer && isLayer(event);
-		pressedLayer = false;
-		if (shouldClose && dialog.getAttribute("closedby") === "any") closeAnimated(dialog);
-	}, { signal });
-	return () => controller.abort();
-}
 defineElement(SurfaceModal.tagName, SurfaceModal);
 //#endregion
 export { SurfaceModal };

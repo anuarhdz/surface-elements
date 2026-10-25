@@ -9,8 +9,6 @@ import type { SurfaceModal } from "./modal.js"
 // Real layout is available here, so color contrast is checked too.
 const audit = (el: Element): Promise<AxeResults> => axe.run(el)
 
-const flush = () => new Promise((resolve) => setTimeout(resolve))
-
 describe("surface-modal accessibility", () => {
   afterEach(() => fixtureCleanup())
 
@@ -107,79 +105,6 @@ describe("surface-modal layout", () => {
     const dialog = el.dialog!
     expect(dialog.offsetHeight).toBeLessThan(innerHeight)
     expect(dialog.scrollHeight).toBeGreaterThan(dialog.clientHeight)
-    await el.close()
-  })
-
-  it("lets the panel grow and scrolls the layer with scroll=page", async () => {
-    const el = await fixture<SurfaceModal>(
-      html`<surface-modal scroll="page"
-        ><dialog>
-          <div style="block-size: 300vh">Tall</div>
-        </dialog></surface-modal
-      >`
-    )
-
-    el.show()
-    const dialog = el.dialog!
-    const panel = dialog.firstElementChild!
-    expect(dialog.offsetHeight).toBe(innerHeight)
-    expect(dialog.scrollHeight).toBeGreaterThan(dialog.clientHeight)
-    expect(panel.getBoundingClientRect().height).toBeGreaterThan(innerHeight)
-    expect(getComputedStyle(dialog).backgroundColor).toBe("rgba(0, 0, 0, 0)")
-    await el.close()
-  })
-})
-
-const press = (target: Element, x: number, y: number) => {
-  target.dispatchEvent(
-    new PointerEvent("pointerdown", {
-      bubbles: true,
-      clientX: x,
-      clientY: y,
-    })
-  )
-  target.dispatchEvent(
-    new MouseEvent("click", { bubbles: true, clientX: x, clientY: y })
-  )
-}
-
-const pageModal = (closedby = "any") =>
-  fixture<SurfaceModal>(
-    html`<surface-modal scroll="page"
-      ><dialog closedby=${closedby}><div>Panel</div></dialog></surface-modal
-    >`
-  )
-
-describe("surface-modal light dismiss with scroll=page", () => {
-  afterEach(() => fixtureCleanup())
-
-  it("closes on a click on the layer around the panel", async () => {
-    const el = await pageModal()
-
-    el.show()
-    press(el.dialog!, 2, 2)
-    await flush()
-    expect(el.open).toBe(false)
-  })
-
-  it("stays open on a click inside the panel", async () => {
-    const el = await pageModal()
-
-    el.show()
-    const rect = el.dialog!.firstElementChild!.getBoundingClientRect()
-    press(el.dialog!.firstElementChild!, rect.left + 4, rect.top + 4)
-    await flush()
-    expect(el.open).toBe(true)
-    await el.close()
-  })
-
-  it("stays open without closedby=any", async () => {
-    const el = await pageModal("closerequest")
-
-    el.show()
-    press(el.dialog!, 2, 2)
-    await flush()
-    expect(el.open).toBe(true)
     await el.close()
   })
 })

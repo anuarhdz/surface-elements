@@ -49,7 +49,7 @@ import "surface-elements/drawer"
 
 `edge` on `<surface-drawer>` is the edge: `end` (default), `start`, `top` or `bottom`. Inline edges follow the writing direction.
 
-A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `medium` (default), `large` or `full`; `scroll="page"` lets a long modal grow and scrolls the layer around it (wrap the content in one element). For a confirmation, set `role="alertdialog"` on the dialog, leave out `closedby="any"` and close it with a `<form method="dialog">`.
+A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `medium` (default), `large` or `full`; long content scrolls inside it. For a confirmation, set `role="alertdialog"` on the dialog, leave out `closedby="any"` and close it with a `<form method="dialog">`.
 
 {{elements}}
 

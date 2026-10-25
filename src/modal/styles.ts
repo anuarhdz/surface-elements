@@ -5,8 +5,7 @@
  * so the styles also work without its JavaScript.
  *
  * `size` on the tag picks a preset width: `small`, `medium` (default, also
- * missing or empty), `large` or `full`. `scroll="page"` turns the dialog into
- * a transparent scrolling layer and styles its only child as the panel.
+ * missing or empty), `large` or `full`. Long content scrolls inside.
  */
 export const modalStyles = /* css */ `
 @layer surface-elements {
@@ -61,43 +60,6 @@ export const modalStyles = /* css */ `
     max-inline-size: none;
     block-size: 100%;
     max-block-size: none;
-    border-radius: 0;
-  }
-
-  /* Page scroll: the dialog covers the viewport and scrolls; the panel is its
-     only child and grows with its content. */
-  surface-modal[scroll="page"] > dialog {
-    inline-size: 100%;
-    max-inline-size: none;
-    block-size: 100%;
-    max-block-size: none;
-    padding: var(--_gutter);
-    border: none;
-    border-radius: 0;
-    background: none;
-    box-shadow: none;
-  }
-
-  surface-modal[scroll="page"] > dialog > * {
-    box-sizing: border-box;
-    inline-size: var(--_size);
-    max-inline-size: 100%;
-    margin-inline: auto;
-    padding: var(--surface-modal-padding, 1.5rem);
-    border: var(--surface-modal-border, none);
-    border-radius: var(--surface-modal-radius, 0.75rem);
-    background: var(--surface-modal-background, Canvas);
-    color: var(--surface-modal-color, CanvasText);
-    box-shadow: var(--surface-modal-shadow, 0 1rem 3rem rgb(0 0 0 / 0.25));
-  }
-
-  surface-modal[scroll="page"][size="full"] > dialog {
-    padding: 0;
-  }
-
-  surface-modal[scroll="page"][size="full"] > dialog > * {
-    inline-size: 100%;
-    min-block-size: 100%;
     border-radius: 0;
   }
 

@@ -22,12 +22,10 @@ export interface DialogHost {
  * Shared wiring for web components that wrap a direct child `<dialog>`:
  * enhances it, rebinds when it is swapped, holds the scroll lock unless the
  * host has `no-scroll-lock`, and mirrors `dialog.open` as `:state(open)`.
- * `bind` adds host-specific behavior to each dialog and returns its cleanup.
  */
 export function dialogHost(
   host: HTMLElement,
-  internals: ElementInternals | undefined,
-  bind?: (dialog: HTMLDialogElement) => Cleanup
+  internals: ElementInternals | undefined
 ): DialogHost {
   let current: HTMLDialogElement | null = null
   let cleanup: Cleanup | undefined
@@ -63,14 +61,8 @@ export function dialogHost(
         // The scroll lock is managed here so `no-scroll-lock` can change at runtime.
         const options: EnhanceDialogOptions = { lockScroll: false }
 
-        const cleanups = [enhanceDialog(dialog, options)]
-
-        if (bind) cleanups.push(bind(dialog))
-
         current = dialog
-        cleanup = () => {
-          for (const fn of cleanups) fn()
-        }
+        cleanup = enhanceDialog(dialog, options)
 
         syncScrollLock()
       }

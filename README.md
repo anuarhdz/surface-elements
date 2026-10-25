@@ -112,7 +112,7 @@ import "surface-elements/modal"
 </surface-modal>
 ```
 
-`size` is `small`, `medium` (default), `large` or `full`. `scroll="page"` lets a long modal grow and scrolls the layer around it; wrap the content in one element. For alerts and confirmations use `role="alertdialog"` on the dialog. Same API as the drawer; theme with `--surface-modal-*`.
+`size` is `small`, `medium` (default), `large` or `full`. Long content scrolls inside the modal. For alerts and confirmations use `role="alertdialog"` on the dialog. Same API as the drawer; theme with `--surface-modal-*`.
 
 ## Agent skill
 

@@ -10,13 +10,12 @@ import { adoptModalStyles } from "./styles.js"
  * styles key on the tag, so the markup works with `modal.css` and no JS too.
  *
  * @tag surface-modal
- * @slot - The modal `<dialog>`, as the direct child. With `scroll="page"`, wrap its content in one element: that element is the panel.
+ * @slot - The modal `<dialog>`, as the direct child.
  * @attr {"small" | "medium" | "large" | "full"} size - Preset width: `24rem`, `32rem` (default), `48rem`, or the whole viewport.
- * @attr {"inside" | "page"} scroll - Where long content scrolls. `inside` (default) caps the dialog at the viewport and scrolls it; `page` lets the panel grow and scrolls the layer around it.
  * @attr {boolean} no-scroll-lock - Leave page scroll untouched while open.
  * @cssstate open - The child dialog is open.
  * @cssprop [--surface-modal-size=32rem] - Inline size when `size` is not set.
- * @cssprop [--surface-modal-gutter=1rem] - Minimum space between the modal and the viewport edges.
+ * @cssprop [--surface-modal-gutter=1rem] - Minimum space between the modal and the viewport edges. Long content scrolls inside the modal.
  * @cssprop [--surface-modal-padding=1.5rem] - Padding of the panel.
  * @cssprop [--surface-modal-background=Canvas] - Background of the panel.
  * @cssprop [--surface-modal-color=CanvasText] - Text color of the panel.
@@ -32,9 +31,7 @@ export class SurfaceModal extends HTMLElement {
   static readonly tagName = "surface-modal"
   static readonly observedAttributes = ["no-scroll-lock"]
 
-  #host = dialogHost(this, this.attachInternals?.(), (dialog) =>
-    dismissFromPageLayer(this, dialog)
-  )
+  #host = dialogHost(this, this.attachInternals?.())
 
   /** The direct child `<dialog>`, if any. */
   get dialog(): HTMLDialogElement | null {
@@ -78,47 +75,6 @@ export class SurfaceModal extends HTMLElement {
   disconnectedCallback(): void {
     this.#host.disconnect()
   }
-}
-
-// With scroll="page" the dialog covers the backdrop, so neither native
-// closedby="any" nor lightDismiss() sees a backdrop click. A click that
-// starts and ends on the dialog itself, outside its scrollbar, is one.
-function dismissFromPageLayer(
-  host: Element,
-  dialog: HTMLDialogElement
-): () => void {
-  const controller = new AbortController()
-  const { signal } = controller
-  let pressedLayer = false
-
-  const isLayer = (event: MouseEvent): boolean =>
-    host.getAttribute("scroll") === "page" &&
-    event.target === dialog &&
-    event.offsetX <= dialog.clientWidth &&
-    event.offsetY <= dialog.clientHeight
-
-  dialog.addEventListener(
-    "pointerdown",
-    (event) => {
-      pressedLayer = isLayer(event)
-    },
-    { signal }
-  )
-
-  dialog.addEventListener(
-    "click",
-    (event) => {
-      const shouldClose = pressedLayer && isLayer(event)
-      pressedLayer = false
-
-      if (shouldClose && dialog.getAttribute("closedby") === "any") {
-        void closeAnimated(dialog)
-      }
-    },
-    { signal }
-  )
-
-  return () => controller.abort()
 }
 
 defineElement(SurfaceModal.tagName, SurfaceModal)

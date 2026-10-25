@@ -91,7 +91,6 @@ hud(() => {
     open: open?.dialog?.id ?? "-",
     "state(open)": open?.matches(":state(open)") ?? false,
     size: open ? (open.getAttribute("size") ?? "medium") : "-",
-    scroll: open ? (open.getAttribute("scroll") ?? "inside") : "-",
     locked: isScrollLocked(),
     scrollY: Math.round(window.scrollY),
     returnValue: lastReturn,

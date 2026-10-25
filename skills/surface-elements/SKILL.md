@@ -60,7 +60,7 @@ import "surface-elements/drawer"
 
 `edge` on `<surface-drawer>` is the edge: `end` (default), `start`, `top` or `bottom`. Inline edges follow the writing direction.
 
-A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `medium` (default), `large` or `full`; `scroll="page"` lets a long modal grow and scrolls the layer around it (wrap the content in one element). For a confirmation, set `role="alertdialog"` on the dialog, leave out `closedby="any"` and close it with a `<form method="dialog">`.
+A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `medium` (default), `large` or `full`; long content scrolls inside it. For a confirmation, set `role="alertdialog"` on the dialog, leave out `closedby="any"` and close it with a `<form method="dialog">`.
 
 ## Elements
 
@@ -78,7 +78,7 @@ Read only the one you need.
 - [references/dialog.md](references/dialog.md): Enhance any native dialog with light-dismiss and exit-animation fallbacks and a scroll lock.
 - [references/drawer.md](references/drawer.md): The surface-drawer web component, a native dialog that slides in from any edge.
 - [references/header.md](references/header.md): A page header that sticks to the top, reports when it is stuck, and can hide while you scroll down.
-- [references/modal.md](references/modal.md): The surface-modal web component, a native dialog centered over the page, with sizes, alert dialogs and page scroll.
+- [references/modal.md](references/modal.md): The surface-modal web component, a native dialog centered over the page, with sizes and alert dialogs.
 - [references/scroll-lock.md](references/scroll-lock.md): A ref-counted lock that stops the page from scrolling.
 - [references/styling.md](references/styling.md): Custom properties, cascade layers and state hooks for theming the drawer.
 - [references/without-installing.md](references/without-installing.md): Paste a web component's copy file into your project instead of installing the package.

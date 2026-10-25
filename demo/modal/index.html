@@ -98,9 +98,7 @@
       <button type="button" commandfor="size-large" command="show-modal">large</button>
       <button type="button" commandfor="size-full" command="show-modal">full</button>
       <button type="button" commandfor="confirm" command="show-modal">confirm (alertdialog)</button>
-      <button type="button" commandfor="long-inside" command="show-modal">long, inside</button>
-      <button type="button" commandfor="long-page" command="show-modal">long, page</button>
-      <button type="button" commandfor="long-page-full" command="show-modal">long, page + full</button>
+      <button type="button" commandfor="long-inside" command="show-modal">long content</button>
       <button type="button" commandfor="sticky" command="show-modal">sticky head/foot</button>
       <button type="button" commandfor="themed" command="show-modal">themed</button>
       <button type="button" commandfor="unlocked" command="show-modal">no-scroll-lock</button>
@@ -153,30 +151,8 @@
       <dialog id="long-inside" closedby="any" aria-labelledby="long-inside-title">
         <div class="panel">
           <div class="head">
-            <h2 id="long-inside-title">Long, scroll inside</h2>
+            <h2 id="long-inside-title">Long content</h2>
             <button type="button" commandfor="long-inside" command="close" aria-label="Close">✕</button>
-          </div>
-          <ol class="items" data-count="60"></ol>
-        </div>
-      </dialog>
-    </surface-modal>
-    <surface-modal scroll="page">
-      <dialog id="long-page" closedby="any" aria-labelledby="long-page-title">
-        <div class="panel">
-          <div class="head">
-            <h2 id="long-page-title">Long, scroll="page"</h2>
-            <button type="button" commandfor="long-page" command="close" aria-label="Close">✕</button>
-          </div>
-          <ol class="items" data-count="60"></ol>
-        </div>
-      </dialog>
-    </surface-modal>
-    <surface-modal scroll="page" size="full">
-      <dialog id="long-page-full" closedby="any" aria-labelledby="long-page-full-title">
-        <div class="panel">
-          <div class="head">
-            <h2 id="long-page-full-title">Long, page + full</h2>
-            <button type="button" commandfor="long-page-full" command="close" aria-label="Close">✕</button>
           </div>
           <ol class="items" data-count="60"></ol>
         </div>

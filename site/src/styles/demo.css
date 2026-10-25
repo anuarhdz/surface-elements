@@ -100,8 +100,7 @@ surface-drawer:is([edge="top"], [edge="bottom"]) .drawer-layout {
 }
 
 /* Modal content */
-surface-modal > dialog,
-surface-modal[scroll="page"] > dialog > * {
+surface-modal > dialog {
   --surface-modal-background: var(--sl-color-bg);
   --surface-modal-color: var(--sl-color-white);
 }

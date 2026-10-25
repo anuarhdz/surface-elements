@@ -207,9 +207,8 @@ function childDialog(host) {
 * Shared wiring for web components that wrap a direct child `<dialog>`:
 * enhances it, rebinds when it is swapped, holds the scroll lock unless the
 * host has `no-scroll-lock`, and mirrors `dialog.open` as `:state(open)`.
-* `bind` adds host-specific behavior to each dialog and returns its cleanup.
 */
-function dialogHost(host, internals, bind) {
+function dialogHost(host, internals) {
 	let current = null;
 	let cleanup;
 	let releaseScrollLock;
@@ -234,12 +233,9 @@ function dialogHost(host, internals, bind) {
 		if (dialog !== current) {
 			unbind();
 			if (dialog) {
-				const cleanups = [enhanceDialog(dialog, { lockScroll: false })];
-				if (bind) cleanups.push(bind(dialog));
+				const options = { lockScroll: false };
 				current = dialog;
-				cleanup = () => {
-					for (const fn of cleanups) fn();
-				};
+				cleanup = enhanceDialog(dialog, options);
 				syncScrollLock();
 			}
 		}

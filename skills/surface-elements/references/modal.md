@@ -1,6 +1,6 @@
 # Modal
 
-The surface-modal web component, a native dialog centered over the page, with sizes, alert dialogs and page scroll.
+The surface-modal web component, a native dialog centered over the page, with sizes and alert dialogs.
 
 `<surface-modal>` turns the native `<dialog>` inside it into a centered modal. The dialog stays the source of truth: open state lives in `dialog.open`, and nothing mirrors it.
 
@@ -59,20 +59,7 @@ An alert or a confirmation interrupts the user and needs an answer. It is the sa
 
 ### Long content
 
-By default the modal is as tall as its content, up to the viewport minus the gutter, and then scrolls inside. Keep a header or footer in view with `position: sticky` inside the dialog.
-
-`scroll="page"` lets the modal grow with its content instead: the dialog covers the viewport as a transparent layer that scrolls, and its only child is the panel. Wrap the content in one element. A click on the layer around the panel counts as a backdrop click.
-
-```html
-<surface-modal scroll="page">
-  <dialog id="terms" closedby="any" aria-labelledby="terms-title">
-    <article>
-      <h2 id="terms-title">Terms</h2>
-      …
-    </article>
-  </dialog>
-</surface-modal>
-```
+The modal is as tall as its content, up to the viewport minus `--surface-modal-gutter`, and then its content scrolls inside. Keep a header or footer in view with `position: sticky` inside the dialog.
 
 ## Copy
 
@@ -82,7 +69,7 @@ The copy file is `copy/surface-modal.js` in the repository: the whole web compon
 
 See the `<surface-modal>` tables under "API reference (generated from source)" in [modal.md](modal.md).
 
-The web component is `display: contents`, so it adds no box to the layout. While a fallback exit animation plays, its dialog carries `data-closing`: select it with `surface-modal > dialog[data-closing]`. With `scroll="page"`, the panel custom properties (`--surface-modal-padding`, `-background`, `-color`, `-border`, `-radius`, `-shadow`) apply to the dialog's only child instead of the dialog.
+The web component is `display: contents`, so it adds no box to the layout. While a fallback exit animation plays, its dialog carries `data-closing`: select it with `surface-modal > dialog[data-closing]`.
 
 ## If you implement it by hand
 
@@ -98,7 +85,7 @@ Load the stylesheet instead of the web component. No JavaScript from this librar
 @import "surface-elements/modal.css";
 ```
 
-You get the layout, the sizes, both scroll modes and the enter and exit transitions where the browser supports them natively. The rules live in `@layer surface-elements`, so any unlayered rule of yours wins.
+You get the layout, the sizes and the enter and exit transitions where the browser supports them natively. The rules live in `@layer surface-elements`, so any unlayered rule of yours wins.
 
 ### What the JavaScript adds
 
@@ -106,7 +93,6 @@ The web component calls [`enhanceDialog()`](dialog.md) on its dialog and adds th
 
 - The exit transition only plays where the browser animates out of the top layer. Elsewhere the modal closes without animating.
 - `closedby="any"` only works where it is native. Elsewhere a backdrop click does nothing.
-- With `scroll="page"`, a click on the layer around the panel never closes the modal, not even where `closedby` is native: the layer is the dialog, not its backdrop.
 - Page scroll is not locked while the modal is open.
 - `surface-modal:state(open)` never matches. Style `surface-modal > dialog[open]` instead.
 
@@ -144,7 +130,6 @@ import "surface-elements/modal"
 | --- | --- | --- |
 | `no-scroll-lock` | `boolean` | Leave page scroll untouched while open. |
 | `size` | `"small" \| "medium" \| "large" \| "full"` | Preset width: `24rem`, `32rem` (default), `48rem`, or the whole viewport. |
-| `scroll` | `"inside" \| "page"` | Where long content scrolls. `inside` (default) caps the dialog at the viewport and scrolls it; `page` lets the panel grow and scrolls the layer around it. |
 
 #### Properties
 
@@ -165,7 +150,7 @@ import "surface-elements/modal"
 
 | Slot | Description |
 | --- | --- |
-| (default) | The modal `<dialog>`, as the direct child. With `scroll="page"`, wrap its content in one element: that element is the panel. |
+| (default) | The modal `<dialog>`, as the direct child. |
 
 #### CSS states
 
@@ -178,7 +163,7 @@ import "surface-elements/modal"
 | Property | Default | Description |
 | --- | --- | --- |
 | `--surface-modal-size` | `32rem` | Inline size when `size` is not set. |
-| `--surface-modal-gutter` | `1rem` | Minimum space between the modal and the viewport edges. |
+| `--surface-modal-gutter` | `1rem` | Minimum space between the modal and the viewport edges. Long content scrolls inside the modal. |
 | `--surface-modal-padding` | `1.5rem` | Padding of the panel. |
 | `--surface-modal-background` | `Canvas` | Background of the panel. |
 | `--surface-modal-color` | `CanvasText` | Text color of the panel. |
@@ -198,8 +183,7 @@ consumer rule wins. The selectors match before the web component is defined,
 so the styles also work without its JavaScript.
 
 `size` on the tag picks a preset width: `small`, `medium` (default, also
-missing or empty), `large` or `full`. `scroll="page"` turns the dialog into
-a transparent scrolling layer and styles its only child as the panel.
+missing or empty), `large` or `full`. Long content scrolls inside.
 
 ```ts
 import { modalStyles } from "surface-elements"
