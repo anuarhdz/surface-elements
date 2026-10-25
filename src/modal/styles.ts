@@ -30,7 +30,6 @@ export const modalStyles = /* css */ `
     background: var(--surface-modal-background, Canvas);
     color: var(--surface-modal-color, CanvasText);
     box-shadow: var(--surface-modal-shadow, 0 1rem 3rem rgb(0 0 0 / 0.25));
-    outline: none;
 
     /* Centered, as tall as its content, scrolling inside past the viewport. */
     inline-size: var(--_size);
@@ -45,6 +44,12 @@ export const modalStyles = /* css */ `
     transition-duration: var(--_duration);
     transition-timing-function: var(--_easing);
     transition-behavior: allow-discrete;
+  }
+
+  /* The dialog itself takes focus when it has nothing focusable: keep the
+     ring for keyboard users only. */
+  surface-modal > dialog:focus:not(:focus-visible) {
+    outline: none;
   }
 
   surface-modal[size="small"] > dialog {
@@ -79,7 +84,7 @@ export const modalStyles = /* css */ `
     overflow: hidden;
     transition-property: opacity, display, overlay;
     transition-duration: var(--surface-modal-duration, 0.2s);
-    transition-timing-function: var(--surface-modal-easing, ease-out);
+    transition-timing-function: var(--surface-modal-easing, cubic-bezier(0.2, 0, 0, 1));
     transition-behavior: allow-discrete;
   }
 

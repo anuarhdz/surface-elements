@@ -112,7 +112,7 @@ import "surface-elements/drawer"
 | --- | --- | --- |
 | `show()` | `void` | Opens the dialog as a modal, cancelling an exit in progress. |
 | `close(returnValue?)` | `Promise<void>` | Closes after the exit transition. Resolves when closed. |
-| `toggle()` | `void` | Calls `show()` or `close()`. |
+| `toggle()` | `void` | Calls `close()` when open, `show()` when closed or closing. |
 
 #### Slots
 

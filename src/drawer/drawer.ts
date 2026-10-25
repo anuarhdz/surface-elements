@@ -1,4 +1,8 @@
-import { closeAnimated, showModal } from "../dialog/dialog.js"
+import {
+  CLOSING_ATTRIBUTE,
+  closeAnimated,
+  showModal,
+} from "../dialog/dialog.js"
 import { defineElement } from "../utils/define.js"
 import { childDialog, dialogHost } from "../utils/dialog-host.js"
 import { adoptDrawerStyles } from "./styles.js"
@@ -57,10 +61,15 @@ export class SurfaceDrawer extends HTMLElement {
     return dialog ? closeAnimated(dialog, returnValue) : Promise.resolve()
   }
 
-  /** Calls `show()` or `close()`. */
+  /** Calls `close()` when open, `show()` when closed or closing. */
   toggle(): void {
-    if (this.open) void this.close()
-    else this.show()
+    const dialog = this.dialog
+
+    if (dialog?.open && !dialog.hasAttribute(CLOSING_ATTRIBUTE)) {
+      void this.close()
+    } else {
+      this.show()
+    }
   }
 
   connectedCallback(): void {

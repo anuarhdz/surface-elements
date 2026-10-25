@@ -29,7 +29,9 @@ The import defines the web component, which adds the styles to the document, so 
 
 ### Sizes
 
-`size` picks a preset width: `small` (`24rem`), `medium` (`32rem`, the default), `large` (`48rem`) or `full` (the whole viewport). For any other width, set `--surface-modal-size` and leave `size` out. The modal never gets closer than `--surface-modal-gutter` to the viewport edges.
+`size` picks a preset width: `small` (`24rem`), `medium` (`32rem`, the default), `large` (`48rem`) or `full` (the whole viewport, with no border radius). For any other width, set `--surface-modal-size` and leave `size` out. The modal never gets closer than `--surface-modal-gutter` to the viewport edges.
+
+With `size="full"` on a page that sets `viewport-fit=cover`, content can sit under a notch or home indicator. Add the safe-area insets to the padding yourself, for example `padding-block-end: max(1.5rem, env(safe-area-inset-bottom))`.
 
 ### Alert and confirm
 
@@ -152,7 +154,7 @@ import "surface-elements/modal"
 | --- | --- | --- |
 | `show()` | `void` | Opens the dialog as a modal, cancelling an exit in progress. |
 | `close(returnValue?)` | `Promise<void>` | Closes after the exit transition. Resolves when closed. |
-| `toggle()` | `void` | Calls `show()` or `close()`. |
+| `toggle()` | `void` | Calls `close()` when open, `show()` when closed or closing. |
 
 #### Slots
 

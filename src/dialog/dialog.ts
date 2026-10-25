@@ -121,9 +121,15 @@ export function routeCloseRequests(dialog: HTMLDialogElement): Cleanup {
   dialog.addEventListener(
     "submit",
     (event) => {
+      // The consumer cancelled it, or a nested dialog already handled it.
+      if (event.defaultPrevented) return
+
       // SAFETY: `submit` is only dispatched at form elements.
       const form = event.target as HTMLFormElement
       const submitter = event.submitter
+
+      // Bubbled up from a form in a dialog nested inside this one.
+      if (form.closest("dialog") !== dialog) return
 
       const method =
         submitter?.getAttribute("formmethod") ?? form.getAttribute("method")
@@ -140,17 +146,37 @@ export function routeCloseRequests(dialog: HTMLDialogElement): Cleanup {
 
 const EXIT_TIMEOUT = 2000
 
+const closing = new WeakMap<HTMLDialogElement, Promise<void>>()
+
 /**
  * Closes the dialog after its exit transition. In browsers that transition
  * `display` and `overlay` natively this is a plain `close()`; elsewhere it
- * sets `data-closing`, waits for the animations and then closes.
+ * sets `data-closing`, waits for the animations and then closes. A call
+ * during an exit in progress returns that exit's promise.
  */
-export async function closeAnimated(
+export function closeAnimated(
   dialog: HTMLDialogElement,
   returnValue?: string
 ): Promise<void> {
-  if (!dialog.open || dialog.hasAttribute(CLOSING_ATTRIBUTE)) return
+  const pending = closing.get(dialog)
 
+  if (pending) return pending
+
+  if (!dialog.open) return Promise.resolve()
+
+  const exit = playExit(dialog, returnValue).finally(() =>
+    closing.delete(dialog)
+  )
+
+  closing.set(dialog, exit)
+
+  return exit
+}
+
+async function playExit(
+  dialog: HTMLDialogElement,
+  returnValue?: string
+): Promise<void> {
   if (!supportsTopLayerExit()) {
     dialog.setAttribute(CLOSING_ATTRIBUTE, "")
     const animations = dialog.getAnimations?.({ subtree: true }) ?? []

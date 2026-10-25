@@ -111,8 +111,10 @@ function routeCloseRequests(dialog) {
 		} else if (command === "show-modal") dialog.removeAttribute(CLOSING_ATTRIBUTE);
 	}, { signal });
 	dialog.addEventListener("submit", (event) => {
+		if (event.defaultPrevented) return;
 		const form = event.target;
 		const submitter = event.submitter;
+		if (form.closest("dialog") !== dialog) return;
 		if ((submitter?.getAttribute("formmethod") ?? form.getAttribute("method"))?.toLowerCase() !== "dialog") return;
 		event.preventDefault();
 		closeAnimated(dialog, submitter?.getAttribute("value") ?? void 0);
@@ -120,13 +122,22 @@ function routeCloseRequests(dialog) {
 	return () => controller.abort();
 }
 const EXIT_TIMEOUT = 2e3;
+const closing = /* @__PURE__ */ new WeakMap();
 /**
 * Closes the dialog after its exit transition. In browsers that transition
 * `display` and `overlay` natively this is a plain `close()`; elsewhere it
-* sets `data-closing`, waits for the animations and then closes.
+* sets `data-closing`, waits for the animations and then closes. A call
+* during an exit in progress returns that exit's promise.
 */
-async function closeAnimated(dialog, returnValue) {
-	if (!dialog.open || dialog.hasAttribute("data-closing")) return;
+function closeAnimated(dialog, returnValue) {
+	const pending = closing.get(dialog);
+	if (pending) return pending;
+	if (!dialog.open) return Promise.resolve();
+	const exit = playExit(dialog, returnValue).finally(() => closing.delete(dialog));
+	closing.set(dialog, exit);
+	return exit;
+}
+async function playExit(dialog, returnValue) {
 	if (!supportsTopLayerExit()) {
 		dialog.setAttribute(CLOSING_ATTRIBUTE, "");
 		const animations = dialog.getAnimations?.({ subtree: true }) ?? [];
@@ -296,7 +307,6 @@ const modalStyles = `
     background: var(--surface-modal-background, Canvas);
     color: var(--surface-modal-color, CanvasText);
     box-shadow: var(--surface-modal-shadow, 0 1rem 3rem rgb(0 0 0 / 0.25));
-    outline: none;
 
     /* Centered, as tall as its content, scrolling inside past the viewport. */
     inline-size: var(--_size);
@@ -311,6 +321,12 @@ const modalStyles = `
     transition-duration: var(--_duration);
     transition-timing-function: var(--_easing);
     transition-behavior: allow-discrete;
+  }
+
+  /* The dialog itself takes focus when it has nothing focusable: keep the
+     ring for keyboard users only. */
+  surface-modal > dialog:focus:not(:focus-visible) {
+    outline: none;
   }
 
   surface-modal[size="small"] > dialog {
@@ -345,7 +361,7 @@ const modalStyles = `
     overflow: hidden;
     transition-property: opacity, display, overlay;
     transition-duration: var(--surface-modal-duration, 0.2s);
-    transition-timing-function: var(--surface-modal-easing, ease-out);
+    transition-timing-function: var(--surface-modal-easing, cubic-bezier(0.2, 0, 0, 1));
     transition-behavior: allow-discrete;
   }
 
@@ -442,9 +458,10 @@ var SurfaceModal = class extends HTMLElement {
 		const dialog = this.dialog;
 		return dialog ? closeAnimated(dialog, returnValue) : Promise.resolve();
 	}
-	/** Calls `show()` or `close()`. */
+	/** Calls `close()` when open, `show()` when closed or closing. */
 	toggle() {
-		if (this.open) this.close();
+		const dialog = this.dialog;
+		if (dialog?.open && !dialog.hasAttribute("data-closing")) this.close();
 		else this.show();
 	}
 	connectedCallback() {

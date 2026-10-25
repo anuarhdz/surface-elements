@@ -143,6 +143,21 @@ describe("closeAnimated", () => {
 
     expect(dialog.open).toBe(true)
   })
+
+  it("returns the exit in progress to a second call", async () => {
+    const dialog = await modal()
+    const { animation, finish } = pendingAnimation()
+    dialog.getAnimations = () => [animation]
+
+    const first = closeAnimated(dialog)
+    const second = closeAnimated(dialog, "ignored")
+    expect(second).toBe(first)
+
+    finish()
+    await second
+    expect(dialog.open).toBe(false)
+    expect(dialog.returnValue).toBe("")
+  })
 })
 
 describe("routeCloseRequests", () => {
@@ -189,6 +204,69 @@ describe("routeCloseRequests", () => {
     expect(submit.defaultPrevented).toBe(true)
     expect(dialog.open).toBe(false)
     expect(dialog.returnValue).toBe("ok")
+  })
+
+  it("leaves a submit the consumer cancelled alone", async () => {
+    const dialog = await modal()
+    track(routeCloseRequests(dialog))
+
+    const form = dialog.querySelector("form")!
+    form.addEventListener("submit", (event) => event.preventDefault())
+    form.dispatchEvent(
+      new SubmitEvent("submit", { cancelable: true, bubbles: true })
+    )
+
+    expect(dialog.open).toBe(true)
+  })
+
+  it("closes only the dialog that owns the form", async () => {
+    const outer = await fixture<HTMLDialogElement>(
+      html`<dialog>
+        <dialog>
+          <form method="dialog"><button value="ok">OK</button></form>
+        </dialog>
+      </dialog>`
+    )
+
+    const inner = outer.querySelector("dialog")!
+    outer.showModal()
+    inner.showModal()
+    track(routeCloseRequests(outer))
+    track(routeCloseRequests(inner))
+
+    inner.querySelector("form")!.dispatchEvent(
+      new SubmitEvent("submit", {
+        cancelable: true,
+        bubbles: true,
+        submitter: inner.querySelector("button"),
+      })
+    )
+
+    expect(inner.open).toBe(false)
+    expect(outer.open).toBe(true)
+  })
+
+  it("ignores a cancelled submit even without a nested listener", async () => {
+    const outer = await fixture<HTMLDialogElement>(
+      html`<dialog>
+        <dialog>
+          <form method="dialog"><button value="ok">OK</button></form>
+        </dialog>
+      </dialog>`
+    )
+
+    const inner = outer.querySelector("dialog")!
+    outer.showModal()
+    inner.showModal()
+    track(routeCloseRequests(outer))
+
+    inner
+      .querySelector("form")!
+      .dispatchEvent(
+        new SubmitEvent("submit", { cancelable: true, bubbles: true })
+      )
+
+    expect(outer.open).toBe(true)
   })
 })
 
