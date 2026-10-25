@@ -75,3 +75,4 @@ Read only the one you need.
 - [references/header.md](references/header.md): A page header that sticks to the top, reports when it is stuck, and can hide while you scroll down.
 - [references/scroll-lock.md](references/scroll-lock.md): A ref-counted lock that stops the page from scrolling.
 - [references/styling.md](references/styling.md): Custom properties, cascade layers and state hooks for theming the drawer.
+- [references/without-installing.md](references/without-installing.md): Paste a web component's copy file into your project instead of installing the package.

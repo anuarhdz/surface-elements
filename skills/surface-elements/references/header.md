@@ -109,37 +109,15 @@ html {
 }
 ```
 
+## Copy
+
+The copy file is `copy/surface-header.js` in the repository: the whole web component in one ES module, with its styles and dependencies inlined. Load it with `<script type="module" src="/surface-header.js"></script>`.
+
 ## API
 
-| Member   | Type                 | Does                                                        |
-| -------- | -------------------- | ----------------------------------------------------------- |
-| `stuck`  | `boolean`, read-only | Whether the header is stuck to the top of its container.    |
-| `hold()` | `() => () => void`   | Keeps it visible until the returned release is called.      |
+See the `<surface-header>` tables under "API reference (generated from source)" in [header.md](header.md).
 
-| Attribute        | Does                                                                         |
-| ---------------- | ---------------------------------------------------------------------------- |
-| `hide-on-scroll` | Hides while scrolling down; shows on scroll up or when focus moves inside.   |
-| `overlay`        | Overlays the content below, with the top colors until stuck.                 |
-
-| Selector                        | Matches                                         |
-| ------------------------------- | ----------------------------------------------- |
-| `surface-header:state(stuck)`   | The element while it is stuck.                  |
-| `surface-header:state(hidden)`  | The element while it is hidden, by `hide-on-scroll` or a hidden section. |
-
-| Data attribute                     | On        | Does                                      |
-| ---------------------------------- | --------- | ----------------------------------------- |
-| `data-surface-header="hidden"`     | A section | Hides the header while it is under it.    |
-
-| Property                    | Default    | Sets                                       |
-| --------------------------- | ---------- | ------------------------------------------ |
-| `--surface-header-background` | `Canvas` | Background while stuck, always without `overlay`. |
-| `--surface-header-color` | `CanvasText` | Text color while stuck, always without `overlay`. |
-| `--surface-header-top-background` | `transparent` | Background with `overlay` before it sticks. |
-| `--surface-header-top-color` | `--surface-header-color` | Text color with `overlay` before it sticks. |
-| `--surface-header-offset`   | `0px`      | Distance from the top edge where it sticks. |
-| `--surface-header-duration` | `0.2s`     | Hide and show transition duration.         |
-| `--surface-header-easing`   | `ease-out` | Hide and show easing.                      |
-| `--surface-header-height`   | (output)   | Set by the element on its scroll container. |
+Mark a section with `data-surface-header="hidden"` to hide the header while that section is under it.
 
 Set the offset with `--surface-header-offset`, not `top`: the hide transition needs it to move the header fully out of view.
 

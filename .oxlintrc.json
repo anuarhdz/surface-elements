@@ -12,6 +12,7 @@
   },
   "ignorePatterns": [
     "dist/**",
+    "copy/**",
     ".vscode",
     ".claude",
     ".agents",

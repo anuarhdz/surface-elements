@@ -1,0 +1,22 @@
+# Use without installing
+
+Paste a web component's copy file into your project instead of installing the package.
+
+Every web component page has a **Copy** section with a copy file: the whole web component in one ES module, with its styles and the functions it uses inlined. Use it when you cannot or do not want to add a dependency.
+
+1. Save the file from the component's page in your project, for example `surface-drawer.js`.
+2. Load it as a module, once per page:
+
+   ```html
+   <script type="module" src="/surface-drawer.js"></script>
+   ```
+
+3. Write the same markup as with the package. The file defines the tag and adds the styles itself.
+
+## What you give up
+
+- **Updates.** The file never changes on its own. To get a fix, copy it again from the docs. The first line names the web component and where it comes from.
+- **Tree shaking across components.** Each copy file inlines what it needs, so two of them on one page carry two copies of the shared functions. They are small, and they still behave as one: shared state, such as the scroll lock count, lives on a global `Symbol.for("surface-elements.…")`, so copies coexist with each other and with the package.
+- **Types.** There is no `.d.ts`. The [API](drawer.md#api) is the same as the package's.
+
+If the same tag is already defined, by another copy or by the package, the file leaves it alone, so loading both is harmless. The first definition wins.

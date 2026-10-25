@@ -1,15 +1,28 @@
-let locks = 0
-let unlock: (() => void) | undefined
+interface ScrollLockState {
+  locks: number
+  unlock: (() => void) | undefined
+}
+
+// Lives on a global symbol, not in module scope, so copy files and the
+// package share one counter when several of them run on the same page.
+const STATE = Symbol.for("surface-elements.scroll-lock")
+
+// SAFETY: only this module writes under the symbol, always this shape; a
+// copy from another version must keep the same fields.
+const state: ScrollLockState = ((
+  globalThis as typeof globalThis & { [STATE]?: ScrollLockState }
+)[STATE] ??= { locks: 0, unlock: undefined })
 
 /**
  * Blocks page scroll by setting `overflow: hidden` on `<html>`. `<body>` is left
  * alone: hiding its overflow too would make it a scroll container and unstick
  * every `position: sticky` element on a scrolled page.
- * Ref-counted: the page unlocks when every caller has released its lock.
+ * Ref-counted: the page unlocks when every caller has released its lock,
+ * across every copy of this module on the page.
  * Returns an idempotent release function.
  */
 export function lockScroll(): () => void {
-  if (locks++ === 0) unlock = applyLock()
+  if (state.locks++ === 0) state.unlock = applyLock()
 
   let released = false
 
@@ -17,16 +30,16 @@ export function lockScroll(): () => void {
     if (released) return
     released = true
 
-    if (--locks === 0) {
-      unlock?.()
-      unlock = undefined
+    if (--state.locks === 0) {
+      state.unlock?.()
+      state.unlock = undefined
     }
   }
 }
 
 /** Whether any caller currently holds a {@link lockScroll} lock. */
 export function isScrollLocked(): boolean {
-  return locks > 0
+  return state.locks > 0
 }
 
 function applyLock(): () => void {

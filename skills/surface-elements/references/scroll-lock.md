@@ -15,6 +15,7 @@ release()
 Sets `overflow: hidden` on `<html>` and returns a release function.
 
 - **Ref-counted.** The page unlocks when every caller has released. Stacked drawers each hold their own lock.
+- **One count per page.** The count lives on `Symbol.for("surface-elements.scroll-lock")`, so copy files and the package share it when they run on the same page.
 - **Idempotent release.** Calling a release twice is harmless.
 - **No layout shift.** With a classic scrollbar it sets `scrollbar-gutter: stable` so the page does not jump sideways.
 - **Restores what it found.** Inline `overflow` and `scrollbar-gutter` values you had set come back on unlock.
@@ -42,7 +43,8 @@ Platform guidance prefers `overscroll-behavior: contain` on the dialog and its b
 Blocks page scroll by setting `overflow: hidden` on `<html>`. `<body>` is left
 alone: hiding its overflow too would make it a scroll container and unstick
 every `position: sticky` element on a scrolled page.
-Ref-counted: the page unlocks when every caller has released its lock.
+Ref-counted: the page unlocks when every caller has released its lock,
+across every copy of this module on the page.
 Returns an idempotent release function.
 
 ```ts

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import { isScrollLocked, lockScroll } from "./scroll-lock.js"
 
@@ -53,5 +53,22 @@ describe("lockScroll", () => {
 
     expect(html.style.overflow).toBe("clip")
     expect(html.style.getPropertyValue("scrollbar-gutter")).toBe("auto")
+  })
+
+  it("shares one counter with other copies of the module", async () => {
+    vi.resetModules()
+    const copy = await import("./scroll-lock.js")
+    expect(copy.lockScroll).not.toBe(lockScroll)
+
+    const own = lockScroll()
+    const copied = copy.lockScroll()
+    expect(copy.isScrollLocked()).toBe(true)
+
+    own()
+    expect(html.style.overflow).toBe("hidden")
+
+    copied()
+    expect(html.style.overflow).toBe("")
+    expect(isScrollLocked()).toBe(false)
   })
 })

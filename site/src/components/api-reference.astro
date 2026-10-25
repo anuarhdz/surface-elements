@@ -1,0 +1,195 @@
+---
+/**
+ * API tables of a web component, read from the Custom Elements Manifest
+ * (dist/custom-elements.json, written by `cem analyze`). The JSDoc in src/
+ * is the only place these facts are written.
+ */
+import {
+  customElements,
+  params,
+  publicMembers,
+  type Manifest,
+} from "../../../scripts/manifest.ts"
+
+type Section =
+  | "attributes"
+  | "properties"
+  | "methods"
+  | "events"
+  | "slots"
+  | "states"
+  | "parts"
+  | "cssProperties"
+
+interface Props {
+  tag: string
+  /** Which tables to show, in this order. Defaults to all of them. */
+  sections?: Section[]
+  /** Show an h3 above each table. */
+  headings?: boolean
+}
+
+const manifests = import.meta.glob<Manifest>(
+  "../../../dist/custom-elements.json",
+  { eager: true, import: "default" }
+)
+
+const manifest = Object.values(manifests)[0]
+
+if (!manifest) {
+  throw new Error("dist/custom-elements.json is missing. Run cem analyze.")
+}
+
+const {
+  tag,
+  sections = [
+    "attributes",
+    "properties",
+    "methods",
+    "events",
+    "slots",
+    "states",
+    "parts",
+    "cssProperties",
+  ],
+  headings = true,
+} = Astro.props
+
+const element = customElements(manifest).find(
+  ({ declaration }) => declaration.tagName === tag
+)?.declaration
+
+if (!element) throw new Error(`<${tag}> is not in the manifest.`)
+
+const members = publicMembers(element)
+
+interface Table {
+  title: string
+  head: string[]
+  rows: string[][]
+}
+
+const code = (text?: string) => (text ? `\`${text}\`` : "")
+
+const tables: Record<Section, Table> = {
+  attributes: {
+    title: "Attributes",
+    head: ["Attribute", "Type", "Description"],
+    rows: (element.attributes ?? []).map((a) => [
+      code(a.name),
+      code(a.type?.text),
+      a.description ?? "",
+    ]),
+  },
+  properties: {
+    title: "Properties",
+    head: ["Property", "Type", "Description"],
+    rows: members
+      .filter((m) => m.kind === "field")
+      .map((f) => [
+        code(f.name),
+        code(f.type?.text) + (f.readonly ? ", read-only" : ""),
+        f.description ?? "",
+      ]),
+  },
+  methods: {
+    title: "Methods",
+    head: ["Method", "Returns", "Description"],
+    rows: members
+      .filter((m) => m.kind === "method")
+      .map((m) => [
+        code(`${m.name}(${params(m.parameters)})`),
+        code(m.return?.type?.text ?? "void"),
+        m.description ?? "",
+      ]),
+  },
+  events: {
+    title: "Events",
+    head: ["Event", "Type", "Description"],
+    rows: (element.events ?? []).map((e) => [
+      code(e.name),
+      code(e.type?.text),
+      e.description ?? "",
+    ]),
+  },
+  slots: {
+    title: "Slots",
+    head: ["Slot", "Description"],
+    rows: (element.slots ?? []).map((s) => [
+      s.name ? code(s.name) : "(default)",
+      s.description ?? "",
+    ]),
+  },
+  states: {
+    title: "CSS states",
+    head: ["Selector", "Description"],
+    rows: (element.cssStates ?? []).map((s) => [
+      code(`${tag}:state(${s.name})`),
+      s.description ?? "",
+    ]),
+  },
+  parts: {
+    title: "CSS parts",
+    head: ["Part", "Description"],
+    rows: (element.cssParts ?? []).map((p) => [
+      code(`::part(${p.name})`),
+      p.description ?? "",
+    ]),
+  },
+  cssProperties: {
+    title: "CSS custom properties",
+    head: ["Property", "Default", "Description"],
+    rows: (element.cssProperties ?? []).map((p) => [
+      code(p.name),
+      code(p.default),
+      p.description ?? "",
+    ]),
+  },
+}
+
+const shown = sections
+  .map((section) => tables[section])
+  .filter((table) => table.rows.length > 0)
+
+// JSDoc text is Markdown: keep inline code and {@link} targets, escape the rest.
+function inline(text: string): string {
+  return text
+    .replace(/\{@link\s+([^}\s]+)\s*\}/g, "`$1`")
+    .replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`)
+    .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\s*\n\s*/g, " ")
+}
+---
+
+{
+  shown.map((table) => (
+    <>
+      {headings && <h3>{table.title}</h3>}
+      <table class="api-table">
+        <thead>
+          <tr>
+            {table.head.map((cell) => (
+              <th>{cell}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {table.rows.map((row) => (
+            <tr>
+              {row.map((cell) => (
+                <td set:html={inline(cell)} />
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  ))
+}
+
+<style>
+  /* Names read as one token: never break them across lines. */
+  .api-table td:first-child :global(code) {
+    white-space: nowrap;
+  }
+</style>
