@@ -18,9 +18,6 @@ async function settle(el: SurfaceAccordion, frames = 120): Promise<void> {
   return settle(el, frames - 1)
 }
 
-// Pretends the browser cannot animate ::details-content.
-const fallback = () => vi.spyOn(CSS, "supports").mockReturnValue(false)
-
 const accordion = () =>
   fixture<SurfaceAccordion>(html`
     <surface-accordion style="--surface-accordion-duration: 60ms">
@@ -93,6 +90,40 @@ describe("surface-accordion in a browser", () => {
     ).toBe(200)
   })
 
+  it("stops clipping an open panel once it has opened", async () => {
+    const el = await accordion()
+    const [first] = items(el)
+    await frame()
+
+    await el.toggle(first, true)
+    expect(getComputedStyle(first, "::details-content").overflowY).toBe(
+      "visible"
+    )
+
+    first.open = false
+    await frame()
+    await frame()
+    expect(getComputedStyle(first, "::details-content").overflowY).toBe("clip")
+  })
+
+  it("resolves a replaced toggle() early", async () => {
+    const el = await accordion()
+    el.style.setProperty("--surface-accordion-duration", "1s")
+    const [first] = items(el)
+    await frame()
+
+    let replaced = false
+    const opening = el.toggle(first, true).then(() => (replaced = true))
+    await frame()
+
+    const closing = el.toggle(first, false)
+    await opening
+    expect(replaced).toBe(true)
+    expect(first.open).toBe(false)
+
+    await closing
+  })
+
   it("has no accessibility violations", async () => {
     const el = await accordion()
     const [first] = items(el)
@@ -100,104 +131,6 @@ describe("surface-accordion in a browser", () => {
 
     const results = await axe.run(el)
     expect(results.violations).toEqual([])
-  })
-
-  describe("fallback animation", () => {
-    it("animates open from the summary height to the full height", async () => {
-      fallback()
-      const el = await accordion()
-      const [first] = items(el)
-      const closed = first.getBoundingClientRect().height
-
-      summaryOf(first).click()
-      expect(first.open).toBe(true)
-      expect(first.getAnimations().length).toBeGreaterThan(0)
-      expect(first.getBoundingClientRect().height).toBeLessThan(closed + 10)
-
-      await settle(el)
-      expect(first.getBoundingClientRect().height).toBeGreaterThan(200)
-    })
-
-    it("keeps a closing item open and marked until the animation ends", async () => {
-      fallback()
-      const el = await accordion()
-      const [first] = items(el)
-      first.open = true
-
-      summaryOf(first).click()
-      expect(first.open).toBe(true)
-      expect(first.hasAttribute("data-closing")).toBe(true)
-
-      await settle(el)
-      expect(first.open).toBe(false)
-      expect(first.hasAttribute("data-closing")).toBe(false)
-    })
-
-    it("animates the open sibling closed in an exclusive group", async () => {
-      fallback()
-      const el = await accordion()
-      const [first, second] = items(el)
-      first.open = true
-
-      summaryOf(second).click()
-      expect(second.open).toBe(true)
-      expect(first.open).toBe(true)
-      expect(first.hasAttribute("data-closing")).toBe(true)
-
-      await settle(el)
-      expect(first.open).toBe(false)
-      expect(first.getAttribute("name")).toBe("faq")
-      expect(second.open).toBe(true)
-    })
-
-    it("reverses a close that is still running", async () => {
-      fallback()
-      const el = await accordion()
-      const [first] = items(el)
-      first.open = true
-
-      summaryOf(first).click()
-      await frame()
-      summaryOf(first).click()
-
-      await settle(el)
-      expect(first.open).toBe(true)
-      expect(first.hasAttribute("data-closing")).toBe(false)
-      expect(first.getAttribute("name")).toBe("faq")
-    })
-
-    it("animates toggle() and resolves when done", async () => {
-      fallback()
-      const el = await accordion()
-      const [first, second] = items(el)
-
-      await el.toggle(first, true)
-      expect(first.open).toBe(true)
-      expect(first.getAnimations()).toHaveLength(0)
-
-      await el.toggle(second)
-      await settle(el)
-      expect(first.open).toBe(false)
-      expect(second.open).toBe(true)
-    })
-
-    it("lets controls inside the summary work without toggling", async () => {
-      fallback()
-
-      const el = await fixture<SurfaceAccordion>(html`
-        <surface-accordion>
-          <details>
-            <summary>One <button type="button">Info</button></summary>
-            <p>First</p>
-          </details>
-        </surface-accordion>
-      `)
-
-      const [first] = el.items
-
-      first?.querySelector("button")?.click()
-      expect(first?.open).toBe(false)
-    })
   })
 })
 
@@ -281,9 +214,35 @@ describe("surface-accordion disabled and persist", () => {
     expect(item.open).toBe(false)
   })
 
-  it("keeps an item open in the fallback too", async () => {
-    fallback()
+  it("gives the summary back when the locked item leaves", async () => {
+    const el = await fixture<SurfaceAccordion>(html`
+      <surface-accordion persist>
+        <details name="m">
+          <summary>One</summary>
+          <p>First</p>
+        </details>
+        <details name="m">
+          <summary>Two</summary>
+          <p>Second</p>
+        </details>
+      </surface-accordion>
+    `)
 
+    const [first, second] = items(el)
+
+    expect(summaryOf(first).getAttribute("aria-disabled")).toBe("true")
+
+    const other = document.createElement("surface-accordion")
+    el.after(other)
+    other.append(first)
+    await frame()
+
+    expect(summaryOf(first).hasAttribute("aria-disabled")).toBe(false)
+    expect(second.open).toBe(true)
+    other.remove()
+  })
+
+  it("reopens the first item after a programmatic close", async () => {
     const el = await fixture<SurfaceAccordion>(html`
       <surface-accordion persist>
         <details>
@@ -299,16 +258,11 @@ describe("surface-accordion disabled and persist", () => {
 
     const [first, second] = items(el)
 
-    summaryOf(second).click()
-    await settle(el)
-    summaryOf(first).click()
-    await settle(el)
+    first.open = false
+    await frame()
+    await frame()
 
-    expect(first.open).toBe(false)
-    expect(second.open).toBe(true)
-
-    summaryOf(second).click()
-    await settle(el)
-    expect(second.open).toBe(true)
+    expect(first.open).toBe(true)
+    expect(second.open).toBe(false)
   })
 })

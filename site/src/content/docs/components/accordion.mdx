@@ -147,7 +147,7 @@ Minimal markup: native `<details>`, with a shared `name` for an exclusive group.
 </div>
 ```
 
-Minimal CSS. Where supported, `::details-content` and `interpolate-size` animate to the content's `auto` height, and `content-visibility` with `allow-discrete` keeps the content visible while it closes:
+Minimal CSS. Where supported, `::details-content` and `interpolate-size` animate to the content's `auto` height, and `content-visibility` with `allow-discrete` keeps the content visible while it closes. The panel clips only while it is closed or moving: `overflow` flips to `visible` when the opening transition ends (its delay) and back to `clip` as soon as it starts closing, so dropdowns and focus rings inside an open panel are not cut off.
 
 ```css
 @supports (interpolate-size: allow-keywords) and selector(::details-content) {
@@ -159,12 +159,16 @@ Minimal CSS. Where supported, `::details-content` and `interpolate-size` animate
     block-size: 0;
     opacity: 0;
     overflow-y: clip;
-    transition: block-size 0.3s, opacity 0.3s, content-visibility 0.3s allow-discrete;
+    transition-property: block-size, opacity, content-visibility, overflow;
+    transition-duration: 0.3s, 0.3s, 0.3s, 0s;
+    transition-behavior: allow-discrete;
   }
 
   .accordion details[open]::details-content {
     block-size: auto;
     opacity: 1;
+    overflow-y: visible;
+    transition-delay: 0s, 0s, 0s, 0.3s;
   }
 }
 ```
@@ -174,6 +178,7 @@ What the JavaScript adds, and what happens without it:
 - **Animation where CSS cannot.** Where the CSS above is not supported, a click on a `<summary>` is intercepted (`preventDefault`). Opening sets `open`, then animates the `<details>` height from its closed size to its full size with `element.animate()` and fades the content in. Closing animates down to the summary's height and removes `open` at the end. Without it, the items open and close at once, which is still correct.
 - **Exclusive groups during the animation.** Setting `open` on one item of a `name` group closes the others immediately, before they could animate. So the closing sibling loses its `name` while it animates and gets it back when done.
 - **Interruptions.** A click while an item animates starts the new animation from its current height.
+- **Overflow.** While it animates, the fallback sets `overflow: hidden` on the `<details>`; at rest nothing is clipped. Content that sticks out of a panel (a dropdown, a focus ring) is cut off only during the animation, as in the CSS above.
 - **`persist` and disabled items.** Native `<details>` cannot refuse to toggle, so the click on a locked summary is cancelled. A `toggle` listener keeps `aria-disabled` on the only open item's summary.
 - Clicks on links and controls inside the `<summary>` are left alone, and nested accordions handle their own items.
 

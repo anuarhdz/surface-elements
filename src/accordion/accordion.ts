@@ -35,6 +35,8 @@ export class SurfaceAccordion extends HTMLElement {
   #names = new WeakMap<HTMLDetailsElement, string>()
   // Summaries this element disabled for `persist`, as opposed to the author.
   #persisted = new WeakSet<HTMLElement>()
+  // Resolves the pending CSS-path toggle() of an item when a newer one starts.
+  #settles = new WeakMap<HTMLDetailsElement, () => void>()
 
   /** The direct child `<details>` elements. */
   get items(): HTMLDetailsElement[] {
@@ -56,8 +58,16 @@ export class SurfaceAccordion extends HTMLElement {
 
     this.#finish(item, open)
     item.open = open
+    this.#settles.get(item)?.()
 
-    return transitionsOf(item)
+    return new Promise((resolve) => {
+      this.#settles.set(item, resolve)
+      void transitionsOf(item).then(() => {
+        if (this.#settles.get(item) === resolve) this.#settles.delete(item)
+
+        resolve()
+      })
+    })
   }
 
   connectedCallback(): void {
@@ -66,8 +76,16 @@ export class SurfaceAccordion extends HTMLElement {
     // `toggle` does not bubble.
     this.addEventListener("toggle", this.#onToggle, true)
 
-    // Items may arrive after connection.
-    this.#observer ??= new MutationObserver(() => this.#syncPersist())
+    // Items may arrive after connection, and leave with a persist lock.
+    this.#observer ??= new MutationObserver((records) => {
+      for (const { removedNodes } of records) {
+        for (const node of removedNodes) {
+          if (node instanceof HTMLDetailsElement) this.#unlock(node)
+        }
+      }
+
+      this.#syncPersist()
+    })
     this.#observer.observe(this, { childList: true })
     this.#syncPersist()
   }
@@ -81,7 +99,10 @@ export class SurfaceAccordion extends HTMLElement {
     this.removeEventListener("toggle", this.#onToggle, true)
     this.#observer?.disconnect()
 
-    for (const item of this.items) this.#finish(item, isOpen(item))
+    for (const item of this.items) {
+      this.#finish(item, isOpen(item))
+      this.#unlock(item)
+    }
   }
 
   #onClick = (event: MouseEvent): void => {
@@ -123,14 +144,15 @@ export class SurfaceAccordion extends HTMLElement {
     if (event.target instanceof HTMLDetailsElement) this.#syncPersist()
   }
 
-  // With `persist`, opens the first item if none is open and disables the
-  // summary of the only open item; without it, gives those summaries back.
-  #syncPersist(): void {
+  // With `persist`, disables the summary of the only open item and, unless
+  // an animation is mid-way (`openFirst` false), opens the first item if none
+  // is open. Without it, gives those summaries back.
+  #syncPersist(openFirst = true): void {
     const items = this.items
     const persist = this.hasAttribute("persist")
 
-    if (persist && !items.some(isOpen)) {
-      const first = items.find((item) => !isDisabled(item))
+    if (openFirst && persist && !items.some(isOpen)) {
+      const first = items.find((item) => !this.#authorDisabled(item))
 
       if (first) first.open = true
     }
@@ -148,10 +170,26 @@ export class SurfaceAccordion extends HTMLElement {
         summary.setAttribute("aria-disabled", "true")
         this.#persisted.add(summary)
       } else if (!lock && this.#persisted.has(summary)) {
-        summary.removeAttribute("aria-disabled")
-        this.#persisted.delete(summary)
+        this.#unlock(item)
       }
     }
+  }
+
+  // Disabled in the markup, not locked by `persist`.
+  #authorDisabled(item: HTMLDetailsElement): boolean {
+    const summary = summaryOf(item)
+
+    return isDisabled(item) && !(summary && this.#persisted.has(summary))
+  }
+
+  // Gives back a summary this element disabled for `persist`.
+  #unlock(item: HTMLDetailsElement): void {
+    const summary = summaryOf(item)
+
+    if (!summary || !this.#persisted.has(summary)) return
+
+    summary.removeAttribute("aria-disabled")
+    this.#persisted.delete(summary)
   }
 
   // Only the fallback needs JavaScript; the styles animate where CSS can.
@@ -220,8 +258,9 @@ export class SurfaceAccordion extends HTMLElement {
     ]
 
     this.#animations.set(item, animations)
-    // A closing item no longer counts as open for `persist`.
-    this.#syncPersist()
+    // A closing item no longer counts as open for `persist`. Opening the first
+    // item here would race the item this animation is about to open.
+    this.#syncPersist(false)
 
     try {
       await Promise.all(animations.map((animation) => animation.finished))
@@ -306,11 +345,18 @@ async function transitionsOf(item: HTMLDetailsElement): Promise<void> {
   if (total === 0) return
 
   // The transition starts with the next rendered frame.
-  await new Promise(requestAnimationFrame)
+  await nextFrame()
   await new Promise((resolve) => setTimeout(resolve, total))
   // Computed styles follow the timeline, which only advances per frame.
-  await new Promise(requestAnimationFrame)
+  await nextFrame()
 }
+
+// A rendered frame, or a timeout where none come (a hidden tab).
+const nextFrame = (): Promise<void> =>
+  new Promise((resolve) => {
+    requestAnimationFrame(() => resolve())
+    setTimeout(resolve, 100)
+  })
 
 // Everything the summary reveals.
 const panels = (item: HTMLDetailsElement): HTMLElement[] =>
@@ -342,15 +388,29 @@ function closedHeight(item: HTMLDetailsElement): number {
   return height
 }
 
+// Unregistered custom properties compute to their raw tokens, a calc() too,
+// so they are resolved through properties that take a time and an easing.
 function timingOf(item: HTMLDetailsElement): KeyframeAnimationOptions {
-  const style = getComputedStyle(item)
-  const duration = style.getPropertyValue("--surface-accordion-duration").trim()
-  const easing = style.getPropertyValue("--surface-accordion-easing").trim()
+  const hadStyle = item.hasAttribute("style")
+  const { animationDuration, animationTimingFunction } = item.style
+  item.style.animationDuration = "var(--surface-accordion-duration, 0.3s)"
+  item.style.animationTimingFunction = "var(--surface-accordion-easing, ease)"
 
-  return {
-    duration: duration ? milliseconds(duration) : 300,
-    easing: easing || "ease",
+  const style = getComputedStyle(item)
+
+  const timing = {
+    duration: milliseconds(style.animationDuration),
+    easing: style.animationTimingFunction || "ease",
   }
+
+  item.style.animationDuration = animationDuration
+  item.style.animationTimingFunction = animationTimingFunction
+
+  if (!hadStyle && item.getAttribute("style") === "") {
+    item.removeAttribute("style")
+  }
+
+  return timing
 }
 
 const milliseconds = (time: string): number => {

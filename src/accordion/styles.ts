@@ -21,15 +21,20 @@ export const accordionStyles = /* css */ `
 
   @supports (interpolate-size: allow-keywords) and selector(::details-content) {
     surface-accordion > details {
+      --_duration: var(--surface-accordion-duration, 0.3s);
+
       interpolate-size: allow-keywords;
     }
 
+    /* Clips only while closed or moving: overflow flips to visible once the
+       open transition ends (its delay), and back to clip as closing starts. */
     surface-accordion > details::details-content {
       block-size: 0;
       opacity: 0;
       overflow-y: clip;
-      transition-property: block-size, opacity, content-visibility;
-      transition-duration: var(--surface-accordion-duration, 0.3s);
+      transition-property: block-size, opacity, content-visibility, overflow;
+      transition-duration: var(--_duration), var(--_duration), var(--_duration), 0s;
+      transition-delay: 0s;
       transition-timing-function: var(--surface-accordion-easing, ease);
       transition-behavior: allow-discrete;
     }
@@ -37,12 +42,14 @@ export const accordionStyles = /* css */ `
     surface-accordion > details[open]::details-content {
       block-size: auto;
       opacity: 1;
+      overflow-y: visible;
+      transition-delay: 0s, 0s, 0s, var(--_duration);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    surface-accordion > details::details-content {
-      transition-duration: 0s;
+    surface-accordion > details {
+      --_duration: 0s;
     }
   }
 }

@@ -34,15 +34,20 @@ const accordionStyles = `
 
   @supports (interpolate-size: allow-keywords) and selector(::details-content) {
     surface-accordion > details {
+      --_duration: var(--surface-accordion-duration, 0.3s);
+
       interpolate-size: allow-keywords;
     }
 
+    /* Clips only while closed or moving: overflow flips to visible once the
+       open transition ends (its delay), and back to clip as closing starts. */
     surface-accordion > details::details-content {
       block-size: 0;
       opacity: 0;
       overflow-y: clip;
-      transition-property: block-size, opacity, content-visibility;
-      transition-duration: var(--surface-accordion-duration, 0.3s);
+      transition-property: block-size, opacity, content-visibility, overflow;
+      transition-duration: var(--_duration), var(--_duration), var(--_duration), 0s;
+      transition-delay: 0s;
       transition-timing-function: var(--surface-accordion-easing, ease);
       transition-behavior: allow-discrete;
     }
@@ -50,12 +55,14 @@ const accordionStyles = `
     surface-accordion > details[open]::details-content {
       block-size: auto;
       opacity: 1;
+      overflow-y: visible;
+      transition-delay: 0s, 0s, 0s, var(--_duration);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    surface-accordion > details::details-content {
-      transition-duration: 0s;
+    surface-accordion > details {
+      --_duration: 0s;
     }
   }
 }
@@ -108,6 +115,7 @@ var SurfaceAccordion = class extends HTMLElement {
 	#animations = /* @__PURE__ */ new WeakMap();
 	#names = /* @__PURE__ */ new WeakMap();
 	#persisted = /* @__PURE__ */ new WeakSet();
+	#settles = /* @__PURE__ */ new WeakMap();
 	/** The direct child `<details>` elements. */
 	get items() {
 		return [...this.querySelectorAll(":scope > details")];
@@ -124,13 +132,23 @@ var SurfaceAccordion = class extends HTMLElement {
 		if (this.#animates()) return this.#animate(item, open);
 		this.#finish(item, open);
 		item.open = open;
-		return transitionsOf(item);
+		this.#settles.get(item)?.();
+		return new Promise((resolve) => {
+			this.#settles.set(item, resolve);
+			transitionsOf(item).then(() => {
+				if (this.#settles.get(item) === resolve) this.#settles.delete(item);
+				resolve();
+			});
+		});
 	}
 	connectedCallback() {
 		adoptAccordionStyles();
 		this.addEventListener("click", this.#onClick);
 		this.addEventListener("toggle", this.#onToggle, true);
-		this.#observer ??= new MutationObserver(() => this.#syncPersist());
+		this.#observer ??= new MutationObserver((records) => {
+			for (const { removedNodes } of records) for (const node of removedNodes) if (node instanceof HTMLDetailsElement) this.#unlock(node);
+			this.#syncPersist();
+		});
 		this.#observer.observe(this, { childList: true });
 		this.#syncPersist();
 	}
@@ -141,7 +159,10 @@ var SurfaceAccordion = class extends HTMLElement {
 		this.removeEventListener("click", this.#onClick);
 		this.removeEventListener("toggle", this.#onToggle, true);
 		this.#observer?.disconnect();
-		for (const item of this.items) this.#finish(item, isOpen(item));
+		for (const item of this.items) {
+			this.#finish(item, isOpen(item));
+			this.#unlock(item);
+		}
 	}
 	#onClick = (event) => {
 		if (event.defaultPrevented) return;
@@ -162,11 +183,11 @@ var SurfaceAccordion = class extends HTMLElement {
 	#onToggle = (event) => {
 		if (event.target instanceof HTMLDetailsElement) this.#syncPersist();
 	};
-	#syncPersist() {
+	#syncPersist(openFirst = true) {
 		const items = this.items;
 		const persist = this.hasAttribute("persist");
-		if (persist && !items.some(isOpen)) {
-			const first = items.find((item) => !isDisabled(item));
+		if (openFirst && persist && !items.some(isOpen)) {
+			const first = items.find((item) => !this.#authorDisabled(item));
 			if (first) first.open = true;
 		}
 		const open = items.filter(isOpen);
@@ -177,11 +198,18 @@ var SurfaceAccordion = class extends HTMLElement {
 			if (lock && !isDisabled(item)) {
 				summary.setAttribute("aria-disabled", "true");
 				this.#persisted.add(summary);
-			} else if (!lock && this.#persisted.has(summary)) {
-				summary.removeAttribute("aria-disabled");
-				this.#persisted.delete(summary);
-			}
+			} else if (!lock && this.#persisted.has(summary)) this.#unlock(item);
 		}
+	}
+	#authorDisabled(item) {
+		const summary = summaryOf(item);
+		return isDisabled(item) && !(summary && this.#persisted.has(summary));
+	}
+	#unlock(item) {
+		const summary = summaryOf(item);
+		if (!summary || !this.#persisted.has(summary)) return;
+		summary.removeAttribute("aria-disabled");
+		this.#persisted.delete(summary);
 	}
 	#animates() {
 		return "animate" in Element.prototype && !supportsDetailsAnimation() && !matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -225,7 +253,7 @@ var SurfaceAccordion = class extends HTMLElement {
 			blockSize: `${to}px`
 		}], timing), ...content.map((el, i) => el.animate({ opacity: [opacity[i] ?? "1", open ? "1" : "0"] }, timing))];
 		this.#animations.set(item, animations);
-		this.#syncPersist();
+		this.#syncPersist(false);
 		try {
 			await Promise.all(animations.map((animation) => animation.finished));
 		} catch {
@@ -268,10 +296,14 @@ async function transitionsOf(item) {
 	const delays = style.transitionDelay.split(",").map(milliseconds);
 	const total = Math.max(0, ...style.transitionDuration.split(",").map((duration, i) => milliseconds(duration) + (delays[i] ?? 0)));
 	if (total === 0) return;
-	await new Promise(requestAnimationFrame);
+	await nextFrame();
 	await new Promise((resolve) => setTimeout(resolve, total));
-	await new Promise(requestAnimationFrame);
+	await nextFrame();
 }
+const nextFrame = () => new Promise((resolve) => {
+	requestAnimationFrame(() => resolve());
+	setTimeout(resolve, 100);
+});
 const panels = (item) => [...item.children].filter((el) => el instanceof HTMLElement && el.localName !== "summary");
 function closedHeight(item) {
 	const style = getComputedStyle(item);
@@ -289,13 +321,19 @@ function closedHeight(item) {
 	return height;
 }
 function timingOf(item) {
+	const hadStyle = item.hasAttribute("style");
+	const { animationDuration, animationTimingFunction } = item.style;
+	item.style.animationDuration = "var(--surface-accordion-duration, 0.3s)";
+	item.style.animationTimingFunction = "var(--surface-accordion-easing, ease)";
 	const style = getComputedStyle(item);
-	const duration = style.getPropertyValue("--surface-accordion-duration").trim();
-	const easing = style.getPropertyValue("--surface-accordion-easing").trim();
-	return {
-		duration: duration ? milliseconds(duration) : 300,
-		easing: easing || "ease"
+	const timing = {
+		duration: milliseconds(style.animationDuration),
+		easing: style.animationTimingFunction || "ease"
 	};
+	item.style.animationDuration = animationDuration;
+	item.style.animationTimingFunction = animationTimingFunction;
+	if (!hadStyle && item.getAttribute("style") === "") item.removeAttribute("style");
+	return timing;
 }
 const milliseconds = (time) => {
 	const value = Number.parseFloat(time) || 0;
