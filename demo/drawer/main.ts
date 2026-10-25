@@ -1,5 +1,6 @@
 import "../../src/drawer/drawer.js"
 import type { SurfaceDrawer } from "../../src/drawer/drawer.js"
+import { supportsClosedBy, supportsTopLayerExit } from "../../src/dialog/dialog.js"
 import { isScrollLocked } from "../../src/scroll-lock/scroll-lock.js"
 import { hud } from "../shared/hud.js"
 
@@ -45,6 +46,27 @@ document.addEventListener(
   true
 )
 
+// Pointer trail on open dialogs, to debug light dismiss on touch devices.
+let lastPointer = "-"
+for (const type of ["pointerdown", "pointerup", "pointercancel", "click"]) {
+  document.addEventListener(
+    type,
+    (event) => {
+      const { target, clientX, clientY } = event as PointerEvent
+
+      if (!(target instanceof HTMLDialogElement)) return
+      const rect = target.getBoundingClientRect()
+      const outside =
+        clientX < rect.left ||
+        clientX > rect.right ||
+        clientY < rect.top ||
+        clientY > rect.bottom
+      lastPointer = `${type} ${Math.round(clientX)},${Math.round(clientY)} ${outside ? "backdrop" : "dialog"}`
+    },
+    true
+  )
+}
+
 const fill = (selector: string, count: number) => {
   document.querySelector(selector)?.append(
     ...Array.from({ length: count }, (_, i) => {
@@ -80,5 +102,8 @@ hud(() => {
     scrollY: Math.round(window.scrollY),
     dir: document.documentElement.dir || "ltr",
     returnValue: lastReturn,
+    pointer: lastPointer,
+    "closedby native": supportsClosedBy(),
+    "exit native": supportsTopLayerExit(),
   }
 })
