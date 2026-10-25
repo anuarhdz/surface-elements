@@ -99,6 +99,22 @@ surface-drawer:is([edge="top"], [edge="bottom"]) .drawer-layout {
   padding-inline-start: 1.25rem;
 }
 
+/* Modal content */
+surface-modal > dialog,
+surface-modal[scroll="page"] > dialog > * {
+  --surface-modal-background: var(--sl-color-bg);
+  --surface-modal-color: var(--sl-color-white);
+}
+
+.modal-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-layout :is(h2, p) {
+  margin: 0;
+}
+
 /* Sticky header demo: a scroll container standing in for the page. */
 .sticky-frame {
   inline-size: 100%;

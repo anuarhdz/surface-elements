@@ -93,6 +93,27 @@ if (!("commandForElement" in HTMLButtonElement.prototype)) {
 }
 ```
 
+## Modal
+
+A centered modal is a native `<dialog>` inside `<surface-modal>`, at the same three levels as the drawer: `modal.css`, the `surface-elements/dialog` functions, or the web component.
+
+```js
+import "surface-elements/modal"
+```
+
+```html
+<button commandfor="settings" command="show-modal">Settings</button>
+
+<surface-modal size="small">
+  <dialog id="settings" closedby="any" aria-labelledby="settings-title">
+    <h2 id="settings-title">Settings</h2>
+    <button commandfor="settings" command="close">Close</button>
+  </dialog>
+</surface-modal>
+```
+
+`size` is `small`, `medium` (default), `large` or `full`. `scroll="page"` lets a long modal grow and scrolls the layer around it; wrap the content in one element. For alerts and confirmations use `role="alertdialog"` on the dialog. Same API as the drawer; theme with `--surface-modal-*`.
+
 ## Agent skill
 
 The package ships a skill that teaches coding agents how to use it, generated from the source and the docs on every build.

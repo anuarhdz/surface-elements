@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="data:," />
+    <title>surface-modal · playground</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        position: sticky;
+        inset-block-start: 0;
+        padding-block: 0.5rem;
+        background: Canvas;
+      }
+
+      .panel {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .panel :is(h2, p) {
+        margin: 0;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .head h2 {
+        margin: 0;
+        font-size: 1.125rem;
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+      }
+
+      #sticky {
+        padding-block: 0;
+      }
+
+      #sticky .head,
+      #sticky .foot {
+        position: sticky;
+        padding-block: 1rem;
+        background: Canvas;
+      }
+
+      #sticky .head {
+        inset-block-start: 0;
+      }
+
+      #sticky .foot {
+        inset-block-end: 0;
+        text-align: end;
+      }
+
+      #themed-modal {
+        --surface-modal-radius: 1.5rem;
+        --surface-modal-border: 2px solid rgb(37 99 235);
+        --surface-modal-backdrop: rgb(37 99 235 / 0.25);
+        --surface-modal-backdrop-filter: blur(4px);
+        --surface-modal-duration: 0.5s;
+      }
+
+      .filler p {
+        max-inline-size: 60ch;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>surface-modal</h1>
+
+    <div class="controls">
+      <button type="button" commandfor="size-small" command="show-modal">small</button>
+      <button type="button" commandfor="size-medium" command="show-modal">medium</button>
+      <button type="button" commandfor="size-large" command="show-modal">large</button>
+      <button type="button" commandfor="size-full" command="show-modal">full</button>
+      <button type="button" commandfor="confirm" command="show-modal">confirm (alertdialog)</button>
+      <button type="button" commandfor="long-inside" command="show-modal">long, inside</button>
+      <button type="button" commandfor="long-page" command="show-modal">long, page</button>
+      <button type="button" commandfor="long-page-full" command="show-modal">long, page + full</button>
+      <button type="button" commandfor="sticky" command="show-modal">sticky head/foot</button>
+      <button type="button" commandfor="themed" command="show-modal">themed</button>
+      <button type="button" commandfor="unlocked" command="show-modal">no-scroll-lock</button>
+      <button type="button" commandfor="nested" command="show-modal">nested</button>
+      <button type="button" data-action="toggle">toggle() medium</button>
+      <button type="button" data-action="auto-close">show(), close() after 2 s</button>
+    </div>
+
+    <surface-modal size="small">
+      <dialog id="size-small" closedby="any" aria-labelledby="size-small-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="size-small-title">small</h2>
+            <button type="button" commandfor="size-small" command="close" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal>
+      <dialog id="size-medium" closedby="any" aria-labelledby="size-medium-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="size-medium-title">medium (default)</h2>
+            <button type="button" commandfor="size-medium" command="close" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal size="large">
+      <dialog id="size-large" closedby="any" aria-labelledby="size-large-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="size-large-title">large</h2>
+            <button type="button" commandfor="size-large" command="close" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal size="full">
+      <dialog id="size-full" closedby="any" aria-labelledby="size-full-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="size-full-title">full</h2>
+            <button type="button" commandfor="size-full" command="close" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal>
+      <dialog id="long-inside" closedby="any" aria-labelledby="long-inside-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="long-inside-title">Long, scroll inside</h2>
+            <button type="button" commandfor="long-inside" command="close" aria-label="Close">✕</button>
+          </div>
+          <ol class="items" data-count="60"></ol>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal scroll="page">
+      <dialog id="long-page" closedby="any" aria-labelledby="long-page-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="long-page-title">Long, scroll="page"</h2>
+            <button type="button" commandfor="long-page" command="close" aria-label="Close">✕</button>
+          </div>
+          <ol class="items" data-count="60"></ol>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal scroll="page" size="full">
+      <dialog id="long-page-full" closedby="any" aria-labelledby="long-page-full-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="long-page-full-title">Long, page + full</h2>
+            <button type="button" commandfor="long-page-full" command="close" aria-label="Close">✕</button>
+          </div>
+          <ol class="items" data-count="60"></ol>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal size="small">
+      <dialog id="sticky" closedby="any" aria-labelledby="sticky-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="sticky-title">Sticky header and footer</h2>
+            <button type="button" commandfor="sticky" command="close" aria-label="Close">✕</button>
+          </div>
+          <ol class="items" data-count="40"></ol>
+          <div class="foot"><button type="button" commandfor="sticky" command="close">Done</button></div>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal id="themed-modal">
+      <dialog id="themed" closedby="any" aria-labelledby="themed-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="themed-title">Themed</h2>
+            <button type="button" commandfor="themed" command="close" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal no-scroll-lock>
+      <dialog id="unlocked" closedby="any" aria-labelledby="unlocked-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="unlocked-title">no-scroll-lock</h2>
+            <button type="button" commandfor="unlocked" command="close" aria-label="Close">✕</button>
+          </div>
+          <p>The page behind keeps scrolling.</p>
+        </div>
+      </dialog>
+    </surface-modal>
+    <surface-modal>
+      <dialog id="nested" closedby="any" aria-labelledby="nested-title">
+        <div class="panel">
+          <div class="head">
+            <h2 id="nested-title">Opens another modal</h2>
+            <button type="button" commandfor="nested" command="close" aria-label="Close">✕</button>
+          </div>
+          <button type="button" commandfor="size-small" command="show-modal">Open small on top</button>
+        </div>
+      </dialog>
+    </surface-modal>
+
+    <surface-modal size="small">
+      <dialog id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+        <form method="dialog" class="panel">
+          <h2 id="confirm-title">Delete this file?</h2>
+          <p id="confirm-text">This cannot be undone. Esc answers with an empty returnValue; the backdrop does nothing.</p>
+          <div class="actions">
+            <button value="cancel" autofocus>Cancel</button>
+            <button value="delete">Delete</button>
+          </div>
+        </form>
+      </dialog>
+    </surface-modal>
+
+    <div class="filler"></div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
