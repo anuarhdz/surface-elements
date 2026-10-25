@@ -15,7 +15,7 @@ release()
 
 ## `lockScroll()`
 
-Sets `overflow: hidden` on `<html>` and `<body>` and returns a release function.
+Sets `overflow: hidden` on `<html>` and returns a release function.
 
 - **Ref-counted.** The page unlocks when every caller has released. Stacked drawers each hold their own lock.
 - **Idempotent release.** Calling a release twice is harmless.

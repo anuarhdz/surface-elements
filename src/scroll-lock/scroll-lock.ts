@@ -2,7 +2,9 @@ let locks = 0
 let unlock: (() => void) | undefined
 
 /**
- * Blocks page scroll by setting `overflow: hidden` on `<html>` and `<body>`.
+ * Blocks page scroll by setting `overflow: hidden` on `<html>`. `<body>` is left
+ * alone: hiding its overflow too would make it a scroll container and unstick
+ * every `position: sticky` element on a scrolled page.
  * Ref-counted: the page unlocks when every caller has released its lock.
  * Returns an idempotent release function.
  */
@@ -29,11 +31,9 @@ export function isScrollLocked(): boolean {
 
 function applyLock(): () => void {
   const html = document.documentElement
-  const body = document.body
 
   const previous = {
     htmlOverflow: html.style.getPropertyValue("overflow"),
-    bodyOverflow: body.style.getPropertyValue("overflow"),
     gutter: html.style.getPropertyValue("scrollbar-gutter"),
   }
 
@@ -44,11 +44,9 @@ function applyLock(): () => void {
   }
 
   html.style.setProperty("overflow", "hidden")
-  body.style.setProperty("overflow", "hidden")
 
   return () => {
     restore(html, "overflow", previous.htmlOverflow)
-    restore(body, "overflow", previous.bodyOverflow)
     restore(html, "scrollbar-gutter", previous.gutter)
   }
 }
