@@ -1,9 +1,11 @@
 import {
   isScrollLocked,
+  supportsDetailsAnimation,
   supportsClosedBy,
   supportsTopLayerExit,
   type SurfaceDrawer,
 } from "surface-elements"
+import "surface-elements/accordion"
 import "surface-elements/drawer"
 import "surface-elements/header"
 
@@ -57,6 +59,7 @@ for (const el of document.querySelectorAll<HTMLElement>("[data-support]")) {
     ["top-layer exit transitions", supportsTopLayerExit()],
     ["invoker commands", "commandForElement" in HTMLButtonElement.prototype],
     [":state()", "CustomStateSet" in globalThis],
+    ["<details> animation (CSS)", supportsDetailsAnimation()],
   ]
   el.replaceChildren(
     ...rows.map(([name, native]) => {

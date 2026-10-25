@@ -12,6 +12,7 @@ The target is [Baseline](https://web.dev/baseline) newly available. Newer featur
 | Exit transitions out of the top layer | `overlay` and `transition-behavior: allow-discrete` | `routeCloseRequests()` and `closeAnimated()` via `data-closing`  |
 | Entry transitions                     | `@starting-style`                                   | None. The drawer appears without sliding in.                     |
 | Invoker commands (`commandfor`)       | Opens and closes from HTML                          | **Not included.** Load a polyfill (below).                       |
+| `<details>` open/close animation      | `::details-content` and `interpolate-size`          | `<surface-accordion>` animates with Web Animations               |
 | `:state()`                            | `surface-drawer:state(open)`                         | None. Style `dialog[open]` instead.                              |
 | `:modal`                              | Modal detection                                     | Treats any open dialog as modal.                                 |
 

@@ -1,0 +1,68 @@
+/**
+ * Accordion styles for the `<details>` directly inside `<surface-accordion>`.
+ * Light DOM, wrapped in the `surface-elements` cascade layer so any unlayered
+ * consumer rule wins. The selectors match before the web component is defined,
+ * so the styles also work without its JavaScript.
+ *
+ * Where `::details-content` and `interpolate-size` exist (Chromium), the
+ * open and close animation is pure CSS. Elsewhere the panels toggle at once,
+ * and the web component animates them with the Web Animations API.
+ */
+export const accordionStyles = /* css */ `
+@layer surface-elements {
+  surface-accordion {
+    display: block;
+  }
+
+  @supports (interpolate-size: allow-keywords) and selector(::details-content) {
+    surface-accordion > details {
+      interpolate-size: allow-keywords;
+    }
+
+    surface-accordion > details::details-content {
+      block-size: 0;
+      opacity: 0;
+      overflow-y: clip;
+      transition-property: block-size, opacity, content-visibility;
+      transition-duration: var(--surface-accordion-duration, 0.3s);
+      transition-timing-function: var(--surface-accordion-easing, ease);
+      transition-behavior: allow-discrete;
+    }
+
+    surface-accordion > details[open]::details-content {
+      block-size: auto;
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    surface-accordion > details::details-content {
+      transition-duration: 0s;
+    }
+  }
+}
+`
+
+let adopted = false
+
+/** Adds {@link accordionStyles} to the document once. */
+export function adoptAccordionStyles(root: Document = document): void {
+  if (adopted) return
+  adopted = true
+
+  if (
+    "adoptedStyleSheets" in root &&
+    "replaceSync" in CSSStyleSheet.prototype
+  ) {
+    const sheet = new CSSStyleSheet()
+    sheet.replaceSync(accordionStyles)
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, sheet]
+
+    return
+  }
+
+  const style = root.createElement("style")
+  style.dataset["surfaceElements"] = "accordion"
+  style.textContent = accordionStyles
+  root.head.append(style)
+}
