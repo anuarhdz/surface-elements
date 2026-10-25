@@ -36,6 +36,8 @@ document.addEventListener(
 
     if (dialog instanceof HTMLDialogElement) {
       lastReturn = `#${dialog.id} "${dialog.returnValue}"`
+      // Browsers keep the last value; reset so Esc next time reads as "".
+      dialog.returnValue = ""
     }
   },
   true

@@ -53,9 +53,17 @@ An alert or a confirmation interrupts the user and needs an answer. It is the sa
 </surface-modal>
 ```
 
-- Leave out `closedby="any"`: a stray click on the backdrop should not answer the question. Esc still closes it, with an empty `returnValue`.
+- Leave out `closedby="any"`: a stray click on the backdrop should not answer the question. Esc still closes it without setting `returnValue`.
 - Put `autofocus` on the least destructive button.
-- Read the answer from `dialog.returnValue` in its `close` event. An alert has a single button.
+- Read the answer from `dialog.returnValue` in its `close` event, then set it back to `""`. The browser never clears it, so without the reset, Esc after an earlier "Delete" reads as `"delete"` again.
+- An alert has a single button.
+
+```js
+dialog.addEventListener("close", () => {
+  if (dialog.returnValue === "delete") deleteFile()
+  dialog.returnValue = ""
+})
+```
 
 ### Long content
 
