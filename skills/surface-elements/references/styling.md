@@ -23,20 +23,7 @@ If you use layers yourself, declare the order once:
 
 Set them on the dialog, on `<surface-drawer>` or on any ancestor.
 
-| Property                   | Default                                              |
-| -------------------------- | ---------------------------------------------------- |
-| `--surface-drawer-size`            | `28rem` for `start`/`end`, `auto` for `top`/`bottom` |
-| `--surface-drawer-max-size`        | `calc(100% - 3rem)`                                  |
-| `--surface-drawer-padding`         | `1rem`                                               |
-| `--surface-drawer-background`      | `Canvas`                                             |
-| `--surface-drawer-color`           | `CanvasText`                                         |
-| `--surface-drawer-border`          | `none`                                               |
-| `--surface-drawer-radius`          | `0`                                                  |
-| `--surface-drawer-shadow`          | `0 0 2rem rgb(0 0 0 / 0.2)`                          |
-| `--surface-drawer-backdrop`        | `rgb(0 0 0 / 0.5)`                                   |
-| `--surface-drawer-backdrop-filter` | `none`                                               |
-| `--surface-drawer-duration`        | `0.3s`                                               |
-| `--surface-drawer-easing`          | `cubic-bezier(0.38, 0.005, 0.215, 1)`                |
+See the `<surface-drawer>` tables under "API reference (generated from source)" in [drawer.md](drawer.md).
 
 ```html
 <surface-drawer edge="bottom">

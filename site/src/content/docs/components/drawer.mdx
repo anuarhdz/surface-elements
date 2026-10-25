@@ -4,6 +4,8 @@ description: The surface-drawer web component, a native dialog that slides in fr
 ---
 
 import { Aside } from "@astrojs/starlight/components"
+import ApiReference from "../../../components/api-reference.astro"
+import CopyFile from "../../../components/copy-file.astro"
 import Demo from "../../../components/demo.astro"
 
 `<surface-drawer>` turns the native `<dialog>` inside it into a drawer. The dialog stays the source of truth: open state lives in `dialog.open`, and nothing mirrors it.
@@ -95,32 +97,13 @@ The import defines the web component, which adds the styles to the document, so 
 
 ## Copy
 
-<Aside>
-  The copy file for this web component is not generated yet. Until it is,
-  install the package.
-</Aside>
+<CopyFile tag="surface-drawer" />
 
 ## API
 
-| Member                | Type                                   | Does                                                      |
-| --------------------- | -------------------------------------- | --------------------------------------------------------- |
-| `show()`              | `() => void`                           | Opens the dialog as a modal. Cancels an exit in progress. |
-| `close(returnValue?)` | `(string?) => Promise<void>`           | Closes after the exit transition. Resolves when closed.   |
-| `toggle()`            | `() => void`                           | Calls `show()` or `close()`.                              |
-| `open`                | `boolean`, read-only                   | `dialog.open`.                                            |
-| `dialog`              | `HTMLDialogElement \| null`, read-only | The direct child dialog.                                  |
+<ApiReference tag="surface-drawer" />
 
-| Attribute        | Does                                                         |
-| ---------------- | ------------------------------------------------------------ |
-| `edge`           | `end` (default), `start`, `top` or `bottom`.                 |
-| `no-scroll-lock` | Leaves page scroll alone while the drawer is open.           |
-
-| Selector                                | Matches                                           |
-| --------------------------------------- | ------------------------------------------------- |
-| `surface-drawer:state(open)`            | The web component while its dialog is open.       |
-| `surface-drawer > dialog[data-closing]` | The dialog while a fallback exit animation plays. |
-
-The web component is `display: contents`, so it adds no box to the layout. The `--surface-drawer-*` custom properties are listed in [Styling](/guides/styling/#custom-properties).
+The web component is `display: contents`, so it adds no box to the layout. While a fallback exit animation plays, its dialog carries `data-closing`: select it with `surface-drawer > dialog[data-closing]`.
 
 <Demo label="Scroll lock opt-out">
   <button type="button" commandfor="unlocked" command="show-modal">Open without scroll lock</button>

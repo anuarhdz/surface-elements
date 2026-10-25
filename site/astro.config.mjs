@@ -54,7 +54,11 @@ export default defineConfig({
         },
         {
           label: "Guides",
-          items: ["guides/styling", "guides/browser-support"],
+          items: [
+            "guides/without-installing",
+            "guides/styling",
+            "guides/browser-support",
+          ],
         },
       ],
     }),

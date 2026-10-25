@@ -1,0 +1,42 @@
+---
+/**
+ * The generated copy file of a web component (copy/<tag>.js), shown with a
+ * copy button. `pnpm build` writes it; CI fails if it is stale.
+ */
+import { Code } from "@astrojs/starlight/components"
+
+interface Props {
+  tag: string
+}
+
+const files = import.meta.glob<string>("../../../copy/*.js", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+})
+
+const { tag } = Astro.props
+const name = `${tag}.js`
+const code = files[`../../../copy/${name}`]
+
+if (code === undefined) {
+  throw new Error(`No copy file for <${tag}> in copy/. Run pnpm build.`)
+}
+
+const size = `${(new TextEncoder().encode(code).length / 1024).toFixed(1)} kB`
+---
+
+<p>
+  The whole web component in one file, with its styles and dependencies
+  inlined. Save it as <code>{name}</code> in your project and load it as a
+  module. Nothing to install, and no updates unless you copy it again: see <a
+    href="/guides/without-installing/">Use without installing</a
+  >.
+</p>
+
+<Code code={`<script type="module" src="/${name}"></script>`} lang="html" />
+
+<details>
+  <summary><code>{name}</code> ({size})</summary>
+  <Code code={code} lang="js" title={name} />
+</details>

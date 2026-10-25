@@ -50,11 +50,11 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Agent skill is up to date
+      - name: Agent skill and copy files are up to date
         run: |
-          if [ -n "$(git status --porcelain -- skills)" ]; then
-            git status --short -- skills
-            echo "::error::skills/ is stale. Run pnpm build and commit the result."
+          if [ -n "$(git status --porcelain -- skills copy)" ]; then
+            git status --short -- skills copy
+            echo "::error::skills/ or copy/ is stale. Run pnpm build and commit the result."
             exit 1
           fi
 

@@ -4,65 +4,19 @@
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { basename, dirname, join } from "node:path"
 
+import {
+  params,
+  publicMembers,
+  type Declaration,
+  type Manifest,
+  type Module,
+} from "./manifest.ts"
+
 const PACKAGE = "surface-elements"
 const DOCS = "site/src/content/docs"
 const OUT = `skills/${PACKAGE}`
 // Pages already covered by SKILL.md itself.
 const SKIP_PAGES = new Set(["index", "getting-started"])
-
-interface Type {
-  text: string
-}
-interface Parameter {
-  name: string
-  type?: Type
-  optional?: boolean
-  default?: string
-  description?: string
-}
-interface Member {
-  kind: "field" | "method"
-  name: string
-  static?: boolean
-  privacy?: string
-  readonly?: boolean
-  type?: Type
-  description?: string
-  parameters?: Parameter[]
-  return?: { type?: Type }
-}
-interface Named {
-  name: string
-  description?: string
-  type?: Type
-  default?: string
-}
-interface Declaration {
-  kind: "class" | "function" | "variable" | "mixin"
-  name: string
-  description?: string
-  tagName?: string
-  customElement?: boolean
-  members?: Member[]
-  attributes?: Named[]
-  events?: Named[]
-  slots?: Named[]
-  cssParts?: Named[]
-  cssStates?: Named[]
-  cssProperties?: Named[]
-  parameters?: Parameter[]
-  return?: { type?: Type }
-  type?: Type
-}
-interface Module {
-  path: string
-  declarations?: Declaration[]
-  exports?: {
-    kind: string
-    name: string
-    declaration?: { name: string; module?: string }
-  }[]
-}
 
 interface Page {
   slug: string
@@ -71,7 +25,7 @@ interface Page {
   body: string
 }
 
-const manifest: { modules: Module[] } = JSON.parse(
+const manifest: Manifest = JSON.parse(
   readFileSync("dist/custom-elements.json", "utf8")
 )
 // The analyzer does not emit modules in a stable order.
@@ -237,9 +191,7 @@ function renderClass(decl: Declaration, specifier = PACKAGE): string {
       "\n```"
   )
 
-  const members = (decl.members ?? []).filter(
-    (m) => !m.static && m.privacy !== "private" && !m.name.startsWith("#")
-  )
+  const members = publicMembers(decl)
   const fields = members.filter((m) => m.kind === "field")
   const methods = members.filter((m) => m.kind === "method")
 
@@ -370,15 +322,6 @@ function renderVariable(decl: Declaration, specifier = PACKAGE): string {
   return out.join("\n\n")
 }
 
-function params(list: Parameter[] = [], typed = false): string {
-  return list
-    .map((p) => {
-      const name = `${p.name}${p.optional || p.default ? "?" : ""}`
-      return typed && p.type ? `${name}: ${p.type.text}` : name
-    })
-    .join(", ")
-}
-
 function code(text?: string): string {
   return text ? `\`${text}\`` : ""
 }
@@ -452,6 +395,15 @@ function mdxToMarkdown(mdx: string): string {
     mdx
       .replace(/^(?:\s*import\s[\s\S]*?\sfrom\s+["'][^"']+["'];?)+/, "")
       .replace(/<Demo\b[\s\S]*?<\/Demo>/g, "")
+      .replace(
+        /<CopyFile\s+([^>]*?)\/>/g,
+        (_, attrs: string) =>
+          `The copy file is \`copy/${attr(attrs, "tag")}.js\` in the repository: the whole web component in one ES module, with its styles and dependencies inlined. Load it with \`<script type="module" src="/${attr(attrs, "tag")}.js"></script>\`.`
+      )
+      .replace(/<ApiReference\s+([^>]*?)\/>/g, (_, attrs: string) => {
+        const tag = attr(attrs, "tag")
+        return `See the \`<${tag}>\` tables under "API reference (generated from source)" in [${slugForTag(tag)}.md](${slugForTag(tag)}.md).`
+      })
       .replace(/<\/?(?:CardGrid|Tabs)\b[^>]*>/g, "")
       .replace(
         /<LinkCard\s+([\s\S]*?)\/>/g,
@@ -487,6 +439,15 @@ function mdxToMarkdown(mdx: string): string {
           SKIP_PAGES.has(slug) ? `](../SKILL.md${hash})` : `](${slug}.md${hash})`
       )
   )
+}
+
+// Folder under src/ of the module that defines a tag, which is also the slug
+// of its reference file.
+function slugForTag(tag: string): string {
+  const mod = manifest.modules.find((m) =>
+    m.declarations?.some((decl) => decl.tagName === tag)
+  )
+  return mod ? basename(dirname(mod.path)) : tag
 }
 
 function attr(attrs: string, name: string): string {

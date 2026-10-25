@@ -31,29 +31,13 @@ The import defines the web component, which adds the styles to the document, so 
 
 ## Copy
 
-> **Note:** The copy file for this web component is not generated yet. Until it is, install the package.
+The copy file is `copy/surface-drawer.js` in the repository: the whole web component in one ES module, with its styles and dependencies inlined. Load it with `<script type="module" src="/surface-drawer.js"></script>`.
 
 ## API
 
-| Member                | Type                                   | Does                                                      |
-| --------------------- | -------------------------------------- | --------------------------------------------------------- |
-| `show()`              | `() => void`                           | Opens the dialog as a modal. Cancels an exit in progress. |
-| `close(returnValue?)` | `(string?) => Promise<void>`           | Closes after the exit transition. Resolves when closed.   |
-| `toggle()`            | `() => void`                           | Calls `show()` or `close()`.                              |
-| `open`                | `boolean`, read-only                   | `dialog.open`.                                            |
-| `dialog`              | `HTMLDialogElement \| null`, read-only | The direct child dialog.                                  |
+See the `<surface-drawer>` tables under "API reference (generated from source)" in [drawer.md](drawer.md).
 
-| Attribute        | Does                                                         |
-| ---------------- | ------------------------------------------------------------ |
-| `edge`           | `end` (default), `start`, `top` or `bottom`.                 |
-| `no-scroll-lock` | Leaves page scroll alone while the drawer is open.           |
-
-| Selector                                | Matches                                           |
-| --------------------------------------- | ------------------------------------------------- |
-| `surface-drawer:state(open)`            | The web component while its dialog is open.       |
-| `surface-drawer > dialog[data-closing]` | The dialog while a fallback exit animation plays. |
-
-The web component is `display: contents`, so it adds no box to the layout. The `--surface-drawer-*` custom properties are listed in [Styling](styling.md#custom-properties).
+The web component is `display: contents`, so it adds no box to the layout. While a fallback exit animation plays, its dialog carries `data-closing`: select it with `surface-drawer > dialog[data-closing]`.
 
 ## If you implement it by hand
 

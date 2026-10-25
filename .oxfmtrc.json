@@ -11,6 +11,7 @@
   "arrowParens": "always",
   "ignorePatterns": [
     "dist/**",
+    "copy/**",
     ".vscode",
     ".claude",
     ".agents",
