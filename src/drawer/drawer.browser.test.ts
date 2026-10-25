@@ -43,3 +43,32 @@ describe("surface-drawer accessibility", () => {
     await el.close()
   })
 })
+
+const overscroll = (el: SurfaceDrawer) => {
+  const dialog = el.dialog!
+
+  return [
+    getComputedStyle(dialog).overscrollBehaviorY,
+    getComputedStyle(dialog, "::backdrop").overscrollBehaviorY,
+  ]
+}
+
+describe("surface-drawer scroll containment", () => {
+  afterEach(() => fixtureCleanup())
+
+  it("contains scroll on the dialog and its backdrop by default", async () => {
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer><dialog>Hi</dialog></surface-drawer>`
+    )
+
+    expect(overscroll(el)).toEqual(["contain", "contain"])
+  })
+
+  it("lets scroll chain to the page with no-scroll-lock", async () => {
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer no-scroll-lock><dialog>Hi</dialog></surface-drawer>`
+    )
+
+    expect(overscroll(el)).toEqual(["auto", "auto"])
+  })
+})

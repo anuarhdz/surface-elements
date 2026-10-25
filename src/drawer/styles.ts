@@ -48,7 +48,6 @@ export const drawerStyles = /* css */ `
     max-inline-size: var(--_max-size);
 
     overflow: auto;
-    overscroll-behavior: contain;
 
     translate: var(--_hidden);
     opacity: var(--_hidden-opacity);
@@ -87,6 +86,13 @@ export const drawerStyles = /* css */ `
     --_y: 100%;
   }
 
+  /* Scroll containment is part of the scroll lock: with it, wheel and touch
+     over the drawer never reach the page, so no-scroll-lock drops it. */
+  surface-drawer:not([no-scroll-lock]) > dialog,
+  surface-drawer:not([no-scroll-lock]) > dialog::backdrop {
+    overscroll-behavior: contain;
+  }
+
   /* ::backdrop reads the public properties directly: older engines do not
      let it inherit from the dialog. */
   surface-drawer > dialog::backdrop {
@@ -94,7 +100,6 @@ export const drawerStyles = /* css */ `
     backdrop-filter: var(--surface-drawer-backdrop-filter, none);
     opacity: 0;
     overflow: hidden;
-    overscroll-behavior: contain;
     transition-property: opacity, display, overlay;
     transition-duration: var(--surface-drawer-duration, 0.3s);
     transition-timing-function: var(--surface-drawer-easing, ease-out);
