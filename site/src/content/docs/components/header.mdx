@@ -95,6 +95,22 @@ surface-header {
 
 The header does not copy the hero's color: a transparent background shows whatever is behind it, images and gradients included. Give the hero enough padding at the top for the header, for example `padding-block-start: var(--surface-header-height)`.
 
+The element measures its height with JavaScript, so on first paint the variable does not exist yet and the hero would jump up once it loads. Give it a fallback per breakpoint that matches your header:
+
+```css
+surface-header {
+  margin-block-end: calc(-1 * var(--surface-header-height, 50px));
+}
+
+@media (width >= 64rem) {
+  surface-header {
+    margin-block-end: calc(-1 * var(--surface-header-height, 120px));
+  }
+}
+```
+
+After that, every size change (breakpoints, rotation, a header that wraps) is measured live: hiding, the overlay and `--surface-header-height` follow the current height.
+
 ### Style the stuck state
 
 `:state(stuck)` matches while the header is stuck. Style the header inside it, for example to add a shadow or make it smaller.
