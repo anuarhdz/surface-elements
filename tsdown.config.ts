@@ -4,7 +4,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     "header/header": "src/header/header.ts",
-    "dialog-drawer/dialog-drawer": "src/dialog-drawer/dialog-drawer.ts",
+    "drawer/drawer": "src/drawer/drawer.ts",
     "dialog/dialog": "src/dialog/dialog.ts",
     "scroll-lock/scroll-lock": "src/scroll-lock/scroll-lock.ts",
   },

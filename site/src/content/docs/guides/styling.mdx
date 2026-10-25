@@ -11,7 +11,7 @@ Every rule ships inside `@layer surface-elements`. Any rule you write outside a 
 
 ```css
 /* Beats the library's padding, no specificity games. */
-dialog[data-drawer] {
+surface-drawer > dialog {
   padding: 2rem;
 }
 ```
@@ -24,33 +24,32 @@ If you use layers yourself, declare the order once:
 
 ## Custom properties
 
-Set them on the dialog, or on any ancestor.
+Set them on the dialog, on `<surface-drawer>` or on any ancestor.
 
 | Property                   | Default                                              |
 | -------------------------- | ---------------------------------------------------- |
-| `--drawer-size`            | `28rem` for `start`/`end`, `auto` for `top`/`bottom` |
-| `--drawer-max-size`        | `calc(100% - 3rem)`                                  |
-| `--drawer-padding`         | `1rem`                                               |
-| `--drawer-background`      | `Canvas`                                             |
-| `--drawer-color`           | `CanvasText`                                         |
-| `--drawer-border`          | `none`                                               |
-| `--drawer-radius`          | `0`                                                  |
-| `--drawer-shadow`          | `0 0 2rem rgb(0 0 0 / 0.2)`                          |
-| `--drawer-backdrop`        | `rgb(0 0 0 / 0.5)`                                   |
-| `--drawer-backdrop-filter` | `none`                                               |
-| `--drawer-duration`        | `0.3s`                                               |
-| `--drawer-easing`          | `cubic-bezier(0.38, 0.005, 0.215, 1)`                |
+| `--surface-drawer-size`            | `28rem` for `start`/`end`, `auto` for `top`/`bottom` |
+| `--surface-drawer-max-size`        | `calc(100% - 3rem)`                                  |
+| `--surface-drawer-padding`         | `1rem`                                               |
+| `--surface-drawer-background`      | `Canvas`                                             |
+| `--surface-drawer-color`           | `CanvasText`                                         |
+| `--surface-drawer-border`          | `none`                                               |
+| `--surface-drawer-radius`          | `0`                                                  |
+| `--surface-drawer-shadow`          | `0 0 2rem rgb(0 0 0 / 0.2)`                          |
+| `--surface-drawer-backdrop`        | `rgb(0 0 0 / 0.5)`                                   |
+| `--surface-drawer-backdrop-filter` | `none`                                               |
+| `--surface-drawer-duration`        | `0.3s`                                               |
+| `--surface-drawer-easing`          | `cubic-bezier(0.38, 0.005, 0.215, 1)`                |
 
 <Demo label="Themed drawer">
   <button type="button" commandfor="themed" command="show-modal">Open themed drawer</button>
 
-  <dialog-drawer>
+  <surface-drawer edge="bottom">
     <dialog
       id="themed"
-      data-drawer="bottom"
       closedby="any"
       aria-labelledby="themed-title"
-      style="--drawer-radius: 1rem 1rem 0 0; --drawer-padding: 1.5rem; --drawer-backdrop: rgb(0 0 0 / 0.25); --drawer-backdrop-filter: blur(4px); --drawer-duration: 0.5s; --drawer-max-size: 60vh"
+      style="--surface-drawer-radius: 1rem 1rem 0 0; --surface-drawer-padding: 1.5rem; --surface-drawer-backdrop: rgb(0 0 0 / 0.25); --surface-drawer-backdrop-filter: blur(4px); --surface-drawer-duration: 0.5s; --surface-drawer-max-size: 60vh"
     >
       <div class="drawer-layout">
         <div class="drawer-head">
@@ -59,34 +58,35 @@ Set them on the dialog, or on any ancestor.
         </div>
       </div>
     </dialog>
-  </dialog-drawer>
+  </surface-drawer>
 </Demo>
 
 ```html
-<dialog
-  data-drawer="bottom"
-  style="
-    --drawer-radius: 1rem 1rem 0 0;
-    --drawer-padding: 1.5rem;
-    --drawer-backdrop: rgb(0 0 0 / 0.25);
-    --drawer-backdrop-filter: blur(4px);
-    --drawer-duration: 0.5s;
-    --drawer-max-size: 60vh;
-  "
-></dialog>
+<surface-drawer edge="bottom">
+  <dialog
+    style="
+      --surface-drawer-radius: 1rem 1rem 0 0;
+      --surface-drawer-padding: 1.5rem;
+      --surface-drawer-backdrop: rgb(0 0 0 / 0.25);
+      --surface-drawer-backdrop-filter: blur(4px);
+      --surface-drawer-duration: 0.5s;
+      --surface-drawer-max-size: 60vh;
+    "
+  ></dialog>
+</surface-drawer>
 ```
 
 ## State hooks
 
-| Selector                            | Matches                                      |
-| ----------------------------------- | -------------------------------------------- |
-| `dialog[data-drawer][open]`         | An open drawer.                              |
-| `dialog[data-drawer][data-closing]` | A drawer playing a fallback exit animation.  |
-| `dialog-drawer:state(open)`         | The custom element while its dialog is open. |
+| Selector                                 | Matches                                      |
+| ---------------------------------------- | -------------------------------------------- |
+| `surface-drawer > dialog[open]`          | An open drawer.                              |
+| `surface-drawer > dialog[data-closing]`  | A drawer playing a fallback exit animation.  |
+| `surface-drawer:state(open)`             | The web component while its dialog is open.  |
 
 ```css
 /* Dim the trigger area while the cart is open. */
-body:has(dialog-drawer:state(open)) .toolbar {
+body:has(surface-drawer:state(open)) .toolbar {
   opacity: 0.5;
 }
 ```

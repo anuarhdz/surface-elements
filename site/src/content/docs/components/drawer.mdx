@@ -1,0 +1,180 @@
+---
+title: Drawer
+description: The surface-drawer web component, a native dialog that slides in from any edge.
+---
+
+import { Aside } from "@astrojs/starlight/components"
+import Demo from "../../../components/demo.astro"
+
+`<surface-drawer>` turns the native `<dialog>` inside it into a drawer. The dialog stays the source of truth: open state lives in `dialog.open`, and nothing mirrors it.
+
+## Install and use
+
+```js
+import "surface-elements/drawer"
+```
+
+```html
+<button commandfor="cart" command="show-modal">Cart</button>
+
+<surface-drawer>
+  <dialog id="cart" closedby="any" aria-labelledby="cart-title">
+    <h2 id="cart-title">Cart</h2>
+    <button commandfor="cart" command="close">Close</button>
+  </dialog>
+</surface-drawer>
+```
+
+The import defines the web component, which adds the styles to the document, so there is no CSS to import. It enhances its direct child dialog, rebinds when you swap it, and cleans up when it leaves the page.
+
+- `command="show-modal"` opens it as a modal, in the top layer, with focus moved inside.
+- `closedby="any"` closes it on Esc and on a click on the backdrop.
+- `<form method="dialog">` closes it and sets `returnValue` from the submit button.
+
+`edge` sets the edge: `end` (the default), `start`, `top` or `bottom`. Inline edges follow the writing direction, so `end` is on the left in RTL.
+
+<Demo label="Edges">
+  <button type="button" commandfor="edge-end" command="show-modal">end</button>
+  <button type="button" commandfor="edge-start" command="show-modal">start</button>
+  <button type="button" commandfor="edge-top" command="show-modal">top</button>
+  <button type="button" commandfor="edge-bottom" command="show-modal">bottom</button>
+  <button type="button" data-action="toggle-dir">Toggle LTR / RTL</button>
+
+  <surface-drawer>
+    <dialog id="edge-end" closedby="any" aria-labelledby="edge-end-title">
+      <div class="drawer-head">
+        <h2 id="edge-end-title">end</h2>
+        <button type="button" commandfor="edge-end" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </surface-drawer>
+  <surface-drawer edge="start">
+    <dialog id="edge-start" closedby="any" aria-labelledby="edge-start-title">
+      <div class="drawer-head">
+        <h2 id="edge-start-title">start</h2>
+        <button type="button" commandfor="edge-start" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </surface-drawer>
+  <surface-drawer edge="top">
+    <dialog id="edge-top" closedby="any" aria-labelledby="edge-top-title">
+      <div class="drawer-head">
+        <h2 id="edge-top-title">top</h2>
+        <button type="button" commandfor="edge-top" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </surface-drawer>
+  <surface-drawer edge="bottom">
+    <dialog id="edge-bottom" closedby="any" aria-labelledby="edge-bottom-title">
+      <div class="drawer-head">
+        <h2 id="edge-bottom-title">bottom</h2>
+        <button type="button" commandfor="edge-bottom" command="close" aria-label="Close">✕</button>
+      </div>
+    </dialog>
+  </surface-drawer>
+</Demo>
+
+<Demo label="Driven from JS">
+  <button type="button" data-action="show" data-target="#api-drawer">show()</button>
+  <button type="button" data-action="toggle" data-target="#api-drawer">toggle()</button>
+  <button type="button" data-action="auto-close" data-target="#api-drawer">show(), then close("timeout") after 2 s</button>
+  <output for="api-dialog"></output>
+
+  <surface-drawer id="api-drawer" edge="start">
+    <dialog id="api-dialog" closedby="any" aria-labelledby="api-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="api-title">Driven from JS</h2>
+          <button type="button" commandfor="api-dialog" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>The methods call the same functions you can use on your own.</p>
+      </div>
+    </dialog>
+  </surface-drawer>
+</Demo>
+
+## Copy
+
+<Aside>
+  The copy file for this web component is not generated yet. Until it is,
+  install the package.
+</Aside>
+
+## API
+
+| Member                | Type                                   | Does                                                      |
+| --------------------- | -------------------------------------- | --------------------------------------------------------- |
+| `show()`              | `() => void`                           | Opens the dialog as a modal. Cancels an exit in progress. |
+| `close(returnValue?)` | `(string?) => Promise<void>`           | Closes after the exit transition. Resolves when closed.   |
+| `toggle()`            | `() => void`                           | Calls `show()` or `close()`.                              |
+| `open`                | `boolean`, read-only                   | `dialog.open`.                                            |
+| `dialog`              | `HTMLDialogElement \| null`, read-only | The direct child dialog.                                  |
+
+| Attribute        | Does                                                         |
+| ---------------- | ------------------------------------------------------------ |
+| `edge`           | `end` (default), `start`, `top` or `bottom`.                 |
+| `no-scroll-lock` | Leaves page scroll alone while the drawer is open.           |
+
+| Selector                                | Matches                                           |
+| --------------------------------------- | ------------------------------------------------- |
+| `surface-drawer:state(open)`            | The web component while its dialog is open.       |
+| `surface-drawer > dialog[data-closing]` | The dialog while a fallback exit animation plays. |
+
+The web component is `display: contents`, so it adds no box to the layout. The `--surface-drawer-*` custom properties are listed in [Styling](/guides/styling/#custom-properties).
+
+<Demo label="Scroll lock opt-out">
+  <button type="button" commandfor="unlocked" command="show-modal">Open without scroll lock</button>
+  <span data-lock-status></span>
+
+  <surface-drawer edge="bottom" no-scroll-lock>
+    <dialog id="unlocked" closedby="any" aria-labelledby="unlocked-title">
+      <div class="drawer-layout">
+        <div class="drawer-head">
+          <h2 id="unlocked-title">no-scroll-lock</h2>
+          <button type="button" commandfor="unlocked" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>The page behind can still scroll.</p>
+      </div>
+    </dialog>
+  </surface-drawer>
+</Demo>
+
+## If you implement it by hand
+
+### Markup
+
+The same as above. Keep the `<surface-drawer>` wrapper even without the JavaScript: the styles select `surface-drawer > dialog`, and an undefined tag still renders its children.
+
+### CSS
+
+Load the stylesheet instead of the web component. No JavaScript from this library runs.
+
+```css
+@import "surface-elements/drawer.css";
+```
+
+You get the layout, the edges and the enter and exit transitions where the browser supports them natively. The rules live in `@layer surface-elements`, so any unlayered rule of yours wins.
+
+### What the JavaScript adds
+
+The web component calls [`enhanceDialog()`](/functions/dialog/) on its dialog and adds the styles. Without it:
+
+- The exit transition only plays where the browser animates out of the top layer. Elsewhere the drawer closes without animating.
+- `closedby="any"` only works where it is native. Elsewhere a backdrop click does nothing.
+- Page scroll is not locked while the drawer is open.
+- `surface-drawer:state(open)` never matches. Style `surface-drawer > dialog[open]` instead.
+
+To get the first three without the web component, call `enhanceDialog(dialog)` yourself and keep the CSS import. Do not do both on the same dialog.
+
+### Accessibility
+
+- Label the dialog. Point `aria-labelledby` at its heading, or set `aria-label`.
+- Give it a visible close button. Esc and the backdrop are not discoverable for everyone.
+- Focus, the inert page behind and Esc come from the native modal dialog. The library does not reimplement them.
+- Under `prefers-reduced-motion: reduce` the drawer fades instead of sliding.
+
+Why the dialog lives in light DOM: [ADR 0001](https://github.com/anuarhdz/surface-elements/blob/main/docs/adr/0001-light-dom-dialog-enhancement.md).
+
+### Browser support
+
+See [Browser support](/guides/browser-support/) for what is native, what falls back and which polyfills you may load.

@@ -184,22 +184,22 @@
 
       /* Customization through the public custom properties */
       #sheet {
-        --drawer-radius: 1rem 1rem 0 0;
-        --drawer-max-size: 85dvh;
-        --drawer-padding: 1.25rem;
+        --surface-drawer-radius: 1rem 1rem 0 0;
+        --surface-drawer-max-size: 85dvh;
+        --surface-drawer-padding: 1.25rem;
       }
 
       #search {
-        --drawer-backdrop: rgb(37 99 235 / 0.25);
-        --drawer-backdrop-filter: blur(4px);
+        --surface-drawer-backdrop: rgb(37 99 235 / 0.25);
+        --surface-drawer-backdrop-filter: blur(4px);
       }
 
       #menu {
-        --drawer-size: 18rem;
+        --surface-drawer-size: 18rem;
       }
 
       /* Styling from the element's custom state */
-      body:has(dialog-drawer:state(open)) surface-header strong::after {
+      body:has(surface-drawer:state(open)) surface-header strong::after {
         content: " · drawer abierto";
         color: var(--accent);
       }
@@ -224,7 +224,7 @@
     </surface-header>
 
     <main>
-      <h1>dialog-drawer</h1>
+      <h1>surface-drawer</h1>
       <p>
         Abre un drawer e intenta hacer scroll en la página (rueda, touch,
         teclado). El indicador de abajo a la izquierda muestra
@@ -260,7 +260,7 @@
         <div class="control">
           <strong>Bottom sheet</strong>
           <p>
-            <code>data-drawer="bottom"</code>, contenido largo con scroll
+            <code>edge="bottom"</code>, contenido largo con scroll
             interno.
           </p>
           <button type="button" commandfor="sheet" command="show-modal">
@@ -271,23 +271,13 @@
         <div class="control">
           <strong>Top + backdrop custom</strong>
           <p>
-            <code>data-drawer="top"</code>, <code>--drawer-backdrop</code>.
+            <code>edge="top"</code>, <code>--surface-drawer-backdrop</code>.
           </p>
           <button type="button" commandfor="search" command="show-modal">
             Abrir búsqueda
           </button>
         </div>
 
-        <div class="control">
-          <strong>Solo funciones</strong>
-          <p>
-            <code>&lt;dialog&gt;</code> sin custom element +
-            <code>enhanceDialog()</code>.
-          </p>
-          <button type="button" commandfor="bare" command="show-modal">
-            Abrir dialog
-          </button>
-        </div>
 
         <div class="control">
           <strong>Sin bloqueo de scroll</strong>
@@ -322,10 +312,9 @@
     </main>
 
     <!-- Cart: declarative, light dismiss, form method="dialog", nested drawer -->
-    <dialog-drawer>
+    <surface-drawer>
       <dialog
         id="cart"
-        data-drawer="end"
         closedby="any"
         aria-labelledby="cart-title"
       >
@@ -353,13 +342,12 @@
           </div>
         </form>
       </dialog>
-    </dialog-drawer>
+    </surface-drawer>
 
     <!-- Menu: start edge, opened from the element API and the header -->
-    <dialog-drawer id="menu-drawer">
+    <surface-drawer edge="start" id="menu-drawer">
       <dialog
         id="menu"
-        data-drawer="start"
         closedby="any"
         aria-labelledby="menu-title"
       >
@@ -384,13 +372,12 @@
           </ul>
         </nav>
       </dialog>
-    </dialog-drawer>
+    </surface-drawer>
 
     <!-- Bottom sheet with long inner content -->
-    <dialog-drawer>
+    <surface-drawer edge="bottom">
       <dialog
         id="sheet"
-        data-drawer="bottom"
         closedby="any"
         aria-labelledby="sheet-title"
       >
@@ -407,13 +394,12 @@
         </div>
         <ul class="drawer-list" id="sheet-items"></ul>
       </dialog>
-    </dialog-drawer>
+    </surface-drawer>
 
     <!-- Top drawer -->
-    <dialog-drawer>
+    <surface-drawer edge="top">
       <dialog
         id="search"
-        data-drawer="top"
         closedby="any"
         aria-labelledby="search-title"
       >
@@ -423,41 +409,12 @@
           <button type="submit" value="search">Ir</button>
         </form>
       </dialog>
-    </dialog-drawer>
-
-    <!-- No custom element: enhanceDialog() from main.ts -->
-    <dialog
-      id="bare"
-      data-drawer="end"
-      closedby="any"
-      aria-labelledby="bare-title"
-    >
-      <div class="drawer-layout">
-        <div class="drawer-head">
-          <h2 id="bare-title">Solo funciones</h2>
-          <button
-            type="button"
-            commandfor="bare"
-            command="close"
-            aria-label="Cerrar"
-          >
-            ✕
-          </button>
-        </div>
-        <p>
-          Este <code>&lt;dialog&gt;</code> no tiene
-          <code>&lt;dialog-drawer&gt;</code>: los estilos vienen de
-          <code>data-drawer</code> y el comportamiento de
-          <code>enhanceDialog(dialog)</code>.
-        </p>
-      </div>
-    </dialog>
+    </surface-drawer>
 
     <!-- Scroll lock disabled -->
-    <dialog-drawer no-scroll-lock>
+    <surface-drawer no-scroll-lock>
       <dialog
         id="unlocked"
-        data-drawer="end"
         closedby="any"
         aria-labelledby="unlocked-title"
       >
@@ -474,7 +431,7 @@
         </div>
         <p>Con este drawer abierto la página de atrás sí hace scroll.</p>
       </dialog>
-    </dialog-drawer>
+    </surface-drawer>
 
     <output class="status" id="status" aria-hidden="true"></output>
 

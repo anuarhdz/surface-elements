@@ -25,8 +25,8 @@ The package is ESM only and has no dependencies.
 | Import                               | Contains                                                   |
 | ------------------------------------ | ---------------------------------------------------------- |
 | `surface-elements`                   | Everything below.                                          |
-| `surface-elements/dialog-drawer`     | The `<dialog-drawer>` element. Registers itself on import. |
-| `surface-elements/dialog-drawer.css` | The drawer styles for CSS-only use.                        |
+| `surface-elements/drawer`     | The `<surface-drawer>` element. Registers itself on import. |
+| `surface-elements/drawer.css` | The drawer styles for CSS-only use.                        |
 | `surface-elements/dialog`            | Dialog enhancement functions.                              |
 | `surface-elements/scroll-lock`       | The ref-counted page scroll lock.                          |
 | `surface-elements/header`            | The `<surface-header>` element. Registers itself on import. |
@@ -37,36 +37,35 @@ Importing an element module defines the element once. Importing it twice, or alo
 ## Your first drawer
 
 ```js
-import "surface-elements/dialog-drawer"
+import "surface-elements/drawer"
 ```
 
 ```html
 <button commandfor="cart" command="show-modal">Cart</button>
 
-<dialog-drawer>
+<surface-drawer>
   <dialog
     id="cart"
-    data-drawer="end"
     closedby="any"
     aria-labelledby="cart-title"
   >
     <h2 id="cart-title">Cart</h2>
     <button commandfor="cart" command="close">Close</button>
   </dialog>
-</dialog-drawer>
+</surface-drawer>
 ```
 
-The button opens the dialog through [invoker commands](https://developer.mozilla.org/docs/Web/API/Invoker_Commands_API). The custom element adds the styles, the animated close and the scroll lock. Read [Browser support](/guides/browser-support/) before you ship to older browsers.
+The button opens the dialog through [invoker commands](https://developer.mozilla.org/docs/Web/API/Invoker_Commands_API). The web component adds the styles, the animated close and the scroll lock. Read [Browser support](/guides/browser-support/) before you ship to older browsers.
 
 <CardGrid>
   <LinkCard
     title="Drawer"
     description="The three ways to use it, with live demos."
-    href="/components/dialog-drawer/"
+    href="/components/drawer/"
   />
   <LinkCard
     title="Dialog functions"
-    description="Enhance any dialog without the custom element."
+    description="Enhance any dialog without the web component."
     href="/functions/dialog/"
   />
 </CardGrid>

@@ -2,26 +2,26 @@ import { fixture, fixtureCleanup, html } from "@open-wc/testing-helpers"
 import { afterEach, describe, expect, it } from "vitest"
 
 import { isScrollLocked } from "../scroll-lock/scroll-lock.js"
-import { DialogDrawer } from "./dialog-drawer.js"
+import { SurfaceDrawer } from "./drawer.js"
 
 const flush = () => new Promise((resolve) => setTimeout(resolve))
 
 const drawer = () =>
-  fixture<DialogDrawer>(
-    html`<dialog-drawer><dialog data-drawer>Hi</dialog></dialog-drawer>`
+  fixture<SurfaceDrawer>(
+    html`<surface-drawer><dialog>Hi</dialog></surface-drawer>`
   )
 
-describe("dialog-drawer", () => {
+describe("surface-drawer", () => {
   afterEach(() => fixtureCleanup())
 
-  it("registers the custom element", () => {
-    expect(customElements.get(DialogDrawer.tagName)).toBe(DialogDrawer)
+  it("registers the web component", () => {
+    expect(customElements.get(SurfaceDrawer.tagName)).toBe(SurfaceDrawer)
   })
 
   it("adopts the drawer styles", async () => {
     await drawer()
     expect(
-      document.querySelector('style[data-surface-elements="dialog-drawer"]')
+      document.querySelector('style[data-surface-elements="surface-drawer"]')
     ).not.toBeNull()
   })
 
@@ -70,8 +70,8 @@ describe("dialog-drawer", () => {
   })
 
   it("skips the lock with no-scroll-lock", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer no-scroll-lock><dialog></dialog></dialog-drawer>`
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer no-scroll-lock><dialog></dialog></surface-drawer>`
     )
 
     el.show()
@@ -93,8 +93,8 @@ describe("dialog-drawer", () => {
   })
 
   it("locks when no-scroll-lock is removed while open", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer no-scroll-lock><dialog></dialog></dialog-drawer>`
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer no-scroll-lock><dialog></dialog></surface-drawer>`
     )
 
     el.show()
@@ -135,8 +135,8 @@ describe("dialog-drawer", () => {
   })
 
   it("enhances a dialog added after connection", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer></dialog-drawer>`
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer></surface-drawer>`
     )
 
     el.append(document.createElement("dialog"))
@@ -159,8 +159,8 @@ describe("dialog-drawer", () => {
   })
 
   it("closes on a backdrop click when closedby is any", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer><dialog closedby="any">Hi</dialog></dialog-drawer>`
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer><dialog closedby="any">Hi</dialog></surface-drawer>`
     )
 
     el.show()
@@ -174,8 +174,8 @@ describe("dialog-drawer", () => {
   })
 
   it("keeps the drawer open on a click inside the dialog", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer><dialog closedby="any">Hi</dialog></dialog-drawer>`
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer><dialog closedby="any">Hi</dialog></surface-drawer>`
     )
 
     el.show()
@@ -205,8 +205,8 @@ describe("dialog-drawer", () => {
   })
 
   it("does not throw or lock without a dialog child", async () => {
-    const el = await fixture<DialogDrawer>(
-      html`<dialog-drawer></dialog-drawer>`
+    const el = await fixture<SurfaceDrawer>(
+      html`<surface-drawer></surface-drawer>`
     )
 
     expect(() => el.show()).not.toThrow()

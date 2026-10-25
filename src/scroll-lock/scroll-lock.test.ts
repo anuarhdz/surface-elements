@@ -11,15 +11,14 @@ describe("lockScroll", () => {
     body.removeAttribute("style")
   })
 
-  it("hides overflow on html and body", () => {
+  it("hides overflow on html and leaves body alone", () => {
     const release = lockScroll()
     expect(html.style.overflow).toBe("hidden")
-    expect(body.style.overflow).toBe("hidden")
+    expect(body.style.overflow).toBe("")
     expect(isScrollLocked()).toBe(true)
 
     release()
     expect(html.style.overflow).toBe("")
-    expect(body.style.overflow).toBe("")
     expect(isScrollLocked()).toBe(false)
   })
 
@@ -47,12 +46,12 @@ describe("lockScroll", () => {
   })
 
   it("restores the inline values it found", () => {
-    body.style.overflow = "clip"
+    html.style.overflow = "clip"
     html.style.setProperty("scrollbar-gutter", "auto")
 
     lockScroll()()
 
-    expect(body.style.overflow).toBe("clip")
+    expect(html.style.overflow).toBe("clip")
     expect(html.style.getPropertyValue("scrollbar-gutter")).toBe("auto")
   })
 })
