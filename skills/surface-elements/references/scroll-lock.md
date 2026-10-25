@@ -12,7 +12,7 @@ release()
 
 ## `lockScroll()`
 
-Sets `overflow: hidden` on `<html>` and `<body>` and returns a release function.
+Sets `overflow: hidden` on `<html>` and returns a release function.
 
 - **Ref-counted.** The page unlocks when every caller has released. Stacked drawers each hold their own lock.
 - **Idempotent release.** Calling a release twice is harmless.
@@ -39,7 +39,9 @@ Platform guidance prefers `overscroll-behavior: contain` on the dialog and its b
 
 ### `lockScroll()`
 
-Blocks page scroll by setting `overflow: hidden` on `<html>` and `<body>`.
+Blocks page scroll by setting `overflow: hidden` on `<html>`. `<body>` is left
+alone: hiding its overflow too would make it a scroll container and unstick
+every `position: sticky` element on a scrolled page.
 Ref-counted: the page unlocks when every caller has released its lock.
 Returns an idempotent release function.
 

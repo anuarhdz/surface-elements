@@ -12,24 +12,26 @@ pnpm add surface-elements
 
 ## Drawer
 
-A drawer is a native `<dialog>` with `data-drawer`. Use it at the level you need.
+A drawer is a native `<dialog>` inside `<surface-drawer>`. Use it at the level you need.
 
 ### 1. HTML + CSS
 
 ```js
-import "surface-elements/dialog-drawer.css" // or @import it from your CSS
+import "surface-elements/drawer.css" // or @import it from your CSS
 ```
 
 ```html
 <button commandfor="cart" command="show-modal">Cart</button>
 
-<dialog id="cart" data-drawer="end" closedby="any" aria-labelledby="cart-title">
-  <h2 id="cart-title">Cart</h2>
-  <button commandfor="cart" command="close">Close</button>
-</dialog>
+<surface-drawer>
+  <dialog id="cart" closedby="any" aria-labelledby="cart-title">
+    <h2 id="cart-title">Cart</h2>
+    <button commandfor="cart" command="close">Close</button>
+  </dialog>
+</surface-drawer>
 ```
 
-`data-drawer` is the edge: `end` (default), `start`, `top` or `bottom`.
+The styles match the tag even when its JavaScript is not loaded. `edge` is the edge: `end` (default), `start`, `top` or `bottom`.
 
 ### 2. Functions
 
@@ -51,33 +53,33 @@ await closeAnimated(dialog, "done")
 
 `lockScroll()` from `surface-elements/scroll-lock` is the ref-counted lock on its own.
 
-### 3. Custom element
+### 3. Web component
 
 ```js
-import "surface-elements/dialog-drawer"
+import "surface-elements/drawer"
 ```
 
 ```html
-<dialog-drawer>
-  <dialog id="cart" data-drawer="end" closedby="any" aria-labelledby="cart-title">
+<surface-drawer>
+  <dialog id="cart" closedby="any" aria-labelledby="cart-title">
     …
   </dialog>
-</dialog-drawer>
+</surface-drawer>
 ```
 
-Wraps level 2 and adds the styles to the document. API: `show()`, `close(returnValue?)`, `toggle()`, `open`, `dialog`. Styling hook: `dialog-drawer:state(open)`. Attribute `no-scroll-lock` opts out of the scroll lock.
+Defines `<surface-drawer>`, which runs level 2 on its dialog and adds the styles to the document. API: `show()`, `close(returnValue?)`, `toggle()`, `open`, `dialog`. Styling hook: `surface-drawer:state(open)`. Attribute `no-scroll-lock` opts out of the scroll lock.
 
 ### Custom properties
 
 | Property | Default |
 | --- | --- |
-| `--drawer-size` | `28rem` (inline) / `auto` (block) |
-| `--drawer-max-size` | `calc(100% - 3rem)` |
-| `--drawer-padding` | `1rem` |
-| `--drawer-background` / `--drawer-color` | `Canvas` / `CanvasText` |
-| `--drawer-border` / `--drawer-radius` / `--drawer-shadow` | `none` / `0` / soft shadow |
-| `--drawer-backdrop` / `--drawer-backdrop-filter` | `rgb(0 0 0 / 0.5)` / `none` |
-| `--drawer-duration` / `--drawer-easing` | `0.3s` / ease-out curve |
+| `--surface-drawer-size` | `28rem` (inline) / `auto` (block) |
+| `--surface-drawer-max-size` | `calc(100% - 3rem)` |
+| `--surface-drawer-padding` | `1rem` |
+| `--surface-drawer-background` / `--surface-drawer-color` | `Canvas` / `CanvasText` |
+| `--surface-drawer-border` / `--surface-drawer-radius` / `--surface-drawer-shadow` | `none` / `0` / soft shadow |
+| `--surface-drawer-backdrop` / `--surface-drawer-backdrop-filter` | `rgb(0 0 0 / 0.5)` / `none` |
+| `--surface-drawer-duration` / `--surface-drawer-easing` | `0.3s` / ease-out curve |
 
 Styles live in `@layer surface-elements`, so any unlayered rule overrides them.
 

@@ -1,21 +1,23 @@
 /**
- * Drawer styles for `dialog[data-drawer]`. Light DOM, wrapped in the
- * `surface-elements` cascade layer so any unlayered consumer rule wins.
+ * Drawer styles for the `<dialog>` directly inside `<surface-drawer>`. Light
+ * DOM, wrapped in the `surface-elements` cascade layer so any unlayered
+ * consumer rule wins. The selectors match before the web component is defined,
+ * so the styles also work without its JavaScript.
  *
- * `data-drawer` takes the edge the drawer is attached to:
- * `end` (default, also the empty value), `start`, `top` or `bottom`.
+ * `edge` on the tag takes the edge the drawer is attached to:
+ * `end` (default, also missing or empty), `start`, `top` or `bottom`.
  */
 export const drawerStyles = /* css */ `
 @layer surface-elements {
-  dialog-drawer {
+  surface-drawer {
     display: contents;
   }
 
-  dialog[data-drawer] {
-    --_size: var(--drawer-size, 28rem);
-    --_max-size: var(--drawer-max-size, calc(100% - 3rem));
-    --_duration: var(--drawer-duration, 0.3s);
-    --_easing: var(--drawer-easing, cubic-bezier(0.38, 0.005, 0.215, 1));
+  surface-drawer > dialog {
+    --_size: var(--surface-drawer-size, 28rem);
+    --_max-size: var(--surface-drawer-max-size, calc(100% - 3rem));
+    --_duration: var(--surface-drawer-duration, 0.3s);
+    --_easing: var(--surface-drawer-easing, cubic-bezier(0.38, 0.005, 0.215, 1));
 
     /* Hidden offset: --_x/--_y per edge, --_dir flips inline edges in RTL,
        --_motion drops the slide under reduced motion. */
@@ -29,12 +31,12 @@ export const drawerStyles = /* css */ `
     box-sizing: border-box;
     position: fixed;
     margin: 0;
-    padding: var(--drawer-padding, 1rem);
-    border: var(--drawer-border, none);
-    border-radius: var(--drawer-radius, 0);
-    background: var(--drawer-background, Canvas);
-    color: var(--drawer-color, CanvasText);
-    box-shadow: var(--drawer-shadow, 0 0 2rem rgb(0 0 0 / 0.2));
+    padding: var(--surface-drawer-padding, 1rem);
+    border: var(--surface-drawer-border, none);
+    border-radius: var(--surface-drawer-radius, 0);
+    background: var(--surface-drawer-background, Canvas);
+    color: var(--surface-drawer-color, CanvasText);
+    box-shadow: var(--surface-drawer-shadow, 0 0 2rem rgb(0 0 0 / 0.2));
     outline: none;
 
     /* Attached to the inline-end edge, full height. */
@@ -46,7 +48,6 @@ export const drawerStyles = /* css */ `
     max-inline-size: var(--_max-size);
 
     overflow: auto;
-    overscroll-behavior: contain;
 
     translate: var(--_hidden);
     opacity: var(--_hidden-opacity);
@@ -56,73 +57,79 @@ export const drawerStyles = /* css */ `
     transition-behavior: allow-discrete;
   }
 
-  dialog[data-drawer]:dir(rtl) {
+  surface-drawer > dialog:dir(rtl) {
     --_dir: -1;
   }
 
-  dialog[data-drawer="start"] {
+  surface-drawer[edge="start"] > dialog {
     inset-inline: 0 auto;
     --_x: calc(-100% * var(--_dir));
   }
 
-  dialog[data-drawer="top"],
-  dialog[data-drawer="bottom"] {
+  surface-drawer[edge="top"] > dialog,
+  surface-drawer[edge="bottom"] > dialog {
     inset-inline: 0;
     inline-size: auto;
     max-inline-size: none;
-    block-size: var(--drawer-size, auto);
+    block-size: var(--surface-drawer-size, auto);
     max-block-size: var(--_max-size);
     --_x: 0%;
   }
 
-  dialog[data-drawer="top"] {
+  surface-drawer[edge="top"] > dialog {
     inset-block: 0 auto;
     --_y: -100%;
   }
 
-  dialog[data-drawer="bottom"] {
+  surface-drawer[edge="bottom"] > dialog {
     inset-block: auto 0;
     --_y: 100%;
   }
 
+  /* Scroll containment is part of the scroll lock: with it, wheel and touch
+     over the drawer never reach the page, so no-scroll-lock drops it. */
+  surface-drawer:not([no-scroll-lock]) > dialog,
+  surface-drawer:not([no-scroll-lock]) > dialog::backdrop {
+    overscroll-behavior: contain;
+  }
+
   /* ::backdrop reads the public properties directly: older engines do not
      let it inherit from the dialog. */
-  dialog[data-drawer]::backdrop {
-    background: var(--drawer-backdrop, rgb(0 0 0 / 0.5));
-    backdrop-filter: var(--drawer-backdrop-filter, none);
+  surface-drawer > dialog::backdrop {
+    background: var(--surface-drawer-backdrop, rgb(0 0 0 / 0.5));
+    backdrop-filter: var(--surface-drawer-backdrop-filter, none);
     opacity: 0;
     overflow: hidden;
-    overscroll-behavior: contain;
     transition-property: opacity, display, overlay;
-    transition-duration: var(--drawer-duration, 0.3s);
-    transition-timing-function: var(--drawer-easing, ease-out);
+    transition-duration: var(--surface-drawer-duration, 0.3s);
+    transition-timing-function: var(--surface-drawer-easing, ease-out);
     transition-behavior: allow-discrete;
   }
 
   /* Open state. :where() keeps the specificity equal to the
      @starting-style rules below so those still apply on entry. */
-  dialog[data-drawer][open]:where(:not([data-closing])) {
+  surface-drawer > dialog[open]:where(:not([data-closing])) {
     translate: 0 0;
     opacity: 1;
   }
 
-  dialog[data-drawer][open]:where(:not([data-closing]))::backdrop {
+  surface-drawer > dialog[open]:where(:not([data-closing]))::backdrop {
     opacity: 1;
   }
 
   @starting-style {
-    dialog[data-drawer][open] {
+    surface-drawer > dialog[open] {
       translate: var(--_hidden);
       opacity: var(--_hidden-opacity);
     }
 
-    dialog[data-drawer][open]::backdrop {
+    surface-drawer > dialog[open]::backdrop {
       opacity: 0;
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    dialog[data-drawer] {
+    surface-drawer > dialog {
       --_motion: 0;
       --_hidden-opacity: 0;
       --_duration: 0.15s;
@@ -150,7 +157,7 @@ export function adoptDrawerStyles(root: Document = document): void {
   }
 
   const style = root.createElement("style")
-  style.dataset["surfaceElements"] = "dialog-drawer"
+  style.dataset["surfaceElements"] = "surface-drawer"
   style.textContent = drawerStyles
   root.head.append(style)
 }

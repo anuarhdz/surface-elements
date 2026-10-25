@@ -106,7 +106,7 @@ const pages = readPages(DOCS)
 const pageBySlug = new Map(pages.map((page) => [page.slug, page]))
 
 // Group public modules by their folder under src/, which matches the slug of
-// their docs page (src/dialog-drawer/ ↔ components/dialog-drawer.mdx).
+// their docs page (src/drawer/ ↔ components/drawer.mdx).
 const modulesBySlug = new Map<string, Module[]>()
 for (const mod of manifest.modules) {
   const slug = basename(dirname(mod.path))

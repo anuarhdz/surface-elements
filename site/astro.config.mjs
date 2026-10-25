@@ -46,7 +46,7 @@ export default defineConfig({
         },
         {
           label: "Components",
-          items: ["components/dialog-drawer", "components/header-sticky"],
+          items: ["components/drawer", "components/header-sticky"],
         },
         {
           label: "Functions",

@@ -23,8 +23,8 @@ import Demo from "../../components/demo.astro"
   <button type="button" commandfor="home-bottom" command="show-modal">Bottom sheet</button>
   <button type="button" commandfor="home-top" command="show-modal">From the top</button>
 
-  <dialog-drawer>
-    <dialog id="home-end" data-drawer="end" closedby="any" aria-labelledby="home-end-title">
+  <surface-drawer>
+    <dialog id="home-end" closedby="any" aria-labelledby="home-end-title">
       <div class="drawer-layout">
         <div class="drawer-head">
           <h2 id="home-end-title">Cart</h2>
@@ -37,10 +37,10 @@ import Demo from "../../components/demo.astro"
         </form>
       </div>
     </dialog>
-  </dialog-drawer>
+  </surface-drawer>
 
-  <dialog-drawer>
-    <dialog id="home-start" data-drawer="start" closedby="any" aria-labelledby="home-start-title">
+  <surface-drawer edge="start">
+    <dialog id="home-start" closedby="any" aria-labelledby="home-start-title">
       <div class="drawer-layout">
         <div class="drawer-head">
           <h2 id="home-start-title">Menu</h2>
@@ -53,22 +53,22 @@ import Demo from "../../components/demo.astro"
         </ul>
       </div>
     </dialog>
-  </dialog-drawer>
+  </surface-drawer>
 
-  <dialog-drawer>
-    <dialog id="home-bottom" data-drawer="bottom" closedby="any" aria-labelledby="home-bottom-title">
+  <surface-drawer edge="bottom">
+    <dialog id="home-bottom" closedby="any" aria-labelledby="home-bottom-title">
       <div class="drawer-layout">
         <div class="drawer-head">
           <h2 id="home-bottom-title">Filters</h2>
           <button type="button" commandfor="home-bottom" command="close" aria-label="Close">✕</button>
         </div>
-        <p>Bottom sheets size to their content up to <code>--drawer-max-size</code>.</p>
+        <p>Bottom sheets size to their content up to <code>--surface-drawer-max-size</code>.</p>
       </div>
     </dialog>
-  </dialog-drawer>
+  </surface-drawer>
 
-  <dialog-drawer>
-    <dialog id="home-top" data-drawer="top" closedby="any" aria-labelledby="home-top-title">
+  <surface-drawer edge="top">
+    <dialog id="home-top" closedby="any" aria-labelledby="home-top-title">
       <div class="drawer-layout">
         <div class="drawer-head">
           <h2 id="home-top-title">Search</h2>
@@ -76,7 +76,7 @@ import Demo from "../../components/demo.astro"
         </div>
       </div>
     </dialog>
-  </dialog-drawer>
+  </surface-drawer>
 </Demo>
 
 <CardGrid>
@@ -84,12 +84,12 @@ import Demo from "../../components/demo.astro"
     A drawer is a `<dialog>`. Invoker commands, `closedby` and `<form method="dialog">` work with no JavaScript.
   </Card>
   <Card title="Pick your level" icon="puzzle">
-    Use the CSS alone, the functions, or the custom element. Each level builds on the one before.
+    Use the CSS alone, the functions, or the web component. Each level builds on the one before.
   </Card>
   <Card title="Accessible by default" icon="approve-check">
     Light DOM keeps `aria-labelledby` and focus handling native. Reduced motion is respected.
   </Card>
   <Card title="Yours to style" icon="setting">
-    Styles live in `@layer surface-elements`. Any unlayered rule wins, and `--drawer-*` properties cover the rest.
+    Styles live in `@layer surface-elements`. Any unlayered rule wins, and `--surface-drawer-*` properties cover the rest.
   </Card>
 </CardGrid>

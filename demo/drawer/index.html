@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="data:," />
+    <title>surface-drawer · playground</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 1rem;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        position: sticky;
+        inset-block-start: 0;
+        padding-block: 0.5rem;
+        background: Canvas;
+      }
+
+      .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .head h2 {
+        margin: 0;
+        font-size: 1.125rem;
+      }
+
+      .filler p {
+        max-inline-size: 60ch;
+      }
+
+      #themed {
+        --surface-drawer-radius: 1rem 1rem 0 0;
+        --surface-drawer-max-size: 85dvh;
+        --surface-drawer-backdrop: rgb(37 99 235 / 0.25);
+        --surface-drawer-backdrop-filter: blur(4px);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>surface-drawer</h1>
+
+    <div class="controls">
+      <button type="button" commandfor="edge-end" command="show-modal">end</button>
+      <button type="button" commandfor="edge-start" command="show-modal">start</button>
+      <button type="button" commandfor="edge-top" command="show-modal">top</button>
+      <button type="button" commandfor="edge-bottom" command="show-modal">bottom</button>
+      <button type="button" commandfor="long" command="show-modal">long content</button>
+      <button type="button" commandfor="themed" command="show-modal">themed</button>
+      <button type="button" commandfor="unlocked" command="show-modal">no-scroll-lock</button>
+      <button type="button" data-action="toggle">toggle() start</button>
+      <button type="button" data-action="auto-close">show(), close() after 2 s</button>
+      <button type="button" data-action="toggle-dir">LTR / RTL</button>
+    </div>
+
+    <surface-drawer>
+      <dialog id="edge-end" closedby="any" aria-labelledby="edge-end-title">
+        <div class="head">
+          <h2 id="edge-end-title">end</h2>
+          <button type="button" commandfor="edge-end" command="close" aria-label="Close">✕</button>
+        </div>
+        <form method="dialog">
+          <p>Submit sets <code>returnValue</code>.</p>
+          <button type="submit" value="confirm">Confirm</button>
+          <button type="submit" value="cancel">Cancel</button>
+        </form>
+      </dialog>
+    </surface-drawer>
+
+    <surface-drawer edge="start" id="start-drawer">
+      <dialog id="edge-start" closedby="any" aria-labelledby="edge-start-title">
+        <div class="head">
+          <h2 id="edge-start-title">start</h2>
+          <button type="button" commandfor="edge-start" command="close" aria-label="Close">✕</button>
+        </div>
+      </dialog>
+    </surface-drawer>
+
+    <surface-drawer edge="top">
+      <dialog id="edge-top" closedby="any" aria-labelledby="edge-top-title">
+        <div class="head">
+          <h2 id="edge-top-title">top</h2>
+          <button type="button" commandfor="edge-top" command="close" aria-label="Close">✕</button>
+        </div>
+      </dialog>
+    </surface-drawer>
+
+    <surface-drawer edge="bottom">
+      <dialog id="edge-bottom" closedby="any" aria-labelledby="edge-bottom-title">
+        <div class="head">
+          <h2 id="edge-bottom-title">bottom</h2>
+          <button type="button" commandfor="edge-bottom" command="close" aria-label="Close">✕</button>
+        </div>
+      </dialog>
+    </surface-drawer>
+
+    <surface-drawer>
+      <dialog id="long" closedby="any" aria-labelledby="long-title">
+        <div class="head">
+          <h2 id="long-title">Long content</h2>
+          <button type="button" commandfor="long" command="close" aria-label="Close">✕</button>
+        </div>
+        <ol id="long-items"></ol>
+      </dialog>
+    </surface-drawer>
+
+    <surface-drawer edge="bottom">
+      <dialog id="themed" closedby="any" aria-labelledby="themed-title">
+        <div class="head">
+          <h2 id="themed-title">Themed bottom sheet</h2>
+          <button type="button" commandfor="themed" command="close" aria-label="Close">✕</button>
+        </div>
+        <ol id="themed-items"></ol>
+      </dialog>
+    </surface-drawer>
+
+    <surface-drawer no-scroll-lock>
+      <dialog id="unlocked" closedby="any" aria-labelledby="unlocked-title">
+        <div class="head">
+          <h2 id="unlocked-title">no-scroll-lock</h2>
+          <button type="button" commandfor="unlocked" command="close" aria-label="Close">✕</button>
+        </div>
+        <p>The page behind keeps scrolling.</p>
+      </dialog>
+    </surface-drawer>
+
+    <div class="filler"></div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

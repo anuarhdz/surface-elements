@@ -1,12 +1,10 @@
 import {
-  adoptDrawerStyles,
-  enhanceDialog,
   isScrollLocked,
   supportsClosedBy,
   supportsTopLayerExit,
-  type DialogDrawer,
+  type SurfaceDrawer,
 } from "surface-elements"
-import "surface-elements/dialog-drawer"
+import "surface-elements/drawer"
 import "surface-elements/header-sticky"
 
 // Invoker commands polyfill, only where missing. The library does not ship it.
@@ -14,18 +12,13 @@ if (!("commandForElement" in HTMLButtonElement.prototype)) {
   void import("invokers-polyfill")
 }
 
-// Functions-only demos: no <dialog-drawer>, so adopt the styles explicitly.
-const bare = document.querySelectorAll<HTMLDialogElement>("dialog[data-enhance]")
-if (bare.length > 0) adoptDrawerStyles()
-for (const dialog of bare) enhanceDialog(dialog)
-
 document.addEventListener("click", (event) => {
   const trigger = (event.target as Element).closest<HTMLElement>(
     "[data-action]"
   )
   if (!trigger) return
-  const drawer = document.querySelector<DialogDrawer>(
-    trigger.dataset["target"] ?? "dialog-drawer"
+  const drawer = document.querySelector<SurfaceDrawer>(
+    trigger.dataset["target"] ?? "surface-drawer"
   )
   switch (trigger.dataset["action"]) {
     case "show":

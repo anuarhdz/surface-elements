@@ -1,10 +1,8 @@
 import {
-  adoptDrawerStyles,
-  enhanceDialog,
   isScrollLocked,
   supportsClosedBy,
   supportsTopLayerExit,
-  type DialogDrawer,
+  type SurfaceDrawer,
 } from "../src/index.js"
 
 // Invoker commands polyfill, only where missing. Not bundled by the library.
@@ -20,13 +18,9 @@ const $ = <T extends Element>(selector: string): T => {
   return el
 }
 
-// Functions-only dialog: no <dialog-drawer>, so adopt the styles explicitly.
-adoptDrawerStyles()
-enhanceDialog($<HTMLDialogElement>("#bare"))
-
 // Element API
-const menu = $<DialogDrawer>("#menu-drawer")
-const cart = $<DialogDrawer>("dialog-drawer:has(> #cart)")
+const menu = $<SurfaceDrawer>("#menu-drawer")
+const cart = $<SurfaceDrawer>("surface-drawer:has(> #cart)")
 
 document.addEventListener("click", (event) => {
   const action = (event.target as Element).closest<HTMLElement>("[data-action]")

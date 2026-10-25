@@ -1,6 +1,6 @@
-export { DialogDrawer } from "./dialog-drawer/dialog-drawer.js"
+export { SurfaceDrawer } from "./drawer/drawer.js"
 
-export { adoptDrawerStyles, drawerStyles } from "./dialog-drawer/styles.js"
+export { adoptDrawerStyles, drawerStyles } from "./drawer/styles.js"
 
 export {
   closeAnimated,
