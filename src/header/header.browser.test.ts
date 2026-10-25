@@ -143,6 +143,101 @@ describe("surface-header in a browser", () => {
     expect(el.matches(":state(hidden)")).toBe(false)
   })
 
+  it("stays visible while held, until released", async () => {
+    const { wrapper, el } = await page({ hide: true })
+
+    const release = el.hold()
+    await scrollTo(wrapper, 400)
+    expect(el.matches(":state(hidden)")).toBe(false)
+
+    release()
+    release()
+    await scrollTo(wrapper, 500)
+    expect(el.matches(":state(hidden)")).toBe(true)
+  })
+
+  it("shows when held while hidden", async () => {
+    const { wrapper, el } = await page({ hide: true })
+
+    await scrollTo(wrapper, 400)
+    el.hold()
+    expect(el.matches(":state(hidden)")).toBe(false)
+  })
+
+  it("does not hide while a details inside is open", async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div style="block-size: 300px; overflow: auto">
+        <surface-header hide-on-scroll
+          ><header>
+            <details open>
+              <summary>Menu</summary>
+              Items
+            </details>
+          </header></surface-header
+        >
+        <main style="block-size: 2000px">Content</main>
+      </div>
+    `)
+
+    const el = headerIn(wrapper)
+
+    await scrollTo(wrapper, 400)
+    expect(el.matches(":state(hidden)")).toBe(false)
+  })
+
+  it("hides while a hidden section is under it, in either direction", async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div style="block-size: 300px; overflow: auto">
+        <surface-header
+          ><header style="block-size: 50px">Site</header></surface-header
+        >
+        <div style="block-size: 500px">Intro</div>
+        <section data-surface-header="hidden" style="block-size: 300px">
+          Full screen
+        </section>
+        <main style="block-size: 2000px">Content</main>
+      </div>
+    `)
+
+    const el = headerIn(wrapper)
+
+    await scrollTo(wrapper, 200)
+    expect(el.matches(":state(hidden)")).toBe(false)
+    await scrollTo(wrapper, 600)
+    expect(el.matches(":state(hidden)")).toBe(true)
+    await scrollTo(wrapper, 550)
+    expect(el.matches(":state(hidden)")).toBe(true)
+    await scrollTo(wrapper, 1000)
+    expect(el.matches(":state(hidden)")).toBe(false)
+  })
+
+  it("overlays the content below and turns solid once stuck", async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div style="block-size: 300px; overflow: auto">
+        <surface-header
+          overlay
+          style="--surface-header-background: rgb(0, 0, 255); --surface-header-duration: 0s"
+          ><header style="block-size: 50px">Site</header></surface-header
+        >
+        <div class="hero" style="block-size: 400px">Hero</div>
+        <main style="block-size: 2000px">Content</main>
+      </div>
+    `)
+
+    const el = headerIn(wrapper)
+    const hero = wrapper.querySelector(".hero")
+    await frame()
+
+    expect(hero?.getBoundingClientRect().top).toBeCloseTo(
+      wrapper.getBoundingClientRect().top,
+      0
+    )
+    expect(getComputedStyle(el).backgroundColor).toBe("rgba(0, 0, 0, 0)")
+
+    await scrollTo(wrapper, 100)
+    expect(getComputedStyle(el).backgroundColor).toBe("rgb(0, 0, 255)")
+  })
+
   it("has no accessibility violations", async () => {
     const { el } = await page()
 

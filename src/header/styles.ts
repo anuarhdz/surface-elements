@@ -14,13 +14,24 @@ export const headerStyles = /* css */ `
     position: sticky;
     inset-block-start: var(--_offset);
     z-index: 1;
-    background: Canvas;
-    color: CanvasText;
+    background: var(--surface-header-background, Canvas);
+    color: var(--surface-header-color, CanvasText);
     container: surface-header / scroll-state;
 
-    transition-property: translate;
+    transition-property: translate, background-color, color;
     transition-duration: var(--surface-header-duration, 0.2s);
     transition-timing-function: var(--surface-header-easing, ease-out);
+  }
+
+  /* Overlays the content below by its own height, which the element
+     publishes on the scroll container, and stays see-through until stuck. */
+  surface-header[overlay] {
+    margin-block-end: calc(-1 * var(--surface-header-height, 0px));
+  }
+
+  surface-header[overlay]:not(:state(stuck)) {
+    background: var(--surface-header-top-background, transparent);
+    color: var(--surface-header-top-color, var(--surface-header-color, CanvasText));
   }
 
   /* Moves past the top edge, offset included, so nothing peeks out. */

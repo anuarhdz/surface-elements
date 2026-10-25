@@ -27,6 +27,50 @@ Add `hide-on-scroll` to move the header out of view while the reader scrolls dow
 <surface-header hide-on-scroll>…</surface-header>
 ```
 
+It never hides what the reader is using: focus inside, an open `<details>` or an open popover inside keep it visible.
+
+### Keep it visible from outside
+
+For a menu that lives outside the header, call `hold()`. It returns a release function; the header stays visible until every hold is released.
+
+```js
+const header = document.querySelector("surface-header")
+let release
+
+menu.addEventListener("toggle", (event) => {
+  if (event.newState === "open") release = header.hold()
+  else release?.()
+})
+```
+
+### Hide over a section
+
+Mark a section with `data-surface-header="hidden"` and the header hides while that section is under it, whichever way the reader scrolls. It works with or without `hide-on-scroll`, and it still shows when focus moves inside the header.
+
+```html
+<section data-surface-header="hidden" style="min-block-size: 100vh">…</section>
+```
+
+### Transparent over the hero
+
+Add `overlay` and the header sits on top of the content below it, see-through, until it sticks. Once stuck, and every time it comes back on scroll up, it takes the solid background.
+
+```html
+<surface-header overlay hide-on-scroll>…</surface-header>
+<div class="hero">…</div>
+```
+
+```css
+surface-header {
+  --surface-header-background: white;
+  --surface-header-color: black;
+  --surface-header-top-background: transparent;
+  --surface-header-top-color: white;
+}
+```
+
+The header does not copy the hero's color: a transparent background shows whatever is behind it, images and gradients included. Give the hero enough padding at the top for the header, for example `padding-block-start: var(--surface-header-height)`.
+
 ### Style the stuck state
 
 `:state(stuck)` matches while the header is stuck. Style the header inside it, for example to add a shadow or make it smaller.
@@ -54,18 +98,28 @@ html {
 | Member   | Type                 | Does                                                        |
 | -------- | -------------------- | ----------------------------------------------------------- |
 | `stuck`  | `boolean`, read-only | Whether the header is stuck to the top of its container.    |
+| `hold()` | `() => () => void`   | Keeps it visible until the returned release is called.      |
 
 | Attribute        | Does                                                                         |
 | ---------------- | ---------------------------------------------------------------------------- |
 | `hide-on-scroll` | Hides while scrolling down; shows on scroll up or when focus moves inside.   |
+| `overlay`        | Overlays the content below, with the top colors until stuck.                 |
 
 | Selector                        | Matches                                         |
 | ------------------------------- | ----------------------------------------------- |
 | `surface-header:state(stuck)`   | The element while it is stuck.                  |
-| `surface-header:state(hidden)`  | The element while `hide-on-scroll` has hidden it. |
+| `surface-header:state(hidden)`  | The element while it is hidden, by `hide-on-scroll` or a hidden section. |
+
+| Data attribute                     | On        | Does                                      |
+| ---------------------------------- | --------- | ----------------------------------------- |
+| `data-surface-header="hidden"`     | A section | Hides the header while it is under it.    |
 
 | Property                    | Default    | Sets                                       |
 | --------------------------- | ---------- | ------------------------------------------ |
+| `--surface-header-background` | `Canvas` | Background while stuck, always without `overlay`. |
+| `--surface-header-color` | `CanvasText` | Text color while stuck, always without `overlay`. |
+| `--surface-header-top-background` | `transparent` | Background with `overlay` before it sticks. |
+| `--surface-header-top-color` | `--surface-header-color` | Text color with `overlay` before it sticks. |
 | `--surface-header-offset`   | `0px`      | Distance from the top edge where it sticks. |
 | `--surface-header-duration` | `0.2s`     | Hide and show transition duration.         |
 | `--surface-header-easing`   | `ease-out` | Hide and show easing.                      |
@@ -106,6 +160,8 @@ Minimal CSS. The `scroll-state` container lets descendants style the stuck state
 What the JavaScript adds, and what happens without it:
 
 - **Stuck state everywhere.** A `scroll` listener, throttled to one read per frame, compares the element's position with its sticky offset and sets `:state(stuck)`. Without it, only browsers with scroll-state queries (Chromium) get stuck styles; the header still sticks everywhere.
+- **Overlay.** `margin-block-end: calc(-1 * height)` pulls the hero under the header; the stuck state switches the colors. Without JS there is no stuck state, so use `@container scroll-state(stuck: top)` for the colors.
+- **Hidden sections and holds.** The same frame checks for marked sections under the header's band, open `<details>`/popovers inside it, and active holds.
 - **Hide on scroll.** The same listener compares each scroll position with the last one: down past the header's own height hides it (`translate` past the top edge), up shows it. `focusin` shows it. Without it, the header simply stays.
 - **Height variable.** A `ResizeObserver` writes `--surface-header-height`. Without it, hard-code the height in `scroll-padding-block-start`.
 
@@ -134,6 +190,11 @@ styles to the document, so no CSS import is needed.
 Publishes its height as `--surface-header-height` on the scroll container
 (`<html>` for the page), for `scroll-padding-block-start`.
 
+It never hides while focus, an open `<details>` or an open popover is
+inside it, or while a SurfaceHeader.hold is active. Mark a section
+with `data-surface-header="hidden"` to hide the header while that section
+is under it.
+
 ```js
 import "surface-elements/header"
 ```
@@ -143,12 +204,19 @@ import "surface-elements/header"
 | Attribute | Type | Description |
 | --- | --- | --- |
 | `hide-on-scroll` | `boolean` | Hide while scrolling down, show again on scroll up or when focus moves inside. |
+| `overlay` | `boolean` | Overlay the content below (the hero) and use the top colors until stuck. |
 
 #### Properties
 
 | Property | Type | Description |
 | --- | --- | --- |
 | `stuck` | `boolean`, read-only | Whether the header is stuck to the top of its scroll container. |
+
+#### Methods
+
+| Method | Returns | Description |
+| --- | --- | --- |
+| `hold()` | `() => void` | Keeps the header visible until the returned function is called, for a menu that lives outside it. Ref-counted; the release is idempotent. |
 
 #### Slots
 
@@ -161,14 +229,18 @@ import "surface-elements/header"
 | Selector | Description |
 | --- | --- |
 | `surface-header:state(stuck)` | The header is stuck to the top of its scroll container. |
-| `surface-header:state(hidden)` | `hide-on-scroll` has moved the header out of view. |
+| `surface-header:state(hidden)` | The header is moved out of view, by `hide-on-scroll` or a hidden section. |
 
 #### CSS custom properties
 
 | Property | Default | Description |
 | --- | --- | --- |
+| `--surface-header-background` | `Canvas` | Background while stuck, and always without `overlay`. |
+| `--surface-header-color` | `CanvasText` | Text color while stuck, and always without `overlay`. |
+| `--surface-header-top-background` | `transparent` | Background with `overlay` before it sticks. |
+| `--surface-header-top-color` | `var(--surface-header-color)` | Text color with `overlay` before it sticks. |
 | `--surface-header-offset` | `0px` | Distance from the top edge where the header sticks. |
-| `--surface-header-duration` | `0.2s` | Hide and show transition duration. |
+| `--surface-header-duration` | `0.2s` | Hide, show and color transition duration. |
 | `--surface-header-easing` | `ease-out` | Hide and show easing. |
 | `--surface-header-height` |  | Output, not input: the element writes its height here, on its scroll container. |
 
