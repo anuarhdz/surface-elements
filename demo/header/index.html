@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>surface-header · playground</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        scroll-padding-block-start: var(--surface-header-height, 0px);
+      }
+
+      body {
+        margin: 0;
+      }
+
+      surface-header header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-block-end: 1px solid color-mix(in srgb, CanvasText 15%, transparent);
+      }
+
+      surface-header:state(stuck) header {
+        box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.15);
+      }
+
+      surface-header strong {
+        flex: 1;
+      }
+
+      main {
+        display: grid;
+        gap: 2rem;
+        padding: 2rem 1rem;
+      }
+
+      .block {
+        display: grid;
+        place-items: center;
+        block-size: 80vh;
+        border-radius: 0.75rem;
+        background: color-mix(in srgb, CanvasText 6%, Canvas);
+        font-size: 2rem;
+      }
+    </style>
+  </head>
+  <body>
+    <surface-header hide-on-scroll>
+      <header>
+        <strong>surface-header</strong>
+        <a href="#b3">#b3</a>
+        <button type="button" data-action="toggle-hide">hide-on-scroll</button>
+      </header>
+    </surface-header>
+
+    <main>
+      <div class="block" id="b1">1</div>
+      <div class="block" id="b2">2</div>
+      <div class="block" id="b3">3</div>
+      <div class="block" id="b4">4</div>
+      <div class="block" id="b5">5</div>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
