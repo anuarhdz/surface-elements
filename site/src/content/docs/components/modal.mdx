@@ -1,0 +1,209 @@
+---
+title: Modal
+description: The surface-modal web component, a native dialog centered over the page, with sizes and alert dialogs.
+---
+
+import ApiReference from "../../../components/api-reference.astro"
+import CopyFile from "../../../components/copy-file.astro"
+import Demo from "../../../components/demo.astro"
+
+`<surface-modal>` turns the native `<dialog>` inside it into a centered modal. The dialog stays the source of truth: open state lives in `dialog.open`, and nothing mirrors it.
+
+## Install and use
+
+```js
+import "surface-elements/modal"
+```
+
+```html
+<button commandfor="settings" command="show-modal">Settings</button>
+
+<surface-modal>
+  <dialog id="settings" closedby="any" aria-labelledby="settings-title">
+    <h2 id="settings-title">Settings</h2>
+    <button commandfor="settings" command="close">Close</button>
+  </dialog>
+</surface-modal>
+```
+
+The import defines the web component, which adds the styles to the document, so there is no CSS to import. It enhances its direct child dialog, rebinds when you swap it, and cleans up when it leaves the page.
+
+- `command="show-modal"` opens it as a modal, in the top layer, with focus moved inside.
+- `closedby="any"` closes it on Esc and on a click on the backdrop.
+- `<form method="dialog">` closes it and sets `returnValue` from the submit button.
+
+### Sizes
+
+`size` picks a preset width: `small` (`24rem`), `medium` (`32rem`, the default), `large` (`48rem`) or `full` (the whole viewport, with no border radius). For any other width, set `--surface-modal-size` and leave `size` out. The modal never gets closer than `--surface-modal-gutter` to the viewport edges.
+
+With `size="full"` on a page that sets `viewport-fit=cover`, content can sit under a notch or home indicator. Add the safe-area insets to the padding yourself, for example `padding-block-end: max(1.5rem, env(safe-area-inset-bottom))`.
+
+<Demo label="Sizes">
+  <button type="button" commandfor="size-small" command="show-modal">small</button>
+  <button type="button" commandfor="size-medium" command="show-modal">medium</button>
+  <button type="button" commandfor="size-large" command="show-modal">large</button>
+  <button type="button" commandfor="size-full" command="show-modal">full</button>
+
+  <surface-modal size="small">
+    <dialog id="size-small" closedby="any" aria-labelledby="size-small-title">
+      <div class="modal-layout">
+        <div class="drawer-head">
+          <h2 id="size-small-title">small</h2>
+          <button type="button" commandfor="size-small" command="close" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </dialog>
+  </surface-modal>
+  <surface-modal>
+    <dialog id="size-medium" closedby="any" aria-labelledby="size-medium-title">
+      <div class="modal-layout">
+        <div class="drawer-head">
+          <h2 id="size-medium-title">medium</h2>
+          <button type="button" commandfor="size-medium" command="close" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </dialog>
+  </surface-modal>
+  <surface-modal size="large">
+    <dialog id="size-large" closedby="any" aria-labelledby="size-large-title">
+      <div class="modal-layout">
+        <div class="drawer-head">
+          <h2 id="size-large-title">large</h2>
+          <button type="button" commandfor="size-large" command="close" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </dialog>
+  </surface-modal>
+  <surface-modal size="full">
+    <dialog id="size-full" closedby="any" aria-labelledby="size-full-title">
+      <div class="modal-layout">
+        <div class="drawer-head">
+          <h2 id="size-full-title">full</h2>
+          <button type="button" commandfor="size-full" command="close" aria-label="Close">✕</button>
+        </div>
+      </div>
+    </dialog>
+  </surface-modal>
+</Demo>
+
+### Alert and confirm
+
+An alert or a confirmation interrupts the user and needs an answer. It is the same web component with `role="alertdialog"` on the dialog:
+
+```html
+<surface-modal size="small">
+  <dialog
+    id="delete"
+    role="alertdialog"
+    aria-labelledby="delete-title"
+    aria-describedby="delete-text"
+  >
+    <h2 id="delete-title">Delete this file?</h2>
+    <p id="delete-text">This cannot be undone.</p>
+    <form method="dialog">
+      <button value="cancel" autofocus>Cancel</button>
+      <button value="delete">Delete</button>
+    </form>
+  </dialog>
+</surface-modal>
+```
+
+- Leave out `closedby="any"`: a stray click on the backdrop should not answer the question. Esc still closes it without setting `returnValue`.
+- Put `autofocus` on the least destructive button.
+- Read the answer from `dialog.returnValue` in its `close` event, then set it back to `""`. The browser never clears it, so without the reset, Esc after an earlier "Delete" reads as `"delete"` again.
+- An alert has a single button.
+
+```js
+dialog.addEventListener("close", () => {
+  if (dialog.returnValue === "delete") deleteFile()
+  dialog.returnValue = ""
+})
+```
+
+<Demo label="Confirm">
+  <button type="button" commandfor="confirm" command="show-modal">Delete file</button>
+  <output for="confirm"></output>
+
+  <surface-modal size="small">
+    <dialog id="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+      <form method="dialog" class="modal-layout">
+        <h2 id="confirm-title">Delete this file?</h2>
+        <p id="confirm-text">This cannot be undone.</p>
+        <div class="drawer-actions">
+          <button value="cancel" autofocus>Cancel</button>
+          <button value="delete">Delete</button>
+        </div>
+      </form>
+    </dialog>
+  </surface-modal>
+</Demo>
+
+### Long content
+
+The modal is as tall as its content, up to the viewport minus `--surface-modal-gutter`, and then its content scrolls inside. Keep a header or footer in view with `position: sticky` inside the dialog.
+
+<Demo label="Long content">
+  <button type="button" commandfor="long" command="show-modal">Open</button>
+
+  <surface-modal>
+    <dialog id="long" closedby="any" aria-labelledby="long-title">
+      <div class="modal-layout">
+        <div class="drawer-head">
+          <h2 id="long-title">Long content</h2>
+          <button type="button" commandfor="long" command="close" aria-label="Close">✕</button>
+        </div>
+        <ol>{Array.from({ length: 40 }, (_, i) => <li>Item {i + 1}</li>)}</ol>
+      </div>
+    </dialog>
+  </surface-modal>
+</Demo>
+
+## Copy
+
+<CopyFile tag="surface-modal" />
+
+## API
+
+<ApiReference tag="surface-modal" />
+
+The web component is `display: contents`, so it adds no box to the layout. While a fallback exit animation plays, its dialog carries `data-closing`: select it with `surface-modal > dialog[data-closing]`.
+
+## If you implement it by hand
+
+### Markup
+
+The same as above. Keep the `<surface-modal>` wrapper even without the JavaScript: the styles select `surface-modal > dialog`, and an undefined tag still renders its children.
+
+### CSS
+
+Load the stylesheet instead of the web component. No JavaScript from this library runs.
+
+```css
+@import "surface-elements/modal.css";
+```
+
+You get the layout, the sizes and the enter and exit transitions where the browser supports them natively. The rules live in `@layer surface-elements`, so any unlayered rule of yours wins.
+
+### What the JavaScript adds
+
+The web component calls [`enhanceDialog()`](/functions/dialog/) on its dialog and adds the styles. Without it:
+
+- The exit transition only plays where the browser animates out of the top layer. Elsewhere the modal closes without animating.
+- `closedby="any"` only works where it is native. Elsewhere a backdrop click does nothing.
+- Page scroll is not locked while the modal is open.
+- `surface-modal:state(open)` never matches. Style `surface-modal > dialog[open]` instead.
+
+To get the first two and the scroll lock without the web component, call `enhanceDialog(dialog)` yourself and keep the CSS import. Do not do both on the same dialog.
+
+### Accessibility
+
+- Label the dialog. Point `aria-labelledby` at its heading, or set `aria-label`. For an alert dialog, also point `aria-describedby` at the message.
+- Give it a visible close button, or explicit answers for an alert dialog. Esc and the backdrop are not discoverable for everyone.
+- Focus, the inert page behind and Esc come from the native modal dialog. The library does not trap focus: Tab can reach the browser's own interface, as the native dialog allows.
+- Under `prefers-reduced-motion: reduce` the modal fades without scaling.
+
+Why the dialog lives in light DOM: [ADR 0001](https://github.com/anuarhdz/surface-elements/blob/main/docs/adr/0001-light-dom-dialog-enhancement.md).
+
+### Browser support
+
+See [Browser support](/guides/browser-support/) for what is native, what falls back and which polyfills you may load.

@@ -143,7 +143,8 @@ function routeCloseRequests(dialog: HTMLDialogElement): Cleanup
 
 Closes the dialog after its exit transition. In browsers that transition
 `display` and `overlay` natively this is a plain `close()`; elsewhere it
-sets `data-closing`, waits for the animations and then closes.
+sets `data-closing`, waits for the animations and then closes. A call
+during an exit in progress returns that exit's promise.
 
 ```ts
 import { closeAnimated } from "surface-elements/dialog"
