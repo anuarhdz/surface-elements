@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Web Components for common interface surfaces.",
   "keywords": [
+    "accordion",
     "custom-elements",
     "dialog",
     "drawer",
@@ -29,6 +30,7 @@
   "type": "module",
   "sideEffects": [
     "./dist/*.js",
+    "./dist/accordion/*.js",
     "./dist/drawer/*.js",
     "./dist/header/*.js",
     "./dist/modal/*.js",
@@ -42,6 +44,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./accordion": {
+      "types": "./dist/accordion/accordion.d.ts",
+      "import": "./dist/accordion/accordion.js"
+    },
+    "./accordion.css": "./dist/accordion.css",
     "./header": {
       "types": "./dist/header/header.d.ts",
       "import": "./dist/header/header.js"

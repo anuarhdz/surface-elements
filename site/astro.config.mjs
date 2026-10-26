@@ -46,7 +46,12 @@ export default defineConfig({
         },
         {
           label: "Components",
-          items: ["components/drawer", "components/header", "components/modal"],
+          items: [
+            "components/accordion",
+            "components/drawer",
+            "components/header",
+            "components/modal",
+          ],
         },
         {
           label: "Functions",

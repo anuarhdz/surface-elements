@@ -1,3 +1,10 @@
+export {
+  SurfaceAccordion,
+  supportsDetailsAnimation,
+} from "./accordion/accordion.js"
+
+export { accordionStyles, adoptAccordionStyles } from "./accordion/styles.js"
+
 export { SurfaceDrawer } from "./drawer/drawer.js"
 
 export { adoptDrawerStyles, drawerStyles } from "./drawer/styles.js"

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="data:," />
+    <title>surface-accordion · playground</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+        --border: color-mix(in srgb, CanvasText 15%, transparent);
+      }
+
+      body {
+        max-inline-size: 42rem;
+        margin: 0 auto;
+        padding: 1rem;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+
+      surface-accordion {
+        border: 1px solid var(--border);
+        border-radius: 0.5rem;
+      }
+
+      surface-accordion > details + details {
+        border-block-start: 1px solid var(--border);
+      }
+
+      summary {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      summary::after {
+        content: "+";
+        transition: rotate 0.2s;
+      }
+
+      /* data-closing: the fallback keeps [open] until the close animation ends. */
+      details[open]:not([data-closing]) > summary::after {
+        rotate: 45deg;
+      }
+
+      details > :not(summary) {
+        margin: 0;
+        padding: 0 1rem 1rem;
+      }
+
+      /* Closed only: with persist the open item's summary is aria-disabled too. */
+      details:not([open]) > summary[aria-disabled="true"] {
+        opacity: 0.6;
+      }
+
+      #slow {
+        --surface-accordion-duration: 1.2s;
+        --surface-accordion-easing: cubic-bezier(0.2, 0.9, 0.3, 1.2);
+      }
+
+      #nested surface-accordion {
+        margin: 0 1rem 1rem;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>surface-accordion</h1>
+
+    <div class="controls">
+      <a href="?fallback" data-fallback-link>Force the JS fallback</a>
+    </div>
+
+    <h2>Exclusive (<code>name</code>)</h2>
+    <surface-accordion id="faq">
+      <details name="faq" open>
+        <summary>What is a web component?</summary>
+        <p>A custom element that wraps native HTML and adds behavior on top.</p>
+      </details>
+      <details name="faq">
+        <summary>Does it work without JavaScript?</summary>
+        <p>Yes. The details open and close natively. In Chromium the styles animate them too.</p>
+      </details>
+      <details name="faq">
+        <summary>Long answer</summary>
+        <div id="long"></div>
+      </details>
+      <details name="faq">
+        <summary>A link in the summary <a href="#faq">#faq</a></summary>
+        <p>Clicking the link navigates; clicking elsewhere on the summary toggles.</p>
+      </details>
+    </surface-accordion>
+
+    <h2>Multiple open, slow with overshoot</h2>
+    <div class="controls">
+      <button type="button" data-action="expand">Expand all</button>
+      <button type="button" data-action="collapse">Collapse all</button>
+    </div>
+    <surface-accordion id="slow">
+      <details>
+        <summary>First</summary>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+      </details>
+      <details>
+        <summary>Second</summary>
+        <p>Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>
+      </details>
+      <details>
+        <summary>Third</summary>
+        <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco.</p>
+      </details>
+    </surface-accordion>
+
+    <h2><code>persist</code> and a disabled item</h2>
+    <surface-accordion persist id="persist">
+      <details name="plan">
+        <summary>Monthly</summary>
+        <p>Pay every month, cancel any time.</p>
+      </details>
+      <details name="plan">
+        <summary>Yearly</summary>
+        <p>Two months free.</p>
+      </details>
+      <details name="plan">
+        <summary aria-disabled="true">Lifetime (sold out)</summary>
+        <p>Not available.</p>
+      </details>
+    </surface-accordion>
+
+    <h2>Nested</h2>
+    <surface-accordion id="nested">
+      <details name="outer">
+        <summary>Products</summary>
+        <surface-accordion>
+          <details name="inner">
+            <summary>Shoes</summary>
+            <p>Running, trail, casual.</p>
+          </details>
+          <details name="inner">
+            <summary>Shirts</summary>
+            <p>Short sleeve, long sleeve.</p>
+          </details>
+        </surface-accordion>
+      </details>
+      <details name="outer">
+        <summary>Company</summary>
+        <p>About, careers, press.</p>
+      </details>
+    </surface-accordion>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

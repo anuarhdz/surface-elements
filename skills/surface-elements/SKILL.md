@@ -1,6 +1,6 @@
 ---
 name: surface-elements
-description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<surface-drawer>, <surface-header>, <surface-modal> and enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptDrawerStyles(), adoptHeaderStyles(), adoptModalStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
+description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<surface-accordion>, <surface-drawer>, <surface-header>, <surface-modal> and supportsDetailsAnimation(), adoptAccordionStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptDrawerStyles(), adoptHeaderStyles(), adoptModalStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
 ---
 
 # surface-elements
@@ -20,6 +20,8 @@ pnpm add surface-elements
 | Import | Contains |
 | --- | --- |
 | `surface-elements` | Everything below. |
+| `surface-elements/accordion` | `<surface-accordion>` (registers itself on import), `CLOSING_ATTRIBUTE`, `supportsDetailsAnimation` |
+| `surface-elements/accordion.css` | Stylesheet for CSS-only use. |
 | `surface-elements/header` | `<surface-header>` (registers itself on import) |
 | `surface-elements/header.css` | Stylesheet for CSS-only use. |
 | `surface-elements/drawer` | `<surface-drawer>` (registers itself on import) |
@@ -66,6 +68,7 @@ A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `
 
 | Element | What it is | Reference |
 | --- | --- | --- |
+| `<surface-accordion>` | Web component that animates the native `<details>` elements directly inside it as they open and close. | [surface-accordion.md](references/accordion.md) |
 | `<surface-drawer>` | Web component that turns its direct child `<dialog>` into a drawer. | [surface-drawer.md](references/drawer.md) |
 | `<surface-header>` | A page header that sticks to the top of its scroll container. | [surface-header.md](references/header.md) |
 | `<surface-modal>` | Web component that turns its direct child `<dialog>` into a centered modal. | [surface-modal.md](references/modal.md) |
@@ -74,6 +77,7 @@ A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `
 
 Read only the one you need.
 
+- [references/accordion.md](references/accordion.md): The surface-accordion web component, native details that animate open and closed, one at a time or several.
 - [references/browser-support.md](references/browser-support.md): What is native, what the library fills in, and what you load yourself.
 - [references/dialog.md](references/dialog.md): Enhance any native dialog with light-dismiss and exit-animation fallbacks and a scroll lock.
 - [references/drawer.md](references/drawer.md): The surface-drawer web component, a native dialog that slides in from any edge.
