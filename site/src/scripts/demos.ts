@@ -8,6 +8,7 @@ import {
 import "surface-elements/accordion"
 import "surface-elements/drawer"
 import "surface-elements/header"
+import "surface-elements/modal"
 
 // Invoker commands polyfill, only where missing. The library does not ship it.
 if (!("commandForElement" in HTMLButtonElement.prototype)) {

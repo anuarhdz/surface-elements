@@ -8,6 +8,7 @@
     "dialog",
     "drawer",
     "header",
+    "modal",
     "sticky",
     "web-components"
   ],
@@ -32,6 +33,7 @@
     "./dist/accordion/*.js",
     "./dist/drawer/*.js",
     "./dist/header/*.js",
+    "./dist/modal/*.js",
     "*.css"
   ],
   "main": "./dist/index.js",
@@ -57,6 +59,11 @@
       "import": "./dist/drawer/drawer.js"
     },
     "./drawer.css": "./dist/drawer.css",
+    "./modal": {
+      "types": "./dist/modal/modal.d.ts",
+      "import": "./dist/modal/modal.js"
+    },
+    "./modal.css": "./dist/modal.css",
     "./dialog": {
       "types": "./dist/dialog/dialog.d.ts",
       "import": "./dist/dialog/dialog.js"

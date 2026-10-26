@@ -37,7 +37,6 @@ export const drawerStyles = /* css */ `
     background: var(--surface-drawer-background, Canvas);
     color: var(--surface-drawer-color, CanvasText);
     box-shadow: var(--surface-drawer-shadow, 0 0 2rem rgb(0 0 0 / 0.2));
-    outline: none;
 
     /* Attached to the inline-end edge, full height. */
     inset-block: 0;
@@ -55,6 +54,12 @@ export const drawerStyles = /* css */ `
     transition-duration: var(--_duration);
     transition-timing-function: var(--_easing);
     transition-behavior: allow-discrete;
+  }
+
+  /* The dialog itself takes focus when it has nothing focusable: keep the
+     ring for keyboard users only. */
+  surface-drawer > dialog:focus:not(:focus-visible) {
+    outline: none;
   }
 
   surface-drawer > dialog:dir(rtl) {
@@ -102,7 +107,7 @@ export const drawerStyles = /* css */ `
     overflow: hidden;
     transition-property: opacity, display, overlay;
     transition-duration: var(--surface-drawer-duration, 0.3s);
-    transition-timing-function: var(--surface-drawer-easing, ease-out);
+    transition-timing-function: var(--surface-drawer-easing, cubic-bezier(0.38, 0.005, 0.215, 1));
     transition-behavior: allow-discrete;
   }
 

@@ -6,6 +6,7 @@ export default defineConfig({
     "accordion/accordion": "src/accordion/accordion.ts",
     "header/header": "src/header/header.ts",
     "drawer/drawer": "src/drawer/drawer.ts",
+    "modal/modal": "src/modal/modal.ts",
     "dialog/dialog": "src/dialog/dialog.ts",
     "scroll-lock/scroll-lock": "src/scroll-lock/scroll-lock.ts",
   },

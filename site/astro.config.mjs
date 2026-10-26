@@ -50,6 +50,7 @@ export default defineConfig({
             "components/accordion",
             "components/drawer",
             "components/header",
+            "components/modal",
           ],
         },
         {
