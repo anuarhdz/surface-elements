@@ -58,6 +58,23 @@ describe("surface-modal accessibility", () => {
 // Layout sizes: the bounding rect is scaled during the entry transition.
 const width = (el: SurfaceModal) => el.dialog!.offsetWidth
 
+describe("surface-modal close and reopen", () => {
+  afterEach(() => fixtureCleanup())
+
+  it("closes again after a reopen in the same tick", async () => {
+    const el = await fixture<SurfaceModal>(
+      html`<surface-modal><dialog>Hi</dialog></surface-modal>`
+    )
+
+    el.show()
+    void el.close()
+    el.show()
+    await el.close()
+
+    expect(el.open).toBe(false)
+  })
+})
+
 describe("surface-modal layout", () => {
   afterEach(() => fixtureCleanup())
 

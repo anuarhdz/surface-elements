@@ -160,13 +160,14 @@ export function closeAnimated(
 ): Promise<void> {
   const pending = closing.get(dialog)
 
-  if (pending) return pending
+  // Only an exit still playing is shared; a reopen cancels it.
+  if (pending && dialog.hasAttribute(CLOSING_ATTRIBUTE)) return pending
 
   if (!dialog.open) return Promise.resolve()
 
-  const exit = playExit(dialog, returnValue).finally(() =>
-    closing.delete(dialog)
-  )
+  const exit = playExit(dialog, returnValue).finally(() => {
+    if (closing.get(dialog) === exit) closing.delete(dialog)
+  })
 
   closing.set(dialog, exit)
 
@@ -198,6 +199,7 @@ async function playExit(
 
 /** Opens the dialog as a modal, cancelling an exit transition in progress. */
 export function showModal(dialog: HTMLDialogElement): void {
+  closing.delete(dialog)
   dialog.removeAttribute(CLOSING_ATTRIBUTE)
 
   if (!dialog.open) dialog.showModal()

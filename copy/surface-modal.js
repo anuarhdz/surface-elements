@@ -131,9 +131,11 @@ const closing = /* @__PURE__ */ new WeakMap();
 */
 function closeAnimated(dialog, returnValue) {
 	const pending = closing.get(dialog);
-	if (pending) return pending;
+	if (pending && dialog.hasAttribute("data-closing")) return pending;
 	if (!dialog.open) return Promise.resolve();
-	const exit = playExit(dialog, returnValue).finally(() => closing.delete(dialog));
+	const exit = playExit(dialog, returnValue).finally(() => {
+		if (closing.get(dialog) === exit) closing.delete(dialog);
+	});
 	closing.set(dialog, exit);
 	return exit;
 }
@@ -149,6 +151,7 @@ async function playExit(dialog, returnValue) {
 }
 /** Opens the dialog as a modal, cancelling an exit transition in progress. */
 function showModal(dialog) {
+	closing.delete(dialog);
 	dialog.removeAttribute(CLOSING_ATTRIBUTE);
 	if (!dialog.open) dialog.showModal();
 }

@@ -67,6 +67,27 @@ describe("surface-modal", () => {
     expect(el.open).toBe(true)
     expect(el.dialog?.hasAttribute("data-closing")).toBe(false)
   })
+  it("closes again after a reopen during the exit animation", async () => {
+    const el = await modal()
+    let finish!: () => void
+
+    const finished = new Promise<Animation>(
+      (resolve) => (finish = () => resolve(animation))
+    )
+
+    // SAFETY: closeAnimated only awaits `finished`; jsdom has no Animation.
+    const animation = { finished } as Animation
+    el.dialog!.getAnimations = () => [animation]
+
+    el.show()
+    void el.close()
+    el.toggle()
+    const closing = el.close()
+    finish()
+    await closing
+
+    expect(el.open).toBe(false)
+  })
 
   it("follows the dialog when it is closed natively", async () => {
     const el = await modal()
