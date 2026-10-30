@@ -28,36 +28,42 @@ const { siteTitle, siteTitleHref } = Astro.locals.starlightRoute
     white-space: nowrap;
   }
 
-  /* A surface over a surface: the library in one glyph. */
+  /* A surface over a surface: the library in one glyph, sized by the
+     capitals beside it. The fill is a grid layer, not a positioned box. */
   .mark {
-    position: relative;
+    display: grid;
     flex: none;
-    inline-size: 1rem;
-    block-size: 1rem;
+    inline-size: 1.6cap;
+    block-size: 1.6cap;
+    padding: 2px;
     border: 1.5px solid currentColor;
   }
 
   .mark::after {
     content: "";
-    position: absolute;
-    inset: 2px 2px 2px 50%;
+    justify-self: end;
+    inline-size: 50%;
     background: var(--sl-color-accent);
   }
 
   .name {
-    overflow: hidden;
+    overflow: clip;
     text-overflow: ellipsis;
   }
 
+  /* Trimmed to its capitals, so the badge's padding looks even. */
   .version {
-    padding: 0.0625rem 0.375rem;
+    padding: 0.3125rem 0.375rem;
     border: 1px solid var(--sl-color-gray-5);
     font-size: var(--sl-text-2xs);
     font-weight: 400;
     color: var(--sl-color-gray-3);
+    text-box: trim-both cap alphabetic;
   }
 
-  .site-title:hover .name {
-    color: var(--sl-color-accent);
+  @media (hover: hover) and (pointer: fine) {
+    .site-title:hover .name {
+      color: var(--sl-color-accent);
+    }
   }
 </style>

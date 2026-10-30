@@ -71,11 +71,11 @@ const components = (
       {
         components.map(({ href, title, tag, size }) => (
           <li>
-            <a href={href}>
-              <span class="tag">&lt;{tag}&gt;</span>
-              <span class="title">{title}</span>
-              {size && <span class="size">{size}</span>}
+            <a class="tag" href={href}>
+              &lt;{tag}&gt;
             </a>
+            <span class="title">{title}</span>
+            {size && <span class="size">{size}</span>}
           </li>
         ))
       }
@@ -84,18 +84,42 @@ const components = (
 </div>
 
 <style>
+  /* Two sides that wrap on their own: the index keeps its width until the
+     intro would get less than half the row, then drops below it. */
   .hero {
-    display: grid;
-    gap: 2.5rem;
-    margin-block-end: 3rem;
-    padding-block: clamp(2rem, 1rem + 6vmin, 6rem) 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 2.5rem 4rem;
+    padding-block: var(--site-space-hero) 3rem;
+  }
+
+  .intro {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 1.25rem;
+    flex-basis: 0;
+    flex-grow: 999;
+    min-inline-size: 55%;
+  }
+
+  .intro > * {
+    margin: 0;
+  }
+
+  .index {
+    flex-basis: 22rem;
+    flex-grow: 1;
+    border: 1px solid var(--sl-color-gray-5);
+    font-family: var(--site-font-ui);
+    font-size: var(--sl-text-xs);
   }
 
   .meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.25rem 0;
-    margin: 0;
+    row-gap: 0.25rem;
     font-family: var(--site-font-ui);
     font-size: var(--sl-text-2xs);
     letter-spacing: 0.08em;
@@ -111,37 +135,32 @@ const components = (
 
   h1 {
     max-inline-size: 18ch;
-    margin-block: 1.25rem 0;
     font-family: var(--site-font-ui);
-    font-size: clamp(2.25rem, 1.25rem + 3.5vw, 4rem);
+    font-size: var(--site-text-hero);
     font-weight: 600;
     line-height: 1.05;
     letter-spacing: -0.045em;
     color: var(--sl-color-white);
-    text-wrap: balance;
   }
 
   .tagline {
     max-inline-size: 48ch;
-    margin-block: 1.25rem 0;
     font-size: var(--sl-text-lg);
     line-height: 1.55;
     color: var(--sl-color-gray-3);
-    text-wrap: pretty;
   }
 
   .install {
     display: flex;
     gap: 0.75rem;
-    inline-size: fit-content;
     max-inline-size: 100%;
-    margin-block: 2rem 0;
     padding: 0.75rem 1rem;
     border: 1px solid var(--sl-color-gray-5);
     background: var(--sl-color-gray-7);
     font-family: var(--site-font-ui);
     font-size: var(--sl-text-sm);
     overflow-x: auto;
+    overscroll-behavior-x: contain;
   }
 
   .install code {
@@ -159,14 +178,6 @@ const components = (
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    margin-block-start: 1.25rem;
-  }
-
-  .index {
-    align-self: end;
-    border: 1px solid var(--sl-color-gray-5);
-    font-family: var(--site-font-ui);
-    font-size: var(--sl-text-xs);
   }
 
   .index-head {
@@ -188,12 +199,11 @@ const components = (
     counter-reset: element;
   }
 
-  li + li {
-    border-block-start: 1px solid var(--sl-color-gray-5);
-  }
-
-  .index a {
+  /* The whole row navigates through one short link: the tag's ::after
+     covers the row, and the ring moves from the link to the row. */
+  li {
     counter-increment: element;
+    position: relative;
     display: grid;
     grid-template-columns: auto 1fr auto;
     grid-template-areas:
@@ -203,19 +213,37 @@ const components = (
     align-items: baseline;
     padding: 0.875rem 1rem;
     color: var(--sl-color-gray-3);
-    text-decoration: none;
   }
 
-  .index a::before {
+  li + li {
+    border-block-start: 1px solid var(--sl-color-gray-5);
+  }
+
+  li::before {
     content: counter(element, decimal-leading-zero);
     grid-area: num;
-    color: var(--sl-color-gray-3);
   }
 
   .tag {
     grid-area: tag;
     color: var(--sl-color-white);
     font-weight: 500;
+    text-decoration: none;
+  }
+
+  .tag::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .tag:focus-visible {
+    outline: 2px solid transparent;
+  }
+
+  li:has(.tag:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
   }
 
   .title {
@@ -227,19 +255,14 @@ const components = (
     font-variant-numeric: tabular-nums;
   }
 
-  .index a:hover {
-    background: var(--sl-color-gray-7);
-  }
+  @media (hover: hover) and (pointer: fine) {
+    li:hover {
+      background: var(--sl-color-gray-7);
+    }
 
-  .index a:hover::before,
-  .index a:hover .tag {
-    color: var(--sl-color-accent);
-  }
-
-  @media (min-width: 64rem) {
-    .hero {
-      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
-      gap: 4rem;
+    li:hover::before,
+    li:hover .tag {
+      color: var(--sl-color-accent);
     }
   }
 </style>

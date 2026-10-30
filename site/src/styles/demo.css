@@ -40,32 +40,58 @@
   background-position: -1px -1px;
 }
 
+/* The label is trimmed to its capitals and baseline, so equal padding looks
+   equal; the padding is raised to keep the button's height. */
 .demo button {
+  position: relative;
   font: inherit;
   font-family: var(--site-font-ui);
   font-size: var(--sl-text-xs);
-  padding: 0.5rem 0.875rem;
+  padding: 0.875rem;
   border: 1px solid var(--sl-color-gray-5);
   border-radius: 0;
   background: var(--sl-color-black);
   color: var(--sl-color-white);
   cursor: pointer;
+  text-box: trim-both cap alphabetic;
 }
 
-.demo button:hover {
-  border-color: var(--sl-color-white);
+/* At least a 44px target, whatever the label. */
+.demo button::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - 44px) / 2);
 }
 
+.demo button:active {
+  scale: 0.97;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .demo button {
+    transition: scale 160ms var(--site-ease-out);
+  }
+}
+
+/* A filled button's ring takes its fill: currentColor is the dark label. */
 .demo button.primary {
   background: var(--sl-color-white);
   border-color: var(--sl-color-white);
   color: var(--sl-color-black);
+  outline-color: var(--sl-color-white);
 }
 
-.demo button.primary:hover {
-  background: var(--sl-color-accent);
-  border-color: var(--sl-color-accent);
-  color: var(--sl-color-text-invert);
+@media (hover: hover) and (pointer: fine) {
+  .demo button:hover {
+    border-color: var(--sl-color-white);
+  }
+
+  .demo button.primary:hover {
+    background: var(--sl-color-accent);
+    border-color: var(--sl-color-accent);
+    color: var(--sl-color-text-invert);
+    outline-color: var(--sl-color-accent);
+  }
 }
 
 .demo output,
@@ -83,7 +109,6 @@
   font-size: var(--sl-text-sm);
 }
 
-/* Drawer content */
 /* The demos theme the library through its public properties only, the way
    a consumer would: square, hairline borders, the site's backdrop. */
 surface-drawer > dialog {
@@ -172,11 +197,11 @@ surface-modal > dialog {
   padding: 0.75rem 1rem;
   background: var(--sl-color-bg-nav);
   border-block-end: 1px solid var(--sl-color-gray-5);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s var(--site-ease-out);
 }
 
 .sticky-frame surface-header:state(stuck) header {
-  box-shadow: 0 0.25rem 1rem rgb(0 0 0 / 0.25);
+  box-shadow: 0 0.25rem 1rem color-mix(in oklch, black 25%, transparent);
 }
 
 .sticky-frame p {
@@ -203,5 +228,6 @@ surface-modal > dialog {
 
 .accordion-demo p {
   margin: 0;
-  padding: 0 1rem 1rem;
+  padding-inline: 1rem;
+  padding-block: 0 1rem;
 }

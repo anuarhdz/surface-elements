@@ -12,21 +12,33 @@ const { entry } = Astro.locals.starlightRoute
 const path = ["docs", ...entry.id.split("/")]
 ---
 
-<p class="eyebrow" aria-hidden="true">
-  {
-    path.map((part, i) => (
-      <>
-        {i > 0 && <span class="sep">/</span>}
-        <span>{part}</span>
-      </>
-    ))
-  }
-</p>
-<h1 id={PAGE_TITLE_ID}>{entry.data.title}</h1>
+<hgroup class="page-title">
+  <p class="eyebrow" aria-hidden="true">
+    {
+      path.map((part, i) => (
+        <>
+          {i > 0 && <span class="sep">/</span>}
+          <span>{part}</span>
+        </>
+      ))
+    }
+  </p>
+  <h1 id={PAGE_TITLE_ID}>{entry.data.title}</h1>
+</hgroup>
 
 <style>
+  .page-title {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-block-start: 1rem;
+  }
+
+  .page-title > * {
+    margin: 0;
+  }
+
   .eyebrow {
-    margin: 1rem 0 0;
     font-family: var(--site-font-ui);
     font-size: var(--sl-text-2xs);
     letter-spacing: 0.04em;
@@ -43,9 +55,8 @@ const path = ["docs", ...entry.id.split("/")]
   }
 
   h1 {
-    margin-block-start: 0.75rem;
     font-family: var(--site-font-ui);
-    font-size: clamp(var(--sl-text-3xl), 1.5rem + 2vw, var(--sl-text-5xl));
+    font-size: var(--site-text-title);
     font-weight: 600;
     letter-spacing: -0.03em;
     line-height: var(--sl-line-height-headings);

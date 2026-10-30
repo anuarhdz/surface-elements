@@ -1,26 +1,43 @@
 /*
  * Site theme: technical, monospace-led, square. Unlayered on purpose, so it
  * wins over every `@layer starlight.*` rule without fighting specificity.
+ * Techniques follow good-css.com.
  */
 
-/* Tokens -------------------------------------------------------------- */
+/* Color tokens --------------------------------------------------------- */
 
-:root {
-  /* Neutral grays, no hue. Dark is Starlight's default scheme. */
-  --sl-color-white: #f5f5f4;
-  --sl-color-gray-1: #e4e4e2;
-  --sl-color-gray-2: #c2c2bf;
-  --sl-color-gray-3: #8e8e8a;
-  --sl-color-gray-4: #5a5a57;
-  --sl-color-gray-5: #2c2c2a;
-  --sl-color-gray-6: #171716;
-  --sl-color-gray-7: #121211;
-  --sl-color-black: #0b0b0a;
+/*
+ * One set of tokens: each holds its light and its dark value, and Starlight's
+ * reset switches `color-scheme` from `data-theme`, so nothing redefines them
+ * per theme. Grays are OKLCH with no hue; the accent family derives from one
+ * base. `::backdrop` gets them too, as Starlight's own tokens do.
+ */
+:root,
+::backdrop {
+  --sl-color-white: light-dark(oklch(14.9% 0 none), oklch(97% 0 none));
+  --sl-color-gray-1: light-dark(oklch(22.6% 0 none), oklch(91.8% 0 none));
+  --sl-color-gray-2: light-dark(oklch(32.8% 0 none), oklch(81.3% 0 none));
+  --sl-color-gray-3: light-dark(oklch(48.1% 0 none), oklch(64.6% 0 none));
+  --sl-color-gray-4: light-dark(oklch(64.9% 0 none), oklch(46.7% 0 none));
+  --sl-color-gray-5: light-dark(oklch(88.4% 0 none), oklch(29.2% 0 none));
+  --sl-color-gray-6: light-dark(oklch(95.1% 0 none), oklch(20.4% 0 none));
+  --sl-color-gray-7: light-dark(oklch(97.2% 0 none), oklch(18.2% 0 none));
+  --sl-color-black: light-dark(oklch(99.1% 0 none), oklch(14.9% 0 none));
 
-  /* One signal color. */
-  --sl-color-accent-low: #3b1708;
-  --sl-color-accent: #ff5c1a;
-  --sl-color-accent-high: #ff9a6e;
+  /* One signal color, darker in light mode to keep 4.5:1 on the page. */
+  --sl-color-accent: light-dark(
+    oklch(55.3% 0.174 38.4),
+    oklch(68.4% 0.21 38.8)
+  );
+  --sl-color-accent-high: light-dark(
+    color-mix(in oklch, var(--sl-color-accent), black 20%),
+    color-mix(in oklch, var(--sl-color-accent), white 35%)
+  );
+  --sl-color-accent-low: color-mix(
+    in oklch,
+    var(--sl-color-accent) 20%,
+    var(--sl-color-black)
+  );
 
   --sl-color-text: var(--sl-color-gray-2);
   --sl-color-text-accent: var(--sl-color-accent);
@@ -33,15 +50,23 @@
   --sl-color-hairline-light: var(--sl-color-gray-5);
   --sl-color-hairline: var(--sl-color-gray-5);
   --sl-color-hairline-shade: var(--sl-color-gray-5);
-  --sl-color-backdrop-overlay: rgb(11 11 10 / 0.8);
+  --sl-color-backdrop-overlay: color-mix(
+    in oklch,
+    var(--sl-color-black) 80%,
+    transparent
+  );
 
-  /* Grid paper behind live demos and the hero. */
-  --site-grid-line: rgb(255 255 255 / 0.045);
+  /* Grid paper behind live demos. */
+  --site-grid-line: color-mix(in oklch, var(--sl-color-white) 5%, transparent);
 
   --sl-shadow-sm: none;
   --sl-shadow-md: none;
   --sl-shadow-lg: 0 0 0 1px var(--sl-color-gray-5);
+}
 
+/* Type, space and motion tokens --------------------------------------- */
+
+:root {
   --sl-font: "IBM Plex Sans Variable";
   --sl-font-mono: "IBM Plex Mono";
   --site-font-ui: var(--__sl-font-mono);
@@ -51,6 +76,13 @@
   --sl-text-code: 0.8125rem;
   --sl-text-code-sm: 0.75rem;
 
+  /* Fluid sizes: rem + vw, both bounds in rem, max under 2.5 × min. */
+  --site-text-hero: clamp(2.25rem, 1.25rem + 3.5vw, 4rem);
+  --site-text-title: clamp(1.8125rem, 1.5rem + 2vw, 2.625rem);
+  --site-space-hero: clamp(2rem, 1rem + 6vw, 6rem);
+
+  --site-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
   --sl-content-width: 46rem;
   --sl-sidebar-width: 17rem;
   --sl-menu-button-size: 2.25rem;
@@ -59,29 +91,49 @@
   scrollbar-color: var(--sl-color-gray-4) transparent;
 }
 
-:root[data-theme="light"] {
-  --sl-color-white: #0b0b0a;
-  --sl-color-gray-1: #1c1c1b;
-  --sl-color-gray-2: #353533;
-  --sl-color-gray-3: #5e5e5b;
-  --sl-color-gray-4: #8f8f8b;
-  --sl-color-gray-5: #d9d9d5;
-  --sl-color-gray-6: #efefec;
-  --sl-color-gray-7: #f6f6f3;
-  --sl-color-black: #fcfcfa;
+/* Base ---------------------------------------------------------------- */
 
-  --sl-color-accent-low: #ffe2d4;
-  --sl-color-accent: #c2410c;
-  --sl-color-accent-high: #8f2f08;
+:root {
+  text-wrap: pretty;
+  font-synthesis: none;
+  -webkit-tap-highlight-color: transparent;
 
-  --sl-color-backdrop-overlay: rgb(252 252 250 / 0.8);
-  --site-grid-line: rgb(0 0 0 / 0.05);
+  /* Fixed header and sidebar: no rubber-band drag on desktop trackpads. */
+  overscroll-behavior-y: none;
 }
 
-/* Base ---------------------------------------------------------------- */
+@media (any-pointer: coarse) {
+  :root {
+    overscroll-behavior-y: auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    scroll-behavior: smooth;
+  }
+}
+
+@view-transition {
+  navigation: auto;
+}
 
 body {
   font-size-adjust: from-font;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: balance;
+}
+
+a,
+button,
+summary,
+[role="button"] {
+  touch-action: manipulation;
 }
 
 ::selection {
@@ -89,10 +141,17 @@ body {
   color: var(--sl-color-text-invert);
 }
 
-:where(a, button, input, select, summary, [tabindex]):focus-visible {
-  outline: 2px solid var(--sl-color-accent);
-  outline-offset: 2px;
+/* One focus ring. Scoped to controls so a focused dialog gets none. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: max(2px, 0.08em) solid currentColor;
+  outline-offset: 0.25em;
   border-radius: 0;
+}
+
+/* Inner scrollers keep their scroll to themselves. */
+.sidebar-pane,
+.right-sidebar {
+  overscroll-behavior: contain;
 }
 
 /* Everything that is interface, not prose, reads in mono. */
@@ -111,6 +170,26 @@ footer .meta,
   font-family: var(--site-font-ui);
 }
 
+/* Press feedback on everything that is pressed rather than read. */
+:is(.sl-link-button, site-search button, .sl-menu-button):active {
+  scale: 0.97;
+}
+
+.pagination-links > a:active {
+  scale: 0.98;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(
+    .sl-link-button,
+    site-search button,
+    .sl-menu-button,
+    .pagination-links > a
+  ) {
+    transition: scale 160ms var(--site-ease-out);
+  }
+}
+
 /* Header ------------------------------------------------------------- */
 
 .page > .header {
@@ -123,10 +202,6 @@ site-search button[data-open-modal] {
   background: transparent;
   font-family: var(--site-font-ui);
   font-size: var(--sl-text-xs);
-}
-
-site-search button[data-open-modal]:hover {
-  border-color: var(--sl-color-gray-3);
 }
 
 site-search kbd {
@@ -144,12 +219,17 @@ site-search dialog {
   gap: 0.75rem;
 }
 
+/* Icon links are 24px: the pseudo-element grows the target to 44px. */
 .social-icons a {
+  position: relative;
   color: var(--sl-color-gray-3);
 }
 
-.social-icons a:hover {
-  color: var(--sl-color-white);
+.social-icons a::after,
+.sl-menu-button::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - 44px) / 2);
 }
 
 .social-icons::after {
@@ -163,17 +243,13 @@ starlight-lang-select select {
   font-size: var(--sl-text-xs);
 }
 
-.sl-menu-button {
+.sl-menu-button,
+:root[data-theme="light"] .sl-menu-button {
   border-radius: 0;
   border: 1px solid var(--sl-color-gray-5);
   background: var(--sl-color-black);
   color: var(--sl-color-white);
   box-shadow: none;
-}
-
-:root[data-theme="light"] .sl-menu-button {
-  background: var(--sl-color-black);
-  color: var(--sl-color-white);
 }
 
 .sl-menu-button:has(~ :popover-open),
@@ -230,14 +306,9 @@ starlight-lang-select select {
   color: var(--sl-color-gray-2);
 }
 
-.sidebar-content a:hover {
-  color: var(--sl-color-white);
-  border-inline-start-color: var(--sl-color-gray-3);
-}
-
+/* The current page holds its look under hover and focus too. */
 .sidebar-content a[aria-current="page"],
-.sidebar-content a[aria-current="page"]:hover,
-.sidebar-content a[aria-current="page"]:focus {
+.sidebar-content a[aria-current="page"]:is(:hover, :focus) {
   background: transparent;
   color: var(--sl-color-white);
   font-weight: 500;
@@ -263,10 +334,6 @@ mobile-starlight-toc .toggle {
 starlight-toc a {
   font-size: var(--sl-text-xs);
   color: var(--sl-color-gray-3);
-}
-
-starlight-toc a:hover {
-  color: var(--sl-color-white);
 }
 
 starlight-toc a[aria-current="true"],
@@ -297,11 +364,6 @@ mobile-starlight-toc .dropdown {
   color: var(--sl-color-white);
   font-weight: 600;
   letter-spacing: -0.02em;
-  text-wrap: balance;
-}
-
-.sl-markdown-content :is(p, li, blockquote) {
-  text-wrap: pretty;
 }
 
 /* Sections read like a spec: a hairline rule and a section number. */
@@ -345,10 +407,6 @@ mobile-starlight-toc .dropdown {
   text-decoration-color: var(--sl-color-accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
-}
-
-.sl-markdown-content a:not(:where(.not-content *)):hover {
-  color: var(--sl-color-accent);
 }
 
 .sl-markdown-content :not(pre, .expressive-code *) > code {
@@ -440,9 +498,10 @@ mobile-starlight-toc .dropdown {
   text-transform: uppercase;
 }
 
-/* Cards: numbered cells of one grid instead of floating boxes ---------- */
+/* Cards: numbered cells of one intrinsic grid ------------------------- */
 
 .card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
   gap: 0;
   border: 1px solid var(--sl-color-gray-5);
   counter-reset: card;
@@ -491,27 +550,18 @@ mobile-starlight-toc .dropdown {
   font-weight: 500;
 }
 
+/* A filled button's ring takes its fill: currentColor is the dark label. */
 .sl-link-button.primary {
   border-color: var(--sl-color-white);
   background: var(--sl-color-white);
   color: var(--sl-color-black);
-}
-
-.sl-link-button.primary:hover {
-  border-color: var(--sl-color-accent);
-  background: var(--sl-color-accent);
-  color: var(--sl-color-text-invert);
+  outline-color: var(--sl-color-white);
 }
 
 .sl-link-button.secondary,
 .sl-link-button.minimal {
   border: 1px solid var(--sl-color-gray-5);
   color: var(--sl-color-white);
-}
-
-.sl-link-button.secondary:hover,
-.sl-link-button.minimal:hover {
-  border-color: var(--sl-color-white);
 }
 
 /* Footer -------------------------------------------------------------- */
@@ -525,6 +575,7 @@ footer .meta {
 }
 
 .pagination-links > a {
+  position: relative;
   border-radius: 0;
   box-shadow: none;
   border-color: var(--sl-color-gray-5);
@@ -535,17 +586,49 @@ footer .meta {
   margin-inline-start: -1px;
 }
 
-.pagination-links > a:hover {
-  border-color: var(--sl-color-accent);
-  position: relative;
-}
-
 .pagination-links .link-title {
   font-size: var(--sl-text-base);
   color: var(--sl-color-white);
 }
 
-/* Forced colors: grid lines and the accent fall back to system colors. */
+/* Hover, only where a precise pointer can hover ----------------------- */
+
+@media (hover: hover) and (pointer: fine) {
+  site-search button[data-open-modal]:hover {
+    border-color: var(--sl-color-gray-3);
+  }
+
+  .social-icons a:hover,
+  starlight-toc a:hover {
+    color: var(--sl-color-white);
+  }
+
+  .sidebar-content a:not([aria-current="page"]):hover {
+    color: var(--sl-color-white);
+    border-inline-start-color: var(--sl-color-gray-3);
+  }
+
+  .sl-markdown-content a:not(:where(.not-content *)):hover {
+    color: var(--sl-color-accent);
+  }
+
+  .sl-link-button.primary:hover {
+    border-color: var(--sl-color-accent);
+    background: var(--sl-color-accent);
+    color: var(--sl-color-text-invert);
+    outline-color: var(--sl-color-accent);
+  }
+
+  .sl-link-button:is(.secondary, .minimal):hover {
+    border-color: var(--sl-color-white);
+  }
+
+  .pagination-links > a:hover {
+    border-color: var(--sl-color-accent);
+  }
+}
+
+/* Forced colors: the current page keeps a visible marker. */
 @media (forced-colors: active) {
   .sidebar-content a[aria-current="page"] {
     border-inline-start-color: Highlight;

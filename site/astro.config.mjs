@@ -35,6 +35,13 @@ export default defineConfig({
           href: "https://github.com/anuarhdz/surface-elements",
         },
       ],
+      // Paint the right canvas before the CSS loads.
+      head: [
+        {
+          tag: "meta",
+          attrs: { name: "color-scheme", content: "dark light" },
+        },
+      ],
       editLink: {
         baseUrl: "https://github.com/anuarhdz/surface-elements/edit/main/site/",
       },
@@ -48,6 +55,7 @@ export default defineConfig({
         "@fontsource/ibm-plex-mono/500.css",
         "@fontsource/ibm-plex-mono/600.css",
         "@fontsource-variable/ibm-plex-sans",
+        "@fontsource-variable/ibm-plex-sans/wght-italic.css",
         "./src/styles/theme.css",
         "./src/styles/demo.css",
       ],
