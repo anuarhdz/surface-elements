@@ -51,8 +51,8 @@ export default defineConfig({
         Hero: "./src/components/hero.astro",
       },
       customCss: [
-        "@fontsource-variable/geist",
-        "@fontsource-variable/geist/wght-italic.css",
+        "@fontsource-variable/inter/opsz.css",
+        "@fontsource-variable/inter/opsz-italic.css",
         "@fontsource-variable/geist-mono",
         "@fontsource-variable/geist-mono/wght-italic.css",
         "./src/styles/theme.css",

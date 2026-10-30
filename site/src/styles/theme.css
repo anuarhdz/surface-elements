@@ -67,7 +67,7 @@
 /* Type, space and motion tokens --------------------------------------- */
 
 :root {
-  --sl-font: "Geist Variable";
+  --sl-font: "Inter Variable";
   --sl-font-mono: "Geist Mono Variable";
   --site-font-ui: var(--__sl-font-mono);
 
@@ -118,7 +118,12 @@
   navigation: auto;
 }
 
-body {
+/* from-font computes to the ratio of the element's own font and inherits as
+   that number, so it is set on every element: mono text must not inherit
+   the sans font's ratio. */
+*,
+::before,
+::after {
   font-size-adjust: from-font;
 }
 
