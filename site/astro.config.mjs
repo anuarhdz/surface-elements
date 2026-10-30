@@ -22,7 +22,7 @@ const librarySource = {
 }
 
 export default defineConfig({
-  site: "https://surface-elements-docs.iniciatico.workers.dev",
+  site: "https://surface-elements.anuar.dev",
   integrations: [
     starlight({
       title: "surface-elements",

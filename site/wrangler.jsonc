@@ -2,6 +2,11 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "surface-elements-docs",
   "compatibility_date": "2026-10-01",
+  "routes": [
+    { "pattern": "surface-elements.anuar.dev", "custom_domain": true },
+  ],
+  // Declaring routes turns workers.dev off by default; keep the old URL alive.
+  "workers_dev": true,
   "assets": {
     "directory": "./dist",
     "not_found_handling": "404-page",

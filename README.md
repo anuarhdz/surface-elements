@@ -2,7 +2,7 @@
 
 Vanilla web components and utilities for common interface surfaces.
 
-**Docs and live demos:** https://surface-elements-docs.iniciatico.workers.dev
+**Docs and live demos:** https://surface-elements.anuar.dev
 
 ## Install
 
