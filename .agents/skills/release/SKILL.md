@@ -106,14 +106,15 @@ pnpm release <patch|minor|major>
 
 The script (see `scripts/release.sh`):
 
-1. Re-runs the verify gate.
-2. `pnpm version <bump>` — bumps `package.json`, creates commit `chore(release): X.Y.Z` and tag `vX.Y.Z`.
-3. Stages and amends `CHANGELOG.md` into that release commit when the changelog was updated before the bump (see below).
-4. `git push origin main --follow-tags`.
-5. `gh release create "vX.Y.Z" --generate-notes` (notes refined from CHANGELOG when present).
-6. `pnpm publish --access public`.
+1. Re-runs the verify gate, then `pnpm build`, and stops if the build changes tracked files.
+2. `pnpm pack --dry-run` on the fresh `dist/`.
+3. `npm version <bump> --no-git-tag-version` — bumps `package.json` only (`pnpm version` refuses the uncommitted changelog) and checks `CHANGELOG.md` has a `## [X.Y.Z]` section.
+4. Commits `package.json` and `CHANGELOG.md` as `chore(release): X.Y.Z` and tags `vX.Y.Z`.
+5. `git push origin main --follow-tags`.
+6. `gh release create "vX.Y.Z"` with the notes from that changelog section.
+7. `pnpm publish --access public`.
 
-**Changelog + version commit:** before invoking the script, the changelog for `X.Y.Z` must already be written on disk (uncommitted). The script includes it in the release commit. If you write the changelog *after* `pnpm version`, stop and fix — do not leave changelog out of the tagged commit.
+**Changelog + version commit:** before invoking the script, the changelog for `X.Y.Z` must already be written on disk (uncommitted). The script includes it in the release commit. If you write the changelog *after* the bump, stop and fix — do not leave changelog out of the tagged commit.
 
 If the script is unavailable mid-session, perform the same sequence manually and keep the commit message `chore(release): X.Y.Z`.
 
