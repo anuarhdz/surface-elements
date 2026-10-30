@@ -67,8 +67,8 @@
 /* Type, space and motion tokens --------------------------------------- */
 
 :root {
-  --sl-font: "IBM Plex Sans Variable";
-  --sl-font-mono: "IBM Plex Mono";
+  --sl-font: "Geist Variable";
+  --sl-font-mono: "Geist Mono Variable";
   --site-font-ui: var(--__sl-font-mono);
 
   --sl-line-height: 1.7;
