@@ -133,11 +133,20 @@ git push origin main --follow-tags
 NOTES_FILE="$(mktemp)"
 trap 'rm -f "$NOTES_FILE"' EXIT
 
+# The section for this version, without blank lines at either end. Plain
+# awk only: the BSD sed on macOS rejects GNU-style one-liners.
 awk -v ver="$VERSION" '
   $0 ~ "^## \\[" ver "\\]" { capture=1; next }
   capture && $0 ~ /^## \[/ { exit }
-  capture { print }
-' CHANGELOG.md | sed -e '1{/^$/d}' -e '${/^$/d}' >"$NOTES_FILE"
+  capture { lines[++n] = $0 }
+  END {
+    first = 1
+    while (first <= n && lines[first] ~ /^[[:space:]]*$/) first++
+    last = n
+    while (last >= first && lines[last] ~ /^[[:space:]]*$/) last--
+    for (i = first; i <= last; i++) print lines[i]
+  }
+' CHANGELOG.md >"$NOTES_FILE"
 
 if [[ ! -s "$NOTES_FILE" ]]; then
   echo "See CHANGELOG.md for details." >"$NOTES_FILE"
