@@ -26,8 +26,8 @@ if [[ "$BRANCH" != "main" ]]; then
   exit 1
 fi
 
-# Working tree may only have CHANGELOG.md dirty (the notes for this release).
-other_dirty="$(
+# Paths with changes other than CHANGELOG.md (the notes for this release).
+other_dirty() {
   git status --porcelain | while IFS= read -r line; do
     path="${line:3}"
     path="${path#\"}"
@@ -40,8 +40,9 @@ other_dirty="$(
       printf '%s\n' "$path"
     fi
   done
-)"
-if [[ -n "$other_dirty" ]]; then
+}
+
+if [[ -n "$(other_dirty)" ]]; then
   echo "error: working tree dirty; only uncommitted CHANGELOG.md is allowed before release" >&2
   git status --short >&2
   exit 1
@@ -82,17 +83,32 @@ pnpm typecheck
 pnpm lint
 pnpm fmt:check
 
+# Build first: the dry-run lists whatever dist/ holds, and a stale dist/
+# from an older build would pass for this release.
+echo "==> build"
+pnpm build
+
+# The build regenerates skills/ and copy/. A change there means the commit
+# being tagged does not match what would be published.
+if [[ -n "$(other_dirty)" ]]; then
+  echo "error: pnpm build changed tracked files; commit them on main first" >&2
+  git status --short >&2
+  exit 1
+fi
+
 echo "==> pack dry-run"
 pnpm pack --dry-run
 
 OLD_VERSION="$(node -p "require('./package.json').version")"
 echo "==> bump ${OLD_VERSION} (${BUMP})"
-pnpm version "$BUMP" --no-git-tag-version
+# npm, not pnpm: pnpm version refuses the uncommitted CHANGELOG.md this
+# script requires. With --no-git-tag-version npm only edits package.json.
+npm version "$BUMP" --no-git-tag-version
 VERSION="$(node -p "require('./package.json').version")"
 TAG="v${VERSION}"
 
 restore_version() {
-  pnpm version "$OLD_VERSION" --no-git-tag-version --allow-same-version >/dev/null 2>&1 ||
+  npm version "$OLD_VERSION" --no-git-tag-version --allow-same-version >/dev/null 2>&1 ||
     git checkout -- package.json
 }
 
