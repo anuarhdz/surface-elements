@@ -417,6 +417,13 @@ mobile-starlight-toc .dropdown {
   font-size: 0.85em;
 }
 
+/* Inline-block keeps a token such as `--surface-drawer-*` whole in prose:
+   it moves to the next line as a unit and only breaks if it is wider than a
+   line. Headings are left out: a signature there must wrap at its spaces. */
+.sl-markdown-content :is(p, li, td) > code {
+  display: inline-block;
+}
+
 .sl-markdown-content :is(ul, ol) > li::marker {
   color: var(--sl-color-gray-4);
 }
