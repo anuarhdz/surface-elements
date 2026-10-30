@@ -1,0 +1,268 @@
+---
+/**
+ * Overrides Starlight's Hero: the pitch and install command on one side, an
+ * index of the web components on the other, with the gzip size of each copy
+ * file (copy/<tag>.js, the element with every dependency inlined).
+ */
+import { gzipSync } from "node:zlib"
+import { getCollection } from "astro:content"
+import { LinkButton } from "@astrojs/starlight/components"
+
+// Starlight's PAGE_TITLE_ID, which its package does not export.
+const PAGE_TITLE_ID = "_top"
+
+const { data } = Astro.locals.starlightRoute.entry
+const { title = data.title, tagline, actions = [] } = data.hero ?? {}
+
+const copies = import.meta.glob<string>("../../../copy/*.js", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+})
+
+const components = (
+  await getCollection("docs", ({ id }) => id.startsWith("components/"))
+)
+  .map(({ id, data: page }) => {
+    const tag = `surface-${id.split("/")[1]}`
+    const code = copies[`../../../copy/${tag}.js`]
+
+    const size = code
+      ? `${(gzipSync(code).length / 1024).toFixed(1)} kB`
+      : undefined
+
+    return { href: `/${id}/`, title: page.title, tag, size }
+  })
+  .toSorted((a, b) => a.tag.localeCompare(b.tag))
+---
+
+<div class="hero not-content">
+  <div class="intro">
+    <p class="meta">
+      <span>Web components</span>
+      <span>Light DOM</span>
+      <span>0 dependencies</span>
+    </p>
+    <h1 id={PAGE_TITLE_ID} set:html={title} />
+    {tagline && <p class="tagline" set:html={tagline} />}
+    <p class="install">
+      <span class="prompt" aria-hidden="true">$</span>
+      <code>pnpm add surface-elements</code>
+    </p>
+    {
+      actions.length > 0 && (
+        <div class="actions">
+          {actions.map(({ link, text, variant, icon }) => (
+            <LinkButton href={link} variant={variant} icon={icon?.name}>
+              {text}
+            </LinkButton>
+          ))}
+        </div>
+      )
+    }
+  </div>
+
+  <nav class="index" aria-labelledby="hero-index-title">
+    <p class="index-head" id="hero-index-title">
+      <span>Elements</span>
+      <span>gzip</span>
+    </p>
+    <ol>
+      {
+        components.map(({ href, title, tag, size }) => (
+          <li>
+            <a class="tag" href={href}>
+              &lt;{tag}&gt;
+            </a>
+            <span class="title">{title}</span>
+            {size && <span class="size">{size}</span>}
+          </li>
+        ))
+      }
+    </ol>
+  </nav>
+</div>
+
+<style>
+  /* Two sides that wrap on their own: the index keeps its width until the
+     intro would get less than half the row, then drops below it. */
+  .hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: 2.5rem 4rem;
+    padding-block: var(--site-space-hero) 3rem;
+  }
+
+  .intro {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 1.25rem;
+    flex-basis: 0;
+    flex-grow: 999;
+    min-inline-size: 55%;
+  }
+
+  .intro > * {
+    margin: 0;
+  }
+
+  .index {
+    flex-basis: 22rem;
+    flex-grow: 1;
+    border: 1px solid var(--sl-color-gray-5);
+    font-family: var(--site-font-ui);
+    font-size: var(--sl-text-xs);
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    row-gap: 0.25rem;
+    font-family: var(--site-font-ui);
+    font-size: var(--sl-text-2xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sl-color-gray-3);
+  }
+
+  .meta span + span::before {
+    content: "/";
+    margin-inline: 0.75em;
+    color: var(--sl-color-accent);
+  }
+
+  h1 {
+    max-inline-size: 18ch;
+    font-family: var(--site-font-ui);
+    font-size: var(--site-text-hero);
+    font-weight: 600;
+    line-height: 1.05;
+    letter-spacing: -0.045em;
+    color: var(--sl-color-white);
+  }
+
+  .tagline {
+    max-inline-size: 48ch;
+    font-size: var(--sl-text-lg);
+    line-height: 1.55;
+    color: var(--sl-color-gray-3);
+  }
+
+  .install {
+    display: flex;
+    gap: 0.75rem;
+    max-inline-size: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--sl-color-gray-5);
+    background: var(--sl-color-gray-7);
+    font-family: var(--site-font-ui);
+    font-size: var(--sl-text-sm);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+
+  .install code {
+    color: var(--sl-color-white);
+    user-select: all;
+    white-space: nowrap;
+  }
+
+  .prompt {
+    color: var(--sl-color-accent);
+    user-select: none;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .index-head {
+    display: flex;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0.5rem 1rem;
+    border-block-end: 1px solid var(--sl-color-gray-5);
+    font-size: var(--sl-text-2xs);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--sl-color-gray-3);
+  }
+
+  ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: element;
+  }
+
+  /* The whole row navigates through one short link: the tag's ::after
+     covers the row, and the ring moves from the link to the row. */
+  li {
+    counter-increment: element;
+    position: relative;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "num tag size"
+      "num title size";
+    column-gap: 1rem;
+    align-items: baseline;
+    padding: 0.875rem 1rem;
+    color: var(--sl-color-gray-3);
+  }
+
+  li + li {
+    border-block-start: 1px solid var(--sl-color-gray-5);
+  }
+
+  li::before {
+    content: counter(element, decimal-leading-zero);
+    grid-area: num;
+  }
+
+  .tag {
+    grid-area: tag;
+    color: var(--sl-color-white);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .tag::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
+
+  .tag:focus-visible {
+    outline: 2px solid transparent;
+  }
+
+  li:has(.tag:focus-visible) {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+  }
+
+  .title {
+    grid-area: title;
+  }
+
+  .size {
+    grid-area: size;
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    li:hover {
+      background: var(--sl-color-gray-7);
+    }
+
+    li:hover::before,
+    li:hover .tag {
+      color: var(--sl-color-accent);
+    }
+  }
+</style>
