@@ -1,6 +1,8 @@
 ---
 name: conventional-commit
 description: Write or fix git commits to Conventional Commits. Use when committing, amending, squashing, or the user mentions conventional commits / commit message format.
+metadata:
+  internal: true
 ---
 
 # Conventional Commit

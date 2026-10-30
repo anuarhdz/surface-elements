@@ -1,6 +1,8 @@
 ---
 name: release
 description: Cut a release — changelog, version bump, GitHub Release, local npm publish. Use when the user wants to release, publish, ship a version, or bump and tag.
+metadata:
+  internal: true
 ---
 
 # Release
