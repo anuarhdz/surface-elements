@@ -2,47 +2,70 @@
 .demo {
   margin-block: 1.5rem;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.75rem;
-  overflow: hidden;
 }
 
 .demo figcaption {
-  padding: 0.375rem 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
   border-block-end: 1px solid var(--sl-color-gray-5);
-  background: var(--sl-color-gray-6);
-  color: var(--sl-color-gray-2);
-  font-size: var(--sl-text-xs);
+  color: var(--sl-color-gray-3);
+  font-family: var(--site-font-ui);
+  font-size: var(--sl-text-2xs);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
+/* "Live" marker: the stage below runs the real library. */
+.demo figcaption::before {
+  content: "";
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  background: var(--sl-color-accent);
+}
+
+/* Grid paper: the stage is a workbench, not page content. */
 .demo-stage {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  padding: 1.25rem;
+  padding: 1.5rem;
+  background-color: var(--sl-color-gray-7);
+  background-image:
+    linear-gradient(var(--site-grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--site-grid-line) 1px, transparent 1px);
+  background-size: 1.5rem 1.5rem;
+  background-position: -1px -1px;
 }
 
 .demo button {
   font: inherit;
-  font-size: var(--sl-text-sm);
+  font-family: var(--site-font-ui);
+  font-size: var(--sl-text-xs);
   padding: 0.5rem 0.875rem;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.5rem;
-  background: var(--sl-color-gray-6);
+  border-radius: 0;
+  background: var(--sl-color-black);
   color: var(--sl-color-white);
   cursor: pointer;
 }
 
 .demo button:hover {
-  border-color: var(--sl-color-gray-3);
+  border-color: var(--sl-color-white);
 }
 
 .demo button.primary {
+  background: var(--sl-color-white);
+  border-color: var(--sl-color-white);
+  color: var(--sl-color-black);
+}
+
+.demo button.primary:hover {
   background: var(--sl-color-accent);
   border-color: var(--sl-color-accent);
-  color: var(--sl-color-black);
+  color: var(--sl-color-text-invert);
 }
 
 .demo output,
@@ -61,9 +84,14 @@
 }
 
 /* Drawer content */
+/* The demos theme the library through its public properties only, the way
+   a consumer would: square, hairline borders, the site's backdrop. */
 surface-drawer > dialog {
   --surface-drawer-background: var(--sl-color-bg);
   --surface-drawer-color: var(--sl-color-white);
+  --surface-drawer-border: 1px solid var(--sl-color-gray-5);
+  --surface-drawer-shadow: none;
+  --surface-drawer-backdrop: var(--sl-color-backdrop-overlay);
 }
 
 .drawer-layout {
@@ -84,9 +112,19 @@ surface-drawer:is([edge="top"], [edge="bottom"]) .drawer-layout {
   gap: 1rem;
 }
 
-.drawer-head h2 {
+.drawer-head h2,
+.modal-layout h2 {
   margin: 0;
-  font-size: var(--sl-text-xl);
+  font-family: var(--site-font-ui);
+  font-size: var(--sl-text-lg);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.demo a {
+  color: var(--sl-color-white);
+  text-decoration-color: var(--sl-color-accent);
+  text-underline-offset: 0.2em;
 }
 
 .drawer-actions {
@@ -103,6 +141,10 @@ surface-drawer:is([edge="top"], [edge="bottom"]) .drawer-layout {
 surface-modal > dialog {
   --surface-modal-background: var(--sl-color-bg);
   --surface-modal-color: var(--sl-color-white);
+  --surface-modal-border: 1px solid var(--sl-color-gray-5);
+  --surface-modal-radius: 0;
+  --surface-modal-shadow: none;
+  --surface-modal-backdrop: var(--sl-color-backdrop-overlay);
 }
 
 .modal-layout {
@@ -120,7 +162,7 @@ surface-modal > dialog {
   block-size: 14rem;
   overflow: auto;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.5rem;
+  background: var(--sl-color-bg);
 }
 
 .sticky-frame header {
@@ -146,7 +188,7 @@ surface-modal > dialog {
 .accordion-demo {
   inline-size: 100%;
   border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.5rem;
+  background: var(--sl-color-bg);
 }
 
 .accordion-demo > details + details {

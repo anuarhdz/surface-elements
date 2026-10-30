@@ -1,0 +1,54 @@
+---
+/**
+ * Overrides Starlight's PageTitle: the page's path in the docs as an eyebrow
+ * above the title, like a section reference in a spec.
+ */
+
+// Starlight's PAGE_TITLE_ID, which its package does not export: the skip
+// link and the table of contents point at it.
+const PAGE_TITLE_ID = "_top"
+
+const { entry } = Astro.locals.starlightRoute
+const path = ["docs", ...entry.id.split("/")]
+---
+
+<p class="eyebrow" aria-hidden="true">
+  {
+    path.map((part, i) => (
+      <>
+        {i > 0 && <span class="sep">/</span>}
+        <span>{part}</span>
+      </>
+    ))
+  }
+</p>
+<h1 id={PAGE_TITLE_ID}>{entry.data.title}</h1>
+
+<style>
+  .eyebrow {
+    margin: 1rem 0 0;
+    font-family: var(--site-font-ui);
+    font-size: var(--sl-text-2xs);
+    letter-spacing: 0.04em;
+    color: var(--sl-color-gray-3);
+  }
+
+  .eyebrow span:last-child {
+    color: var(--sl-color-accent);
+  }
+
+  .sep {
+    margin-inline: 0.375em;
+    color: var(--sl-color-gray-4);
+  }
+
+  h1 {
+    margin-block-start: 0.75rem;
+    font-family: var(--site-font-ui);
+    font-size: clamp(var(--sl-text-3xl), 1.5rem + 2vw, var(--sl-text-5xl));
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: var(--sl-line-height-headings);
+    color: var(--sl-color-white);
+  }
+</style>
