@@ -162,6 +162,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#settles = [];
 	#added = /* @__PURE__ */ new WeakMap();
 	#mutations;
+	#waiting;
 	#resizes;
 	#intersections;
 	constructor() {
@@ -214,7 +215,19 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	connectedCallback() {
 		adoptCarouselStyles();
 		const track = this.track;
-		if (!track) return;
+		if (!track) {
+			this.#waiting ??= new MutationObserver(() => {
+				if (!this.track) return;
+				this.#waiting?.disconnect();
+				this.connectedCallback();
+			});
+			this.#waiting.observe(this, {
+				childList: true,
+				subtree: true
+			});
+			return;
+		}
+		this.#waiting?.disconnect();
 		this.#track = track;
 		this.#index = this.#nearest(track)?.index ?? 0;
 		this.#announced = this.#index;
@@ -271,6 +284,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		this.removeEventListener("pointerenter", this.#onPointerEnter);
 		this.removeEventListener("pointerleave", this.#onPointerLeave);
 		document.removeEventListener("visibilitychange", this.#onVisibility);
+		this.#waiting?.disconnect();
 		this.#mutations?.disconnect();
 		this.#resizes?.disconnect();
 		this.#intersections?.disconnect();
@@ -384,6 +398,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		const track = this.#track;
 		if (!track) return Promise.resolve();
 		if (reached(track, el)) {
+			if (this.#target) stopScroll(track);
 			this.#target = void 0;
 			this.#update();
 			return Promise.resolve();
@@ -738,8 +753,9 @@ function offsetOf(track, el) {
 	const rect = el.getBoundingClientRect();
 	const rtl = style.direction === "rtl";
 	const origin = box.left + track.clientLeft;
-	const left = origin + px(style.scrollPaddingLeft);
-	const right = origin + track.clientWidth - px(style.scrollPaddingRight);
+	const width = track.clientWidth;
+	const left = origin + px(style.scrollPaddingLeft, width);
+	const right = origin + width - px(style.scrollPaddingRight, width);
 	const start = rect.left - px(own.scrollMarginLeft);
 	const end = rect.right + px(own.scrollMarginRight);
 	const align = own.scrollSnapAlign.trim().split(/\s+/).at(-1);
@@ -756,10 +772,19 @@ function reached(track, el) {
 	const high = rtl ? 0 : max;
 	return offset > 0 ? track.scrollLeft >= high - 1 : track.scrollLeft <= low + 1;
 }
-const px = (value) => Number.parseFloat(value) || 0;
+const px = (value, basis = 0) => {
+	const number = Number.parseFloat(value) || 0;
+	return value.trim().endsWith("%") ? number * basis / 100 : number;
+};
 const maxScroll = (track) => Math.max(0, track.scrollWidth - track.clientWidth);
 const atStart = (track) => Math.abs(track.scrollLeft) <= 1;
 const atEnd = (track) => Math.abs(track.scrollLeft) >= maxScroll(track) - 1;
+function stopScroll(track) {
+	track.scrollTo?.({
+		left: track.scrollLeft,
+		behavior: "instant"
+	});
+}
 function scrollByX(track, left, behavior) {
 	if (left !== 0) track.scrollBy?.({
 		left,

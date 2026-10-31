@@ -91,6 +91,7 @@ export class SurfaceCarousel extends HTMLElement {
   // Attributes this element added, as opposed to the author.
   #added = new WeakMap<Element, Set<string>>()
   #mutations: MutationObserver | undefined
+  #waiting: MutationObserver | undefined
   #resizes: ResizeObserver | undefined
   #intersections: IntersectionObserver | undefined
 
@@ -163,8 +164,21 @@ export class SurfaceCarousel extends HTMLElement {
 
     const track = this.track
 
-    if (!track) return
+    // The track can come after the element, from a framework or innerHTML:
+    // set up once it is there.
+    if (!track) {
+      this.#waiting ??= new MutationObserver(() => {
+        if (!this.track) return
 
+        this.#waiting?.disconnect()
+        this.connectedCallback()
+      })
+      this.#waiting.observe(this, { childList: true, subtree: true })
+
+      return
+    }
+
+    this.#waiting?.disconnect()
     this.#track = track
     this.#index = this.#nearest(track)?.index ?? 0
     this.#announced = this.#index
@@ -245,6 +259,7 @@ export class SurfaceCarousel extends HTMLElement {
     this.removeEventListener("pointerenter", this.#onPointerEnter)
     this.removeEventListener("pointerleave", this.#onPointerLeave)
     document.removeEventListener("visibilitychange", this.#onVisibility)
+    this.#waiting?.disconnect()
     this.#mutations?.disconnect()
     this.#resizes?.disconnect()
     this.#intersections?.disconnect()
@@ -444,6 +459,10 @@ export class SurfaceCarousel extends HTMLElement {
     // Already there, or as close as the track can scroll: no scroll, and so
     // no scrollend, would follow.
     if (reached(track, el)) {
+      // A step under way (the next() that this prev() takes back) would
+      // still carry the track off: stop it where it is.
+      if (this.#target) stopScroll(track)
+
       this.#target = undefined
       this.#update()
 
@@ -1043,8 +1062,9 @@ function offsetOf(track: HTMLElement, el: HTMLElement): number {
   const rtl = style.direction === "rtl"
 
   const origin = box.left + track.clientLeft
-  const left = origin + px(style.scrollPaddingLeft)
-  const right = origin + track.clientWidth - px(style.scrollPaddingRight)
+  const width = track.clientWidth
+  const left = origin + px(style.scrollPaddingLeft, width)
+  const right = origin + width - px(style.scrollPaddingRight, width)
 
   const start = rect.left - px(own.scrollMarginLeft)
   const end = rect.right + px(own.scrollMarginRight)
@@ -1071,7 +1091,13 @@ function reached(track: HTMLElement, el: HTMLElement): boolean {
   return offset > 0 ? track.scrollLeft >= high - 1 : track.scrollLeft <= low + 1
 }
 
-const px = (value: string): number => Number.parseFloat(value) || 0
+// A computed length in pixels. Scroll padding keeps percentages, which are
+// of the scrollport's width (`basis`); `auto` counts as 0.
+const px = (value: string, basis = 0): number => {
+  const number = Number.parseFloat(value) || 0
+
+  return value.trim().endsWith("%") ? (number * basis) / 100 : number
+}
 
 // scrollLeft runs negative in right-to-left tracks.
 const maxScroll = (track: HTMLElement): number =>
@@ -1081,6 +1107,11 @@ const atStart = (track: HTMLElement): boolean => Math.abs(track.scrollLeft) <= 1
 
 const atEnd = (track: HTMLElement): boolean =>
   Math.abs(track.scrollLeft) >= maxScroll(track) - 1
+
+// An instant scroll to where the track is cancels a smooth one under way.
+function stopScroll(track: HTMLElement): void {
+  track.scrollTo?.({ left: track.scrollLeft, behavior: "instant" })
+}
 
 // jsdom has no Element.scrollBy.
 function scrollByX(

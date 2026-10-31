@@ -179,6 +179,55 @@ describe("surface-carousel in a browser", () => {
     expect(el.index).toBe(0)
   })
 
+  it("cancels a step that a newer one takes back before it starts", async () => {
+    const el = await carousel()
+
+    void el.next()
+    await el.prev()
+    await sleep(600)
+
+    expect(el.index).toBe(0)
+    expect(inView(el, 0)).toBe(true)
+    expect(Math.abs(el.track?.scrollLeft ?? 1)).toBeLessThan(1)
+  })
+
+  it("resolves steps with percentage scroll padding", async () => {
+    const el = await carousel("", 4, "--surface-carousel-per-view: 2")
+    const track = el.track
+
+    if (!track) throw new Error("Missing track")
+
+    // 10% of the 400 px scrollport is 40 px, not 10 px.
+    track.style.scrollPaddingInline = "10%"
+    await el.goTo(0, { behavior: "instant" })
+
+    const timeout = new Promise((resolve) => setTimeout(resolve, 1500, "stuck"))
+
+    expect(await Promise.race([el.next().then(() => "done"), timeout])).toBe(
+      "done"
+    )
+    expect(el.index).toBe(1)
+  })
+
+  it("sets itself up when the track arrives after it connects", async () => {
+    const el = document.createElement("surface-carousel")
+    document.body.append(el)
+    el.innerHTML = `<div data-surface-carousel="track">${slides(3, "late")}</div>`
+
+    try {
+      expect(
+        await until(() => el.track?.getAttribute("tabindex") === "0")
+      ).toBe(true)
+      expect(el.slides[0]?.getAttribute("aria-label")).toBe("1 of 3")
+
+      el.style.cssText = "display: block; inline-size: 400px"
+      await el.next()
+      expect(el.index).toBe(1)
+    } finally {
+      el.remove()
+    }
+  })
+
   it("follows the reader's own scroll", async () => {
     const el = await carousel()
     el.track?.scrollTo({ left: 2 * 416, behavior: "instant" })
