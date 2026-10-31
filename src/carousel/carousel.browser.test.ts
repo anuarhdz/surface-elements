@@ -325,6 +325,9 @@ const autoplayState = (el: SurfaceCarousel) =>
     hovered: el.matches(":hover"),
     focused: el.contains(document.activeElement),
     scrollLeft: el.track?.scrollLeft,
+    maxScroll: (el.track?.scrollWidth ?? 0) - (el.track?.clientWidth ?? 0),
+    reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
+    pageFocus: document.hasFocus(),
   })
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
@@ -349,9 +352,7 @@ describe("surface-carousel autoplay", () => {
     expect(el.matches(":state(playing)")).toBe(true)
 
     const advanced = await until(() => el.index === 1, 120)
-    expect({ advanced, state: autoplayState(el) }).toMatchObject({
-      advanced: true,
-    })
+    expect(advanced ? "ok" : autoplayState(el)).toBe("ok")
 
     el.track?.focus()
     expect(el.playing).toBe(false)
@@ -382,9 +383,7 @@ describe("surface-carousel autoplay", () => {
 
     setVisible(true)
     const advanced = await until(() => el.index === 1, 120)
-    expect({ advanced, state: autoplayState(el) }).toMatchObject({
-      advanced: true,
-    })
+    expect(advanced ? "ok" : autoplayState(el)).toBe("ok")
   })
 
   it("rewinds to the first slide without loop", async () => {
@@ -393,9 +392,7 @@ describe("surface-carousel autoplay", () => {
 
     el.play()
     const rewound = await until(() => el.index === 0 && inView(el, 0), 120)
-    expect({ rewound, state: autoplayState(el) }).toMatchObject({
-      rewound: true,
-    })
+    expect(rewound ? "ok" : autoplayState(el)).toBe("ok")
   })
 })
 
