@@ -173,6 +173,46 @@ describe("Navigation", () => {
     expect(rests).toEqual([false, true])
   })
 
+  it("lets a trip started while resting replace the queued one", async () => {
+    const track = fakeTrack()
+    const { done, watch } = tracker()
+    let reentered = false
+
+    const nav = new Navigation(track.scroller, () => {
+      // A change listener steps elsewhere as the track comes to rest.
+      if (reentered) return
+
+      reentered = true
+      watch("listener", nav.go(at(2), "instant"))
+    })
+
+    const at = (i: number): HTMLElement => {
+      const el = track.slides[i]
+
+      if (!el) throw new Error(`No slide ${i}`)
+
+      return el
+    }
+
+    watch("a", nav.go(at(1), "instant"))
+    track.at = at(1)
+    watch("queued", nav.go(at(3), "instant"))
+    nav.ended()
+    vi.advanceTimersByTime(0)
+    await flush()
+
+    // The listener's trip started; the older queued one gave way to it.
+    expect(track.calls).toEqual(["scroll 1 instant", "scroll 2 instant"])
+    expect(done).toEqual(new Set(["a", "queued"]))
+    expect(nav.heading).toBe(at(2))
+
+    track.at = at(2)
+    nav.ended()
+    vi.advanceTimersByTime(0)
+    await flush()
+    expect(done.has("listener")).toBe(true)
+  })
+
   it("resolves every trip when abandoned", async () => {
     const { nav, track, slide } = setup()
     const { done, watch } = tracker()

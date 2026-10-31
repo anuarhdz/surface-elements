@@ -109,6 +109,7 @@ var Drag = class {
 	#press;
 	#unsnapped;
 	#series = 0;
+	#releasing = false;
 	constructor(host) {
 		this.#host = host;
 	}
@@ -181,7 +182,10 @@ var Drag = class {
 		const press = this.#press;
 		if (!press || event.pointerId !== press.pointerId) return;
 		this.#end();
-		if (!press.moved) return;
+		if (!press.moved) {
+			if (!this.#releasing) this.#resnap();
+			return;
+		}
 		track.addEventListener("click", swallow, {
 			capture: true,
 			once: true
@@ -191,8 +195,10 @@ var Drag = class {
 		const to = (Math.abs(speed) > FLICK_SPEED ? ahead(track, speed > 0 ? -1 : 1) : void 0) ?? this.#host.nearest();
 		const series = this.#series;
 		const resnap = () => {
+			this.#releasing = false;
 			if (series === this.#series && !this.#press) this.#resnap();
 		};
+		this.#releasing = true;
 		if (to) this.#host.go(to).then(resnap);
 		else resnap();
 	};
@@ -391,7 +397,8 @@ var Navigation = class {
 		this.#queued = void 0;
 		this.#rested(!queued);
 		finish(trip);
-		if (queued) this.#start(queued);
+		if (this.#trip || this.#queued) finish(queued);
+		else if (queued) this.#start(queued);
 	}
 };
 const finish = (trip) => {

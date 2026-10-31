@@ -667,6 +667,42 @@ describe("surface-carousel drag", () => {
     ).toBe(true)
   })
 
+  it("gives snapping back after a click while a drag settles", async () => {
+    const el = await carousel("drag")
+    const track = el.track
+    const slide = el.slides[0]
+
+    if (!track || !slide) throw new Error("Missing track")
+
+    track.style.scrollSnapType = "x mandatory"
+    await mouseDrag(el, -150, { pause: 100 })
+
+    // A plain click on the track before the release scroll comes to rest.
+    const box = track.getBoundingClientRect()
+
+    const press = (type: string) =>
+      slide.dispatchEvent(
+        new PointerEvent(type, {
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+          button: 0,
+          buttons: type === "pointerup" ? 0 : 1,
+          clientX: box.left + 100,
+          clientY: box.top + 50,
+          bubbles: true,
+        })
+      )
+
+    press("pointerdown")
+    await frame()
+    press("pointerup")
+
+    expect(
+      await until(() => track.style.scrollSnapType === "x mandatory")
+    ).toBe(true)
+  })
+
   it("swallows the click that ends a drag, not a plain click", async () => {
     const el = await carousel("drag")
     let clicks = 0

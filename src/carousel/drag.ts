@@ -46,6 +46,8 @@ export class Drag {
   // and given back once the last one comes to rest.
   #unsnapped: { snapType: string; behavior: string } | undefined
   #series = 0
+  // Whether a release scroll is under way, which gives snapping back itself.
+  #releasing = false
 
   constructor(host: DragHost) {
     this.#host = host
@@ -143,7 +145,13 @@ export class Drag {
 
     this.#end()
 
-    if (!press.moved) return
+    // A press that never became a drag: snapping, if a drag left it off and
+    // no release scroll is still to give it back, comes back now.
+    if (!press.moved) {
+      if (!this.#releasing) this.#resnap()
+
+      return
+    }
 
     // The click that ends a drag is not a click on the slide under it.
     track.addEventListener("click", swallow, { capture: true, once: true })
@@ -164,8 +172,12 @@ export class Drag {
     const series = this.#series
 
     const resnap = () => {
+      this.#releasing = false
+
       if (series === this.#series && !this.#press) this.#resnap()
     }
+
+    this.#releasing = true
 
     if (to) void this.#host.go(to).then(resnap)
     else resnap()

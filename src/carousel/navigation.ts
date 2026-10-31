@@ -181,7 +181,10 @@ export class Navigation {
     this.#rested(!queued)
     finish(trip)
 
-    if (queued) this.#start(queued)
+    // `rested` can start a trip of its own (a change listener calling
+    // goTo()); that newer request supersedes the queued one.
+    if (this.#trip || this.#queued) finish(queued)
+    else if (queued) this.#start(queued)
   }
 }
 
