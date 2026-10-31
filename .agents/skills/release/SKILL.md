@@ -15,7 +15,7 @@ Before any step:
 
 1. On `main`, clean working tree (`git status`).
 2. `git fetch origin && git pull --ff-only`.
-3. Logged into npm (`npm whoami`) and GitHub CLI (`gh auth status`).
+3. Logged into the registry with pnpm (`pnpm whoami`; pnpm keeps its own session, so `npm login` alone is not enough) and GitHub CLI (`gh auth status`).
 4. CI green on the tip of `main` you are releasing.
 
 If any fail, stop and fix; do not release from a dirty or divergent tree.
