@@ -331,11 +331,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#refresh() {
 		const track = this.#track;
 		if (!track) return;
-		for (const el of [this.#target, this.#queued]) if (el && !track.contains(el)) {
-			this.#target = void 0;
-			this.#queued = void 0;
-			this.#armSettle();
-		}
+		if ([this.#target, this.#queued].some((el) => el && !track.contains(el))) this.#dropSteps();
 		const slides = this.slides;
 		this.#index = clamp(this.#index, 0, Math.max(0, slides.length - 1));
 		this.#label(slides);
@@ -364,15 +360,23 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#renderClones() {
 		const track = this.#track;
 		if (!track) return;
+		const had = this.#cloneCount > 0;
 		this.#removeClones(track);
 		const slides = this.slides;
 		const count = this.#neededClones();
 		this.#cloneCount = count;
+		if (had || count > 0) this.#dropSteps();
 		if (count === 0) return;
 		track.prepend(...copies(slides, slides.length - count, slides.length));
 		track.append(...copies(slides, 0, count));
 		const current = slides[this.#index];
 		if (current) this.#jump(current);
+	}
+	#dropSteps() {
+		if (!this.#target && !this.#queued) return;
+		this.#target = void 0;
+		this.#queued = void 0;
+		this.#armSettle();
 	}
 	#removeClones(track) {
 		const clones = track.querySelectorAll(`:scope > [${CLONE_ATTRIBUTE}]`);
@@ -604,6 +608,10 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		const track = this.#track;
 		const drag = this.#drag;
 		if (!track || !drag || event.pointerId !== drag.pointerId) return;
+		if ((event.buttons & 1) === 0) {
+			this.#onDragEnd(event);
+			return;
+		}
 		const dx = event.clientX - drag.startX;
 		if (!drag.moved) {
 			if (Math.abs(dx) < DRAG_THRESHOLD) return;

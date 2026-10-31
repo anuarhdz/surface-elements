@@ -363,6 +363,22 @@ describe("surface-carousel loop", () => {
     ).toBeLessThan(1)
   })
 
+  it("settles a step that a change of slides interrupts", async () => {
+    const el = await carousel("loop")
+
+    const pending = el.next()
+    const extra = document.createElement("div")
+    extra.style.blockSize = "100px"
+    el.track?.append(extra)
+
+    const timeout = new Promise((resolve) => setTimeout(resolve, 1500, "stuck"))
+
+    expect(await Promise.race([pending.then(() => "done"), timeout])).toBe(
+      "done"
+    )
+    expect(el.slides).toHaveLength(5)
+  })
+
   it("opens on the first slide when it starts hidden", async () => {
     const el = await carousel("loop", 4, "display: none")
 
@@ -674,6 +690,38 @@ describe("surface-carousel drag", () => {
     expect(await until(() => inner.index === 1)).toBe(true)
     expect(outer.track?.scrollLeft).toBe(0)
     expect(outer.matches(":state(dragging)")).toBe(false)
+  })
+
+  it("forgets a press let go outside the track", async () => {
+    const el = await carousel("drag")
+    const slide = el.slides[0]
+    const box = el.track?.getBoundingClientRect()
+
+    if (!slide || !box) throw new Error("Missing track")
+
+    const send = (type: string, clientX: number, buttons: number) =>
+      slide.dispatchEvent(
+        new PointerEvent(type, {
+          pointerId: 1,
+          pointerType: "mouse",
+          isPrimary: true,
+          button: 0,
+          buttons,
+          clientX,
+          clientY: box.top + box.height / 2,
+          bubbles: true,
+        })
+      )
+
+    const x = box.left + box.width / 2
+    send("pointerdown", x, 1)
+    // The release happened outside, unseen; the mouse comes back unpressed.
+    send("pointermove", x - 100, 0)
+    await frame()
+
+    expect(el.matches(":state(dragging)")).toBe(false)
+    expect(el.track?.scrollLeft).toBe(0)
+    expect(el.track?.style.scrollSnapType).toBe("")
   })
 
   it("does nothing without the drag attribute", async () => {

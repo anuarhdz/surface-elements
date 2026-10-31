@@ -324,12 +324,8 @@ export class SurfaceCarousel extends HTMLElement {
 
     // A step headed for a slide that left the track can never arrive:
     // drop it and settle its promise.
-    for (const el of [this.#target, this.#queued]) {
-      if (el && !track.contains(el)) {
-        this.#target = undefined
-        this.#queued = undefined
-        this.#armSettle()
-      }
+    if ([this.#target, this.#queued].some((el) => el && !track.contains(el))) {
+      this.#dropSteps()
     }
 
     const slides = this.slides
@@ -387,10 +383,15 @@ export class SurfaceCarousel extends HTMLElement {
 
     if (!track) return
 
+    const had = this.#cloneCount > 0
     this.#removeClones(track)
     const slides = this.slides
     const count = this.#neededClones()
     this.#cloneCount = count
+
+    // Re-making the copies scrolls the track at once, which cuts short a step
+    // under way: drop it and settle its promise.
+    if (had || count > 0) this.#dropSteps()
 
     if (count === 0) return
 
@@ -401,6 +402,15 @@ export class SurfaceCarousel extends HTMLElement {
     const current = slides[this.#index]
 
     if (current) this.#jump(current)
+  }
+
+  // Gives up the step under way and the queued one, settling their promises.
+  #dropSteps(): void {
+    if (!this.#target && !this.#queued) return
+
+    this.#target = undefined
+    this.#queued = undefined
+    this.#armSettle()
   }
 
   #removeClones(track: HTMLElement): void {
@@ -796,6 +806,14 @@ export class SurfaceCarousel extends HTMLElement {
     const drag = this.#drag
 
     if (!track || !drag || event.pointerId !== drag.pointerId) return
+
+    // Let go outside the track, where no pointerup reached it (the pointer is
+    // only captured once the press becomes a drag): end it here.
+    if ((event.buttons & 1) === 0) {
+      this.#onDragEnd(event)
+
+      return
+    }
 
     const dx = event.clientX - drag.startX
 
