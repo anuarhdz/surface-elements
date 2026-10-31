@@ -1,6 +1,7 @@
 import { fixture, fixtureCleanup } from "@open-wc/testing-helpers"
 import axe from "axe-core"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
+import { userEvent } from "vitest/browser"
 
 import "./carousel.js"
 import {
@@ -275,8 +276,8 @@ describe("surface-carousel loop", () => {
   })
 })
 
-// Autoplay waits while the carousel is off screen. Test files can run in
-// iframes outside the viewport (CI), so these tests say what is on screen.
+// Autoplay waits while the carousel is off screen. These tests say what is
+// on screen, instead of depending on where the runner's iframe sits.
 const visibility: Array<(visible: boolean) => void> = []
 
 class FakeIntersectionObserver implements IntersectionObserver {
@@ -315,27 +316,24 @@ const setVisible = (visible: boolean) => {
   for (const report of visibility) report(visible)
 }
 
-// What gates autoplay, for the failure message.
-const autoplayState = (el: SurfaceCarousel) =>
-  JSON.stringify({
-    index: el.index,
-    playing: el.playing,
-    hidden: document.hidden,
-    visibility: document.visibilityState,
-    hovered: el.matches(":hover"),
-    focused: el.contains(document.activeElement),
-    scrollLeft: el.track?.scrollLeft,
-    maxScroll: (el.track?.scrollWidth ?? 0) - (el.track?.clientWidth ?? 0),
-    reducedMotion: matchMedia("(prefers-reduced-motion: reduce)").matches,
-    pageFocus: document.hasFocus(),
-  })
+// Autoplay pauses under the mouse, and the test runner can leave the real
+// pointer anywhere (over the carousel in CI). Park it on a spot of its own.
+async function pointerAway(): Promise<void> {
+  const spot = document.createElement("div")
+  spot.style.cssText =
+    "position: fixed; inset: auto 0 0 auto; inline-size: 8px; block-size: 8px"
+  document.body.append(spot)
+  await userEvent.hover(spot)
+  spot.remove()
+}
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 describe("surface-carousel autoplay", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     visibility.length = 0
     vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver)
+    await pointerAway()
   })
 
   afterEach(() => {
@@ -352,7 +350,7 @@ describe("surface-carousel autoplay", () => {
     expect(el.matches(":state(playing)")).toBe(true)
 
     const advanced = await until(() => el.index === 1, 120)
-    expect(advanced ? "ok" : autoplayState(el)).toBe("ok")
+    expect(advanced).toBe(true)
 
     el.track?.focus()
     expect(el.playing).toBe(false)
@@ -383,7 +381,22 @@ describe("surface-carousel autoplay", () => {
 
     setVisible(true)
     const advanced = await until(() => el.index === 1, 120)
-    expect(advanced ? "ok" : autoplayState(el)).toBe("ok")
+    expect(advanced).toBe(true)
+  })
+
+  it("waits while the mouse is over it", async () => {
+    const el = await carousel('autoplay interval="1000" loop')
+    const track = el.track
+
+    if (!track) throw new Error("Missing track")
+
+    await userEvent.hover(track)
+    await sleep(1300)
+    expect(el.index).toBe(0)
+    expect(el.playing).toBe(true)
+
+    await pointerAway()
+    expect(await until(() => el.index === 1, 120)).toBe(true)
   })
 
   it("rewinds to the first slide without loop", async () => {
@@ -392,7 +405,7 @@ describe("surface-carousel autoplay", () => {
 
     el.play()
     const rewound = await until(() => el.index === 0 && inView(el, 0), 120)
-    expect(rewound ? "ok" : autoplayState(el)).toBe("ok")
+    expect(rewound).toBe(true)
   })
 })
 
