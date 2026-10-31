@@ -149,6 +149,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#index = 0;
 	#announced = 0;
 	#target;
+	#queued;
 	#cloneCount = 0;
 	#frame = 0;
 	#settleTimer = 0;
@@ -314,6 +315,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 			for (const marker of this.#markers()) marker.removeAttribute("aria-current");
 		}
 		this.#target = void 0;
+		this.#queued = void 0;
 		this.#track = void 0;
 		for (const resolve of this.#settles.splice(0)) resolve();
 	}
@@ -377,7 +379,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		const track = this.#track;
 		if (!track) return Promise.resolve();
 		if (this.#loops()) {
-			let from = this.#target ?? this.#nearest(track)?.el;
+			let from = this.#heading() ?? this.#nearest(track)?.el;
 			let to = from && sibling(from, direction);
 			const copied = from && !to ? from.getAttribute(CLONE_ATTRIBUTE) : null;
 			const real = copied === null ? void 0 : this.slides[Number(copied)];
@@ -388,21 +390,35 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 			}
 			return to ? this.#scrollTo(to, behavior) : Promise.resolve();
 		}
-		if ((direction > 0 ? atEnd(track) : atStart(track)) && !this.#target) return Promise.resolve();
+		if ((direction > 0 ? atEnd(track) : atStart(track)) && !this.#heading()) return Promise.resolve();
 		const slides = this.slides;
-		const from = this.#target ? slides.indexOf(this.#target) : this.#index;
+		const heading = this.#heading();
+		const from = heading ? slides.indexOf(heading) : this.#index;
 		const to = slides[clamp(from + direction, 0, slides.length - 1)];
 		return to ? this.#scrollTo(to, behavior) : Promise.resolve();
+	}
+	#heading() {
+		return this.#queued ?? this.#target;
 	}
 	#scrollTo(el, behavior = defaultBehavior()) {
 		const track = this.#track;
 		if (!track) return Promise.resolve();
 		const previous = this.#target;
-		if (previous && reached(track, previous)) return new Promise((resolve) => {
-			this.#settles.push(resolve);
+		if (previous && reached(track, previous)) {
+			this.#queued = el;
+			return new Promise((resolve) => {
+				this.#settles.push(resolve);
+				this.#armSettle();
+			}).then(() => {
+				if (this.#queued !== el) return;
+				this.#queued = void 0;
+				return this.#scrollTo(el, behavior);
+			});
+		}
+		if (previous) {
+			stopScroll(track);
 			this.#armSettle();
-		}).then(() => this.#scrollTo(el, behavior));
-		if (previous) stopScroll(track);
+		}
 		if (reached(track, el)) {
 			this.#target = void 0;
 			this.#update();
@@ -553,7 +569,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	}
 	#onDragStart = (event) => {
 		const track = this.#track;
-		if (!track || !this.hasAttribute("drag") || event.pointerType !== "mouse" || event.button !== 0 || !(event.target instanceof Element) || event.target.closest("input, select, textarea, [contenteditable]")) return;
+		if (!track || !this.hasAttribute("drag") || event.pointerType !== "mouse" || event.button !== 0 || !(event.target instanceof Element) || event.target.closest("input, select, textarea, [contenteditable]") || event.target.closest(SurfaceCarousel.tagName) !== this) return;
 		this.#drag = {
 			pointerId: event.pointerId,
 			startX: event.clientX,
@@ -586,6 +602,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 			capture(track, event.pointerId);
 			getSelection()?.removeAllRanges();
 			this.#target = void 0;
+			this.#queued = void 0;
 			this.#setState("dragging", true);
 		}
 		track.scrollLeft = drag.startScroll - dx;
@@ -672,6 +689,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	};
 	#onUserScroll = () => {
 		this.#target = void 0;
+		this.#queued = void 0;
 		this.pause();
 	};
 	#onPointerEnter = (event) => {

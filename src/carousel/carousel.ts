@@ -75,6 +75,8 @@ export class SurfaceCarousel extends HTMLElement {
   #announced = 0
   // Where a programmatic scroll is headed, so quick clicks step from there.
   #target: HTMLElement | undefined
+  // A step waiting for the one before it to end, which quick steps chain from.
+  #queued: HTMLElement | undefined
   #cloneCount = 0
   #frame = 0
   #settleTimer = 0
@@ -293,6 +295,7 @@ export class SurfaceCarousel extends HTMLElement {
     }
 
     this.#target = undefined
+    this.#queued = undefined
     this.#track = undefined
 
     for (const resolve of this.#settles.splice(0)) resolve()
@@ -416,7 +419,7 @@ export class SurfaceCarousel extends HTMLElement {
     if (!track) return Promise.resolve()
 
     if (this.#loops()) {
-      let from = this.#target ?? this.#nearest(track)?.el
+      let from = this.#heading() ?? this.#nearest(track)?.el
       let to = from && sibling(from, direction)
 
       // A copy at the very end of the track: swap it for the slide it copies,
@@ -439,13 +442,19 @@ export class SurfaceCarousel extends HTMLElement {
 
     const edge = direction > 0 ? atEnd(track) : atStart(track)
 
-    if (edge && !this.#target) return Promise.resolve()
+    if (edge && !this.#heading()) return Promise.resolve()
 
     const slides = this.slides
-    const from = this.#target ? slides.indexOf(this.#target) : this.#index
+    const heading = this.#heading()
+    const from = heading ? slides.indexOf(heading) : this.#index
     const to = slides[clamp(from + direction, 0, slides.length - 1)]
 
     return to ? this.#scrollTo(to, behavior) : Promise.resolve()
+  }
+
+  // Where the latest step is headed: the queued one, else the one under way.
+  #heading(): HTMLElement | undefined {
+    return this.#queued ?? this.#target
   }
 
   #scrollTo(
@@ -460,15 +469,29 @@ export class SurfaceCarousel extends HTMLElement {
 
     // A step that has arrived but not ended yet still snaps the track back
     // to its own slide when it ends, over a newer scroll: let it end first.
+    // The step waits as the queued one, so a quicker step chains from it.
     if (previous && reached(track, previous)) {
+      this.#queued = el
+
       return new Promise<void>((resolve) => {
         this.#settles.push(resolve)
         this.#armSettle()
-      }).then(() => this.#scrollTo(el, behavior))
+      }).then(() => {
+        // A newer queued step replaced this one, or the reader took over.
+        if (this.#queued !== el) return
+
+        this.#queued = undefined
+
+        return this.#scrollTo(el, behavior)
+      })
     }
 
     // A step still on its way would carry the track off: stop it where it is.
-    if (previous) stopScroll(track)
+    // Stopping may not move the track, so settle its promise by the clock.
+    if (previous) {
+      stopScroll(track)
+      this.#armSettle()
+    }
 
     // Already there, or as close as the track can scroll: no scroll, and so
     // no scrollend, would follow.
@@ -721,7 +744,9 @@ export class SurfaceCarousel extends HTMLElement {
       event.pointerType !== "mouse" ||
       event.button !== 0 ||
       !(event.target instanceof Element) ||
-      event.target.closest("input, select, textarea, [contenteditable]")
+      event.target.closest("input, select, textarea, [contenteditable]") ||
+      // A carousel nested in a slide drags its own track.
+      event.target.closest(SurfaceCarousel.tagName) !== this
     ) {
       return
     }
@@ -761,6 +786,7 @@ export class SurfaceCarousel extends HTMLElement {
       capture(track, event.pointerId)
       getSelection()?.removeAllRanges()
       this.#target = undefined
+      this.#queued = undefined
       this.#setState("dragging", true)
     }
 
@@ -906,6 +932,7 @@ export class SurfaceCarousel extends HTMLElement {
   // The reader takes over: autoplay stops, and a scroll under way is theirs.
   #onUserScroll = (): void => {
     this.#target = undefined
+    this.#queued = undefined
     this.pause()
   }
 

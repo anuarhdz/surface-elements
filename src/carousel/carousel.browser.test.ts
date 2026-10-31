@@ -204,6 +204,30 @@ describe("surface-carousel in a browser", () => {
     expect(inView(el, 3)).toBe(true)
   })
 
+  it("keeps every step of a quick series of instant steps", async () => {
+    const el = await carousel()
+
+    const steps = [1, 2, 3].map(() => el.next({ behavior: "instant" }))
+    await Promise.all(steps)
+
+    expect(el.index).toBe(3)
+    expect(inView(el, 3)).toBe(true)
+  })
+
+  it("resolves a step that a newer one cancels before it moves", async () => {
+    const el = await carousel()
+
+    const pending = el.next()
+    await el.prev()
+
+    const timeout = new Promise((resolve) => setTimeout(resolve, 1000, "stuck"))
+
+    expect(await Promise.race([pending.then(() => "done"), timeout])).toBe(
+      "done"
+    )
+    expect(el.index).toBe(0)
+  })
+
   it("resolves steps with percentage scroll padding", async () => {
     const el = await carousel("", 4, "--surface-carousel-per-view: 2")
     const track = el.track
@@ -601,6 +625,29 @@ describe("surface-carousel drag", () => {
     // nearest is two back: past the start, to the last but one.
     await mouseDrag(el, 700, { steps: 30, pause: 150 })
     expect(await until(() => el.index === 2 && inView(el, 2), 240)).toBe(true)
+  })
+
+  it("leaves a drag inside a nested carousel to that carousel", async () => {
+    const outer = await carousel("drag")
+    const slide = outer.slides[0]
+
+    if (!slide) throw new Error("Missing slide")
+
+    slide.innerHTML = `
+      <surface-carousel drag aria-label="Inner" style="display: block; inline-size: 300px">
+        <div data-surface-carousel="track">${slides(3, "inner")}</div>
+      </surface-carousel>`
+
+    const inner = slide.querySelector<SurfaceCarousel>("surface-carousel")
+
+    if (!inner) throw new Error("Missing inner carousel")
+
+    expect(await until(() => inner.slides.length === 3)).toBe(true)
+
+    await mouseDrag(inner, -200, { pause: 150 })
+    expect(await until(() => inner.index === 1)).toBe(true)
+    expect(outer.track?.scrollLeft).toBe(0)
+    expect(outer.matches(":state(dragging)")).toBe(false)
   })
 
   it("does nothing without the drag attribute", async () => {
