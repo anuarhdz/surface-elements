@@ -5,6 +5,15 @@ export {
 
 export { accordionStyles, adoptAccordionStyles } from "./accordion/styles.js"
 
+export {
+  SurfaceCarousel,
+  supportsScrollEnd,
+  type CarouselChangeDetail,
+  type CarouselScrollOptions,
+} from "./carousel/carousel.js"
+
+export { adoptCarouselStyles, carouselStyles } from "./carousel/styles.js"
+
 export { SurfaceDrawer } from "./drawer/drawer.js"
 
 export { adoptDrawerStyles, drawerStyles } from "./drawer/styles.js"

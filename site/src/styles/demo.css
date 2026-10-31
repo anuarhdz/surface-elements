@@ -231,3 +231,49 @@ surface-modal > dialog {
   padding-inline: 1rem;
   padding-block: 0 1rem;
 }
+
+.carousel-demo {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+}
+
+.carousel-demo [data-surface-carousel="track"] {
+  grid-column: 1 / -1;
+  border-radius: 0.5rem;
+  scrollbar-width: none;
+}
+
+.carousel-demo [data-surface-carousel="track"] > * {
+  display: grid;
+  place-items: center;
+  block-size: 9rem;
+  margin: 0;
+  border-radius: 0.5rem;
+  background: var(--sl-color-gray-6);
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.carousel-demo [data-surface-carousel="markers"] {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.carousel-demo [data-surface-carousel="markers"] > a {
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border: 2px solid var(--sl-color-gray-3);
+  border-radius: 50%;
+}
+
+.carousel-demo [data-surface-carousel="markers"] > [aria-current="true"] {
+  background: var(--sl-color-gray-2);
+}
+
+.carousel-demo [aria-disabled="true"] {
+  opacity: 0.4;
+}

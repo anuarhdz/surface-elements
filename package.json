@@ -4,11 +4,13 @@
   "description": "Web Components for common interface surfaces.",
   "keywords": [
     "accordion",
+    "carousel",
     "custom-elements",
     "dialog",
     "drawer",
     "header",
     "modal",
+    "slider",
     "sticky",
     "web-components"
   ],
@@ -31,6 +33,7 @@
   "sideEffects": [
     "./dist/*.js",
     "./dist/accordion/*.js",
+    "./dist/carousel/*.js",
     "./dist/drawer/*.js",
     "./dist/header/*.js",
     "./dist/modal/*.js",
@@ -49,6 +52,11 @@
       "import": "./dist/accordion/accordion.js"
     },
     "./accordion.css": "./dist/accordion.css",
+    "./carousel": {
+      "types": "./dist/carousel/carousel.d.ts",
+      "import": "./dist/carousel/carousel.js"
+    },
+    "./carousel.css": "./dist/carousel.css",
     "./header": {
       "types": "./dist/header/header.d.ts",
       "import": "./dist/header/header.js"

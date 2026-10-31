@@ -88,6 +88,7 @@ export default defineConfig({
           label: "Components",
           items: [
             "components/accordion",
+            "components/carousel",
             "components/drawer",
             "components/header",
             "components/modal",

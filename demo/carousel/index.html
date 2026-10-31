@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="data:," />
+    <title>surface-carousel · playground</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+        --border: color-mix(in srgb, CanvasText 15%, transparent);
+      }
+
+      body {
+        max-inline-size: 48rem;
+        margin: 0 auto;
+        padding: 1rem 1rem 8rem;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      surface-carousel {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 0.5rem;
+        margin-block: 1rem 2.5rem;
+      }
+
+      [data-surface-carousel="track"] {
+        grid-column: 1 / -1;
+        border-radius: 0.75rem;
+        scrollbar-width: none;
+      }
+
+      [data-surface-carousel="track"]:focus-visible {
+        outline: 2px solid Highlight;
+        outline-offset: 2px;
+      }
+
+      .slide {
+        display: grid;
+        place-items: center;
+        block-size: 12rem;
+        border-radius: 0.75rem;
+        background: hsl(var(--hue) 70% 55%);
+        color: white;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+
+      /* Snapped slide where scroll-state queries exist; data-current elsewhere. */
+      .slide > span {
+        transition: scale 0.3s;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        [data-current] > span {
+          scale: 1.25;
+        }
+      }
+
+      [data-surface-carousel="markers"] {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      [data-surface-carousel="markers"] > * {
+        inline-size: 0.75rem;
+        block-size: 0.75rem;
+        padding: 0;
+        border: 2px solid CanvasText;
+        border-radius: 50%;
+        background: transparent;
+      }
+
+      /* :target-current is the no-JS state where scroll-target-group exists. */
+      surface-carousel:not(:defined) [data-surface-carousel="markers"] > :target-current,
+      [data-surface-carousel="markers"] > [aria-current="true"] {
+        background: CanvasText;
+      }
+
+      [data-surface-carousel][aria-disabled="true"] {
+        opacity: 0.4;
+      }
+
+      #slider {
+        --surface-carousel-per-view: 3;
+        --surface-carousel-gap: 0.5rem;
+      }
+
+      #slider .slide {
+        block-size: 8rem;
+      }
+
+      #center {
+        --surface-carousel-per-view: 1.4;
+        --surface-carousel-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>surface-carousel</h1>
+
+    <h2>Loop, autoplay, anchor markers</h2>
+    <surface-carousel id="hero" aria-label="Featured" loop autoplay interval="3000">
+      <div data-surface-carousel="track">
+        <div class="slide" id="hero-1" style="--hue: 0"><span>1</span></div>
+        <div class="slide" id="hero-2" style="--hue: 60"><span>2</span></div>
+        <div class="slide" id="hero-3" style="--hue: 120"><span>3</span></div>
+        <div class="slide" id="hero-4" style="--hue: 200"><span>4</span></div>
+        <div class="slide" id="hero-5" style="--hue: 280"><span>5</span></div>
+      </div>
+      <button type="button" data-surface-carousel="prev" aria-label="Previous slide">←</button>
+      <nav data-surface-carousel="markers" aria-label="Slides">
+        <a href="#hero-1" aria-label="Slide 1"></a>
+        <a href="#hero-2" aria-label="Slide 2"></a>
+        <a href="#hero-3" aria-label="Slide 3"></a>
+        <a href="#hero-4" aria-label="Slide 4"></a>
+        <a href="#hero-5" aria-label="Slide 5"></a>
+      </nav>
+      <button type="button" data-surface-carousel="next" aria-label="Next slide">→</button>
+      <button type="button" data-surface-carousel="play" style="grid-column: 1 / -1; justify-self: center">
+        Autoplay
+      </button>
+    </surface-carousel>
+
+    <h2>Slider, three per view, no loop</h2>
+    <surface-carousel id="slider" aria-label="Products">
+      <div data-surface-carousel="track"></div>
+      <button type="button" data-surface-carousel="prev" aria-label="Previous">←</button>
+      <span></span>
+      <button type="button" data-surface-carousel="next" aria-label="Next">→</button>
+    </surface-carousel>
+
+    <h2>Centered with peek, loop, button markers</h2>
+    <surface-carousel id="center" aria-label="Gallery" loop>
+      <div data-surface-carousel="track">
+        <div class="slide" style="--hue: 20"><span>A</span></div>
+        <div class="slide" style="--hue: 100"><span>B</span></div>
+        <div class="slide" style="--hue: 180"><span>C</span></div>
+        <div class="slide" style="--hue: 260"><span>D</span></div>
+      </div>
+      <button type="button" data-surface-carousel="prev" aria-label="Previous">←</button>
+      <div data-surface-carousel="markers">
+        <button type="button" aria-label="A"></button>
+        <button type="button" aria-label="B"></button>
+        <button type="button" aria-label="C"></button>
+        <button type="button" aria-label="D"></button>
+      </div>
+      <button type="button" data-surface-carousel="next" aria-label="Next">→</button>
+    </surface-carousel>
+
+    <h2>Right to left, loop</h2>
+    <surface-carousel id="rtl" dir="rtl" aria-label="RTL" loop>
+      <div data-surface-carousel="track">
+        <div class="slide" style="--hue: 330"><span>١</span></div>
+        <div class="slide" style="--hue: 30"><span>٢</span></div>
+        <div class="slide" style="--hue: 90"><span>٣</span></div>
+      </div>
+      <button type="button" data-surface-carousel="prev" aria-label="Previous">→</button>
+      <span></span>
+      <button type="button" data-surface-carousel="next" aria-label="Next">←</button>
+    </surface-carousel>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

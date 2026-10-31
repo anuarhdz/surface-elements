@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 
 // The generated copy files, loaded before anything from src/ defines the tags.
 import "../copy/surface-accordion.js"
+import "../copy/surface-carousel.js"
 import "../copy/surface-drawer.js"
 import "../copy/surface-header.js"
 import "../copy/surface-modal.js"
@@ -18,6 +19,7 @@ describe("copy files", () => {
 
   it("define their web components on their own", () => {
     expect(customElements.get("surface-accordion")).toBeDefined()
+    expect(customElements.get("surface-carousel")).toBeDefined()
     expect(customElements.get("surface-drawer")).toBeDefined()
     expect(customElements.get("surface-header")).toBeDefined()
     expect(customElements.get("surface-modal")).toBeDefined()
