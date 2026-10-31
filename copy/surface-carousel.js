@@ -157,6 +157,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#playing = false;
 	#hovered = false;
 	#onScreen = true;
+	#measured = false;
 	#drag;
 	#unsnapped;
 	#drags = 0;
@@ -255,7 +256,14 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		this.#mutations.observe(track, { childList: true });
 		if ("ResizeObserver" in globalThis) {
 			this.#resizes ??= new ResizeObserver(() => {
+				const observed = this.#track;
+				const visible = !!observed && measurable(observed);
 				if (this.#cloneCount !== this.#neededClones()) this.#renderClones();
+				else if (visible && !this.#measured) {
+					const slide = this.slides[this.#index];
+					if (slide) this.#jump(slide);
+				}
+				this.#measured = visible;
 				this.#update();
 			});
 			this.#resizes.observe(track);
@@ -268,6 +276,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 			this.#intersections.observe(this);
 		}
 		this.#refresh();
+		this.#measured = measurable(track);
 		if (this.hasAttribute("autoplay") && !prefersReducedMotion()) this.play();
 	}
 	attributeChangedCallback(name, old, value) {
@@ -320,7 +329,13 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		for (const resolve of this.#settles.splice(0)) resolve();
 	}
 	#refresh() {
-		if (!this.#track) return;
+		const track = this.#track;
+		if (!track) return;
+		for (const el of [this.#target, this.#queued]) if (el && !track.contains(el)) {
+			this.#target = void 0;
+			this.#queued = void 0;
+			this.#armSettle();
+		}
 		const slides = this.slides;
 		this.#index = clamp(this.#index, 0, Math.max(0, slides.length - 1));
 		this.#label(slides);
@@ -462,10 +477,11 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		const track = this.#track;
 		if (!track) return;
 		const slides = this.slides;
-		const nearest = this.#nearest(track);
-		const index = nearest?.index ?? 0;
+		const nearest = measurable(track) ? this.#nearest(track) : void 0;
+		const index = nearest?.index ?? this.#index;
+		const current = nearest?.el ?? slides[index];
 		this.#index = index;
-		for (const el of track.children) el.toggleAttribute(CURRENT_ATTRIBUTE, el === nearest?.el);
+		for (const el of track.children) el.toggleAttribute(CURRENT_ATTRIBUTE, el === current);
 		for (const [i, marker] of this.#markers().entries()) if (this.#slideOf(marker, i) === index) marker.setAttribute("aria-current", "true");
 		else marker.removeAttribute("aria-current");
 		const loops = this.#loops();
@@ -795,6 +811,7 @@ function reached(track, el) {
 	const high = rtl ? 0 : max;
 	return offset > 0 ? track.scrollLeft >= high - 1 : track.scrollLeft <= low + 1;
 }
+const measurable = (track) => track.clientWidth > 0;
 const px = (value, basis = 0) => {
 	const number = Number.parseFloat(value) || 0;
 	return value.trim().endsWith("%") ? number * basis / 100 : number;

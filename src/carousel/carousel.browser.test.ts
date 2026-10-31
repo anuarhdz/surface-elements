@@ -228,6 +228,22 @@ describe("surface-carousel in a browser", () => {
     expect(el.index).toBe(0)
   })
 
+  it("settles a step whose slide is removed on the way", async () => {
+    // Off the viewport's left edge: a removed slide measures at 0.
+    const el = await carousel("", 5, "margin-inline-start: 40px")
+    await el.goTo(2, { behavior: "instant" })
+
+    // Away from both ends, so the track cannot settle at an edge either.
+    const pending = el.next()
+    el.slides[3]?.remove()
+
+    const timeout = new Promise((resolve) => setTimeout(resolve, 1500, "stuck"))
+
+    expect(await Promise.race([pending.then(() => "done"), timeout])).toBe(
+      "done"
+    )
+  })
+
   it("resolves steps with percentage scroll padding", async () => {
     const el = await carousel("", 4, "--surface-carousel-per-view: 2")
     const track = el.track
@@ -345,6 +361,16 @@ describe("surface-carousel loop", () => {
           track.getBoundingClientRect().right
       )
     ).toBeLessThan(1)
+  })
+
+  it("opens on the first slide when it starts hidden", async () => {
+    const el = await carousel("loop", 4, "display: none")
+
+    el.style.display = "block"
+
+    expect(await until(() => inView(el, 0))).toBe(true)
+    expect(el.index).toBe(0)
+    expect(el.slides[0]?.hasAttribute(CURRENT_ATTRIBUTE)).toBe(true)
   })
 
   it("makes the copies inert and keeps ids unique", async () => {

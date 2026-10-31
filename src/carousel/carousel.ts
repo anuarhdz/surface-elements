@@ -84,6 +84,8 @@ export class SurfaceCarousel extends HTMLElement {
   #playing = false
   #hovered = false
   #onScreen = true
+  // Whether the track had a size at the last resize; false while hidden.
+  #measured = false
   #drag: DragState | undefined
   // The track's own inline snapping, saved by the first of a series of drags
   // and given back once the last one comes to rest.
@@ -219,8 +221,20 @@ export class SurfaceCarousel extends HTMLElement {
 
     if ("ResizeObserver" in globalThis) {
       this.#resizes ??= new ResizeObserver(() => {
-        if (this.#cloneCount !== this.#neededClones()) this.#renderClones()
+        const observed = this.#track
+        const visible = !!observed && measurable(observed)
 
+        // Copies are re-made around the current slide. Without that, a track
+        // that just became visible (it started in display: none, where the
+        // first jump measured 0) still has to be put on its slide.
+        if (this.#cloneCount !== this.#neededClones()) this.#renderClones()
+        else if (visible && !this.#measured) {
+          const slide = this.slides[this.#index]
+
+          if (slide) this.#jump(slide)
+        }
+
+        this.#measured = visible
         this.#update()
       })
       this.#resizes.observe(track)
@@ -235,6 +249,7 @@ export class SurfaceCarousel extends HTMLElement {
     }
 
     this.#refresh()
+    this.#measured = measurable(track)
 
     if (this.hasAttribute("autoplay") && !prefersReducedMotion()) this.play()
   }
@@ -306,6 +321,16 @@ export class SurfaceCarousel extends HTMLElement {
     const track = this.#track
 
     if (!track) return
+
+    // A step headed for a slide that left the track can never arrive:
+    // drop it and settle its promise.
+    for (const el of [this.#target, this.#queued]) {
+      if (el && !track.contains(el)) {
+        this.#target = undefined
+        this.#queued = undefined
+        this.#armSettle()
+      }
+    }
 
     const slides = this.slides
     this.#index = clamp(this.#index, 0, Math.max(0, slides.length - 1))
@@ -563,12 +588,15 @@ export class SurfaceCarousel extends HTMLElement {
     if (!track) return
 
     const slides = this.slides
-    const nearest = this.#nearest(track)
-    const index = nearest?.index ?? 0
+    // A hidden track (display: none) measures 0 everywhere, so where it is
+    // scrolled says nothing: keep the slide it had.
+    const nearest = measurable(track) ? this.#nearest(track) : undefined
+    const index = nearest?.index ?? this.#index
+    const current = nearest?.el ?? slides[index]
     this.#index = index
 
     for (const el of track.children) {
-      el.toggleAttribute(CURRENT_ATTRIBUTE, el === nearest?.el)
+      el.toggleAttribute(CURRENT_ATTRIBUTE, el === current)
     }
 
     for (const [i, marker] of this.#markers().entries()) {
@@ -1130,6 +1158,9 @@ function reached(track: HTMLElement, el: HTMLElement): boolean {
 
 // A computed length in pixels. Scroll padding keeps percentages, which are
 // of the scrollport's width (`basis`); `auto` counts as 0.
+// Whether the track has a size; a hidden one (display: none) has none.
+const measurable = (track: HTMLElement): boolean => track.clientWidth > 0
+
 const px = (value: string, basis = 0): number => {
   const number = Number.parseFloat(value) || 0
 
