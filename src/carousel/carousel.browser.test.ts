@@ -162,6 +162,22 @@ describe("surface-carousel in a browser", () => {
     expect(await until(() => el.index === 0 && inView(el, 0))).toBe(true)
   })
 
+  it("resolves a step to a slide the track cannot align", async () => {
+    // Three in view: the last slide never reaches the start edge.
+    const el = await carousel("", 4, "--surface-carousel-per-view: 3")
+    await el.goTo(3, { behavior: "instant" })
+
+    const timeout = new Promise((resolve) => setTimeout(resolve, 1000, "stuck"))
+
+    expect(await Promise.race([el.goTo(3).then(() => "done"), timeout])).toBe(
+      "done"
+    )
+    expect(await Promise.race([el.prev().then(() => "done"), timeout])).toBe(
+      "done"
+    )
+    expect(el.index).toBe(0)
+  })
+
   it("follows the reader's own scroll", async () => {
     const el = await carousel()
     el.track?.scrollTo({ left: 2 * 416, behavior: "instant" })
@@ -299,6 +315,18 @@ const setVisible = (visible: boolean) => {
   for (const report of visibility) report(visible)
 }
 
+// What gates autoplay, for the failure message.
+const autoplayState = (el: SurfaceCarousel) =>
+  JSON.stringify({
+    index: el.index,
+    playing: el.playing,
+    hidden: document.hidden,
+    visibility: document.visibilityState,
+    hovered: el.matches(":hover"),
+    focused: el.contains(document.activeElement),
+    scrollLeft: el.track?.scrollLeft,
+  })
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 describe("surface-carousel autoplay", () => {
@@ -320,7 +348,10 @@ describe("surface-carousel autoplay", () => {
     expect(toggle.getAttribute("aria-pressed")).toBe("true")
     expect(el.matches(":state(playing)")).toBe(true)
 
-    expect(await until(() => el.index === 1, 120)).toBe(true)
+    const advanced = await until(() => el.index === 1, 120)
+    expect({ advanced, state: autoplayState(el) }).toMatchObject({
+      advanced: true,
+    })
 
     el.track?.focus()
     expect(el.playing).toBe(false)
@@ -350,7 +381,10 @@ describe("surface-carousel autoplay", () => {
     expect(el.playing).toBe(true)
 
     setVisible(true)
-    expect(await until(() => el.index === 1, 120)).toBe(true)
+    const advanced = await until(() => el.index === 1, 120)
+    expect({ advanced, state: autoplayState(el) }).toMatchObject({
+      advanced: true,
+    })
   })
 
   it("rewinds to the first slide without loop", async () => {
@@ -358,7 +392,10 @@ describe("surface-carousel autoplay", () => {
     await el.goTo(1, { behavior: "instant" })
 
     el.play()
-    expect(await until(() => el.index === 0 && inView(el, 0), 120)).toBe(true)
+    const rewound = await until(() => el.index === 0 && inView(el, 0), 120)
+    expect({ rewound, state: autoplayState(el) }).toMatchObject({
+      rewound: true,
+    })
   })
 })
 

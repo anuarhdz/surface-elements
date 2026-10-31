@@ -87,13 +87,15 @@ Always include the play button: it is how the reader stops it. It gets `aria-pre
 `markers` holds one link or button per slide, in order. Anchor markers (`<a href="#slide-id">`) point at their slide's `id`, so they work before and without the script: the browser scrolls the track to the slide, and where `scroll-target-group` is supported (Chromium) the marker whose slide is in view matches `:target-current`. With the script, a marker click scrolls only the track, without changing the URL or scrolling the page, and the current marker gets `aria-current="true"`:
 
 ```css
-[data-surface-carousel="markers"] > [aria-current="true"],
+[data-surface-carousel="markers"] > [aria-current="true"] {
+  background: currentColor;
+}
+
+/* Its own rule: browsers that do not know :target-current drop the whole selector list. */
 surface-carousel:not(:defined) [data-surface-carousel="markers"] > :target-current {
   background: currentColor;
 }
 ```
-
-Keep `:target-current` in its own rule or inside `:is()`: browsers that do not know it drop the whole selector list.
 
 ### Style the current slide
 

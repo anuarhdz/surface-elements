@@ -89,6 +89,26 @@ describe("surface-carousel", () => {
     }
   })
 
+  it("strips the copied slide itself, not only its content", async () => {
+    const el = await fixture<SurfaceCarousel>(`
+      <surface-carousel loop>
+        <div data-surface-carousel="track">
+          <video autoplay muted></video>
+          <input name="q" />
+        </div>
+      </surface-carousel>
+    `)
+
+    const selector = `[${CLONE_ATTRIBUTE}]`
+    const clones = [...(el.track?.querySelectorAll(selector) ?? [])]
+    const inputs = clones.filter((clone) => clone.localName === "input")
+
+    expect(inputs.length).toBeGreaterThan(0)
+    expect(clones.some((clone) => clone.hasAttribute("autoplay"))).toBe(false)
+    expect(clones.some((clone) => clone.hasAttribute("name"))).toBe(false)
+    expect(inputs.every((input) => input.hasAttribute("disabled"))).toBe(true)
+  })
+
   it("removes the copies when loop goes away", async () => {
     const el = await carousel("loop")
     el.removeAttribute("loop")

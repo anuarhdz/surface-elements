@@ -78,9 +78,13 @@
         background: transparent;
       }
 
-      /* :target-current is the no-JS state where scroll-target-group exists. */
-      surface-carousel:not(:defined) [data-surface-carousel="markers"] > :target-current,
       [data-surface-carousel="markers"] > [aria-current="true"] {
+        background: CanvasText;
+      }
+
+      /* The no-JS state where scroll-target-group exists. Its own rule:
+         browsers that do not know :target-current drop the whole list. */
+      surface-carousel:not(:defined) [data-surface-carousel="markers"] > :target-current {
         background: CanvasText;
       }
 

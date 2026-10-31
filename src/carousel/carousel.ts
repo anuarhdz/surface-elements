@@ -422,9 +422,9 @@ export class SurfaceCarousel extends HTMLElement {
 
     if (!track) return Promise.resolve()
 
-    const delta = offsetOf(track, el)
-
-    if (Math.abs(delta) < 1 || !maxScroll(track)) {
+    // Already there, or as close as the track can scroll: no scroll, and so
+    // no scrollend, would follow.
+    if (reached(track, el)) {
       this.#target = undefined
       this.#update()
 
@@ -435,7 +435,7 @@ export class SurfaceCarousel extends HTMLElement {
 
     return new Promise((resolve) => {
       this.#settles.push(resolve)
-      scrollByX(track, delta, behavior)
+      scrollByX(track, offsetOf(track, el), behavior)
 
       // An instant scroll may not wait for a frame to report itself.
       if (behavior === "instant") this.#armSettle()
@@ -770,22 +770,27 @@ function cloneSlide(slide: HTMLElement, index: number): HTMLElement {
   clone.inert = true
   clone.removeAttribute(CURRENT_ATTRIBUTE)
 
-  for (const el of [clone, ...clone.querySelectorAll("[id]")])
-    el.removeAttribute("id")
+  for (const el of within(clone, "[id]")) el.removeAttribute("id")
 
   // A copied checked radio or open <details name> would steal its group.
-  for (const el of clone.querySelectorAll("[name]")) el.removeAttribute("name")
+  for (const el of within(clone, "[name]")) el.removeAttribute("name")
 
-  for (const el of clone.querySelectorAll("input, select, textarea, button")) {
+  for (const el of within(clone, "input, select, textarea, button")) {
     el.setAttribute("disabled", "")
   }
 
-  for (const media of clone.querySelectorAll("video, audio")) {
+  for (const media of within(clone, "video, audio")) {
     media.removeAttribute("autoplay")
   }
 
   return clone
 }
+
+// `root` and its descendants that match `selector`.
+const within = (root: Element, selector: string): Element[] => [
+  ...(root.matches(selector) ? [root] : []),
+  ...root.querySelectorAll(selector),
+]
 
 // Copies of `slides` from `start` to `end` (exclusive).
 const copies = (

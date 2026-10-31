@@ -359,8 +359,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#scrollTo(el, behavior = defaultBehavior()) {
 		const track = this.#track;
 		if (!track) return Promise.resolve();
-		const delta = offsetOf(track, el);
-		if (Math.abs(delta) < 1 || !maxScroll(track)) {
+		if (reached(track, el)) {
 			this.#target = void 0;
 			this.#update();
 			return Promise.resolve();
@@ -368,7 +367,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		this.#target = el;
 		return new Promise((resolve) => {
 			this.#settles.push(resolve);
-			scrollByX(track, delta, behavior);
+			scrollByX(track, offsetOf(track, el), behavior);
 			if (behavior === "instant") this.#armSettle();
 		});
 	}
@@ -571,12 +570,13 @@ function cloneSlide(slide, index) {
 	clone.setAttribute("aria-hidden", "true");
 	clone.inert = true;
 	clone.removeAttribute(CURRENT_ATTRIBUTE);
-	for (const el of [clone, ...clone.querySelectorAll("[id]")]) el.removeAttribute("id");
-	for (const el of clone.querySelectorAll("[name]")) el.removeAttribute("name");
-	for (const el of clone.querySelectorAll("input, select, textarea, button")) el.setAttribute("disabled", "");
-	for (const media of clone.querySelectorAll("video, audio")) media.removeAttribute("autoplay");
+	for (const el of within(clone, "[id]")) el.removeAttribute("id");
+	for (const el of within(clone, "[name]")) el.removeAttribute("name");
+	for (const el of within(clone, "input, select, textarea, button")) el.setAttribute("disabled", "");
+	for (const media of within(clone, "video, audio")) media.removeAttribute("autoplay");
 	return clone;
 }
+const within = (root, selector) => [...root.matches(selector) ? [root] : [], ...root.querySelectorAll(selector)];
 const copies = (slides, start, end) => slides.slice(start, end).map((slide, i) => cloneSlide(slide, start + i));
 const sibling = (el, direction) => {
 	const next = direction > 0 ? el.nextElementSibling : el.previousElementSibling;
