@@ -68,8 +68,10 @@ command -v npm >/dev/null || {
   exit 1
 }
 
-npm whoami >/dev/null || {
-  echo "error: not logged in to npm (npm login)" >&2
+# pnpm keeps its own registry session, apart from npm's: check the one that
+# publishes, before anything is committed, tagged or released.
+pnpm whoami >/dev/null || {
+  echo "error: not logged in to the registry with pnpm (pnpm login)" >&2
   exit 1
 }
 gh auth status >/dev/null 2>&1 || {
