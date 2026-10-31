@@ -456,12 +456,22 @@ export class SurfaceCarousel extends HTMLElement {
 
     if (!track) return Promise.resolve()
 
+    const previous = this.#target
+
+    // A step that has arrived but not ended yet still snaps the track back
+    // to its own slide when it ends, over a newer scroll: let it end first.
+    if (previous && reached(track, previous)) {
+      return new Promise<void>((resolve) => {
+        this.#settles.push(resolve)
+        this.#armSettle()
+      }).then(() => this.#scrollTo(el, behavior))
+    }
+
+    // A step still on its way would carry the track off: stop it where it is.
+    if (previous) stopScroll(track)
+
     // Already there, or as close as the track can scroll: no scroll, and so
     // no scrollend, would follow.
-    // A step still under way would carry the track off, or (Chromium 141)
-    // win over a newer instant one: stop it where it is first.
-    if (this.#target) stopScroll(track)
-
     if (reached(track, el)) {
       this.#target = undefined
       this.#update()

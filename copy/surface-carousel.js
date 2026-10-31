@@ -397,7 +397,12 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#scrollTo(el, behavior = defaultBehavior()) {
 		const track = this.#track;
 		if (!track) return Promise.resolve();
-		if (this.#target) stopScroll(track);
+		const previous = this.#target;
+		if (previous && reached(track, previous)) return new Promise((resolve) => {
+			this.#settles.push(resolve);
+			this.#armSettle();
+		}).then(() => this.#scrollTo(el, behavior));
+		if (previous) stopScroll(track);
 		if (reached(track, el)) {
 			this.#target = void 0;
 			this.#update();
