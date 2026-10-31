@@ -409,6 +409,143 @@ describe("surface-carousel autoplay", () => {
   })
 })
 
+// A mouse drag on the track: `distance` pixels to the right (negative is
+// left) in `steps` moves, `ms` apart, then a pause before letting go.
+async function mouseDrag(
+  el: SurfaceCarousel,
+  distance: number,
+  { steps = 10, ms = 16, pause = 0 } = {}
+): Promise<void> {
+  const target = el.slides[0]?.parentElement?.firstElementChild
+  const box = el.track?.getBoundingClientRect()
+
+  if (!(target instanceof HTMLElement) || !box) throw new Error("Missing track")
+
+  const y = box.top + box.height / 2
+  const x = box.left + box.width / 2
+
+  const send = (node: Element, type: string, clientX: number) =>
+    node.dispatchEvent(
+      new PointerEvent(type, {
+        pointerId: 1,
+        pointerType: "mouse",
+        isPrimary: true,
+        button: 0,
+        buttons: type === "pointerup" ? 0 : 1,
+        clientX,
+        clientY: y,
+        bubbles: true,
+        cancelable: true,
+      })
+    )
+
+  send(target, "pointerdown", x)
+
+  const move = async (i: number): Promise<void> => {
+    if (i > steps) return
+
+    await sleep(ms)
+    send(target, "pointermove", x + (distance * i) / steps)
+
+    return move(i + 1)
+  }
+
+  await move(1)
+  await sleep(pause)
+  send(target, "pointerup", x + distance)
+}
+
+describe("surface-carousel drag", () => {
+  afterEach(() => fixtureCleanup())
+
+  it("settles a slow drag on the nearest slide", async () => {
+    const el = await carousel("drag")
+
+    // 150 of 400 px, then a stop: under half a slide, no speed left.
+    await mouseDrag(el, -150, { pause: 150 })
+    expect(await until(() => inView(el, 0))).toBe(true)
+    expect(el.index).toBe(0)
+
+    await mouseDrag(el, -250, { pause: 150 })
+    expect(await until(() => el.index === 1 && inView(el, 1))).toBe(true)
+  })
+
+  it("goes on to the next slide on a quick flick", async () => {
+    const el = await carousel("drag")
+
+    await mouseDrag(el, -60, { steps: 4, ms: 8 })
+    expect(await until(() => el.index === 1 && inView(el, 1))).toBe(true)
+
+    await mouseDrag(el, 60, { steps: 4, ms: 8 })
+    expect(await until(() => el.index === 0 && inView(el, 0))).toBe(true)
+  })
+
+  it("follows the pointer without snapping, then gives snapping back", async () => {
+    const el = await carousel("drag")
+    const track = el.track
+
+    if (!track) throw new Error("Missing track")
+
+    // The author's own inline value comes back, not the stylesheet's.
+    track.style.scrollSnapType = "x mandatory"
+
+    const done = mouseDrag(el, -100, { pause: 100 })
+    expect(await until(() => el.matches(":state(dragging)"))).toBe(true)
+    expect(track.style.scrollSnapType).toBe("none")
+    expect(Math.abs(track.scrollLeft)).toBeGreaterThan(0)
+
+    await done
+    expect(el.matches(":state(dragging)")).toBe(false)
+    expect(
+      await until(() => track.style.scrollSnapType === "x mandatory")
+    ).toBe(true)
+  })
+
+  it("swallows the click that ends a drag, not a plain click", async () => {
+    const el = await carousel("drag")
+    let clicks = 0
+    el.track?.addEventListener("click", () => clicks++)
+
+    await mouseDrag(el, -100, { pause: 100 })
+    el.slides[0]?.click()
+    expect(clicks).toBe(0)
+
+    await sleep(20)
+    el.slides[0]?.click()
+    expect(clicks).toBe(1)
+  })
+
+  it("drags past the ends with loop", async () => {
+    const el = await carousel("drag loop")
+
+    // 700 px is 1.7 slides (416 px each) to the right of the first, so the
+    // nearest is two back: past the start, to the last but one.
+    await mouseDrag(el, 700, { steps: 30, pause: 150 })
+    expect(await until(() => el.index === 2 && inView(el, 2), 240)).toBe(true)
+  })
+
+  it("does nothing without the drag attribute", async () => {
+    const el = await carousel()
+
+    await mouseDrag(el, -300, { pause: 100 })
+    await frame()
+    expect(el.track?.scrollLeft).toBe(0)
+    expect(el.matches(":state(dragging)")).toBe(false)
+  })
+
+  it("stops native drag and drop of images and links", async () => {
+    const el = await carousel("drag")
+
+    const event = new DragEvent("dragstart", {
+      bubbles: true,
+      cancelable: true,
+    })
+
+    el.slides[0]?.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+  })
+})
+
 describe("surface-carousel accessibility", () => {
   afterEach(() => fixtureCleanup())
 

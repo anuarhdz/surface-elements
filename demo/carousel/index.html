@@ -110,8 +110,8 @@
   <body>
     <h1>surface-carousel</h1>
 
-    <h2>Loop, autoplay, anchor markers</h2>
-    <surface-carousel id="hero" aria-label="Featured" loop autoplay interval="3000">
+    <h2>Loop, autoplay, drag, anchor markers</h2>
+    <surface-carousel id="hero" aria-label="Featured" loop autoplay interval="3000" drag>
       <div data-surface-carousel="track">
         <div class="slide" id="hero-1" style="--hue: 0"><span>1</span></div>
         <div class="slide" id="hero-2" style="--hue: 60"><span>2</span></div>
@@ -133,16 +133,16 @@
       </button>
     </surface-carousel>
 
-    <h2>Slider, three per view, no loop</h2>
-    <surface-carousel id="slider" aria-label="Products">
+    <h2>Slider, three per view, drag, no loop</h2>
+    <surface-carousel id="slider" aria-label="Products" drag>
       <div data-surface-carousel="track"></div>
       <button type="button" data-surface-carousel="prev" aria-label="Previous">←</button>
       <span></span>
       <button type="button" data-surface-carousel="next" aria-label="Next">→</button>
     </surface-carousel>
 
-    <h2>Centered with peek, loop, button markers</h2>
-    <surface-carousel id="center" aria-label="Gallery" loop>
+    <h2>Centered with peek, loop, drag, button markers</h2>
+    <surface-carousel id="center" aria-label="Gallery" loop drag>
       <div data-surface-carousel="track">
         <div class="slide" style="--hue: 20"><span>A</span></div>
         <div class="slide" style="--hue: 100"><span>B</span></div>

@@ -65,6 +65,23 @@ The web component adds copies of the first slides after the last one and of the 
 
 Copies are taken when the slides change and when the view grows. Content that changes inside a slide afterwards (a playing video, a counter) is not mirrored in its copies, and an `<iframe>` in a slide loads once per copy.
 
+### Drag with the mouse
+
+Touch swipes are native. Add `drag` and a mouse can drag the track too:
+
+```html
+<surface-carousel aria-label="Featured" drag loop>…</surface-carousel>
+```
+
+- A press becomes a drag after 5 px, so clicks on links and buttons in a slide still work. The click that ends a drag is dropped.
+- While dragging, snapping is off and the track follows the pointer. The carousel matches `surface-carousel:state(dragging)`, the cursor is `grabbing` and text selection is off.
+- On release, a quick drag goes on to the next slide in that direction, like a touch flick, even after a few pixels. A slow one, or one that stopped before letting go, settles on the nearest slide. Snapping comes back once the track rests.
+- With `loop`, a drag past the first or last slide goes on through the copies.
+- Images and links in the slides do not start a native drag and drop. Presses on inputs, selects, text areas and editable content are left alone.
+- Only mouse presses with the main button count. Touch and pen keep the browser's own scrolling.
+
+The track shows a `grab` cursor on devices with a fine pointer. Override it in your styles if you prefer.
+
 ### Autoplay
 
 ```html
@@ -210,6 +227,7 @@ What the JavaScript adds, and what happens without it:
 - **Current slide.** On every scroll frame it marks the nearest slide (`data-current`) and marker (`aria-current`), and disables prev and next at the edges. When the scroll ends (`scrollend`, or 150 ms without scroll events where that event is missing) it fires `surface-carousel-change`.
 - **Markers.** A click scrolls only the track, without a hash change or a page scroll. Without it, anchors still scroll to their slide (and the page, if the carousel is not in view).
 - **Loop.** Copies at both ends, as above, swapped for their slide once a scroll ends on them. A step past the last copy swaps first and goes on, so quick clicks never hit the end of the track.
+- **Drag.** Pointer events on the track: past a 5 px threshold, `scroll-snap-type: none` and `scrollLeft` follow the pointer (with `loop`, a copy in view is swapped for its slide mid-drag). On release, the speed over the last 100 ms picks the next snap position ahead or the nearest, and the track scrolls there before snapping comes back, so it cannot jump. A capturing click listener drops the click that ends the drag. Without it, a mouse scrolls with the wheel, the scrollbar or the buttons.
 - **Autoplay.** A timer that is re-armed after each step, cleared on hover, when off screen (`IntersectionObserver`) and in a hidden tab, and stopped on focus or reader input.
 
 Accessibility checklist:
@@ -268,8 +286,8 @@ const CURRENT_ATTRIBUTE: string
 Web component for a carousel or slider built on a native scroll-snap
 container. The browser does the scrolling, swiping, snapping and keyboard
 scrolling; the web component wires the buttons and markers you write, and
-adds an infinite `loop` and `autoplay` on top. Adds the carousel styles to
-the document, so no CSS import is needed.
+adds an infinite `loop`, `autoplay` and mouse `drag` on top. Adds the
+carousel styles to the document, so no CSS import is needed.
 
 Mark the parts with `data-surface-carousel`: the scroll container is
 `track` and its children are the slides; `prev`, `next` and `play` are
@@ -292,6 +310,7 @@ import "surface-elements/carousel"
 | `loop` | `boolean` | Wrap around at both ends. Copies of the first and last slides are added to the track, inert and hidden from assistive technology. |
 | `autoplay` | `boolean` | Advance on its own every `interval`, unless the reader prefers reduced motion. Pauses while hovered, off screen or in a hidden tab, and stops for good when the reader focuses, drags or uses a control inside. |
 | `interval` | `number` | Milliseconds between autoplay steps. Defaults to 5000, at least 1000. |
+| `drag` | `boolean` | Scroll by dragging with a mouse, as touch swipes do. A quick drag goes on to the next slide; a slow one settles on the nearest. |
 
 #### Properties
 
@@ -329,6 +348,7 @@ import "surface-elements/carousel"
 | Selector | Description |
 | --- | --- |
 | `surface-carousel:state(playing)` | Autoplay is on. |
+| `surface-carousel:state(dragging)` | The reader is dragging the track with a mouse. |
 
 #### CSS custom properties
 

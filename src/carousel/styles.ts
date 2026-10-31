@@ -43,6 +43,17 @@ export const carouselStyles = /* css */ `
     display: none;
   }
 
+  @media (any-pointer: fine) {
+    surface-carousel[drag] [data-surface-carousel="track"] {
+      cursor: grab;
+    }
+  }
+
+  surface-carousel:state(dragging) [data-surface-carousel="track"] {
+    cursor: grabbing;
+    user-select: none;
+  }
+
   surface-carousel [data-surface-carousel][aria-disabled="true"] {
     cursor: default;
   }

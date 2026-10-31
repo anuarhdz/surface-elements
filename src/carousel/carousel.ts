@@ -13,6 +13,12 @@ export const CURRENT_ATTRIBUTE = "data-current"
 const DEFAULT_INTERVAL = 5000
 const MIN_INTERVAL = 1000
 
+// How far a mouse must move before a press becomes a drag, so clicks stay clicks.
+const DRAG_THRESHOLD = 5
+
+// Release speed, in px/ms, past which a drag goes on to the next slide.
+const FLICK_SPEED = 0.3
+
 // How long a scroll must be quiet to count as settled, without `scrollend`.
 const SETTLE_DELAY = 150
 
@@ -32,8 +38,8 @@ export interface CarouselChangeDetail {
  * Web component for a carousel or slider built on a native scroll-snap
  * container. The browser does the scrolling, swiping, snapping and keyboard
  * scrolling; the web component wires the buttons and markers you write, and
- * adds an infinite `loop` and `autoplay` on top. Adds the carousel styles to
- * the document, so no CSS import is needed.
+ * adds an infinite `loop`, `autoplay` and mouse `drag` on top. Adds the
+ * carousel styles to the document, so no CSS import is needed.
  *
  * Mark the parts with `data-surface-carousel`: the scroll container is
  * `track` and its children are the slides; `prev`, `next` and `play` are
@@ -50,7 +56,9 @@ export interface CarouselChangeDetail {
  * @attr {boolean} loop - Wrap around at both ends. Copies of the first and last slides are added to the track, inert and hidden from assistive technology.
  * @attr {boolean} autoplay - Advance on its own every `interval`, unless the reader prefers reduced motion. Pauses while hovered, off screen or in a hidden tab, and stops for good when the reader focuses, drags or uses a control inside.
  * @attr {number} interval - Milliseconds between autoplay steps. Defaults to 5000, at least 1000.
+ * @attr {boolean} drag - Scroll by dragging with a mouse, as touch swipes do. A quick drag goes on to the next slide; a slow one settles on the nearest.
  * @cssstate playing - Autoplay is on.
+ * @cssstate dragging - The reader is dragging the track with a mouse.
  * @cssprop [--surface-carousel-per-view=1] - Slides in view at once.
  * @cssprop [--surface-carousel-gap=1rem] - Space between slides.
  * @cssprop [--surface-carousel-align=start] - `scroll-snap-align` of the slides: `start`, `center` or `end`.
@@ -74,6 +82,7 @@ export class SurfaceCarousel extends HTMLElement {
   #playing = false
   #hovered = false
   #onScreen = true
+  #drag: DragState | undefined
   #settles: Array<() => void> = []
   // Attributes this element added, as opposed to the author.
   #added = new WeakMap<Element, Set<string>>()
@@ -172,6 +181,8 @@ export class SurfaceCarousel extends HTMLElement {
     track.addEventListener("keydown", this.#onKeyDown)
     track.addEventListener("pointerdown", this.#onUserScroll, { passive: true })
     track.addEventListener("wheel", this.#onUserScroll, { passive: true })
+    track.addEventListener("pointerdown", this.#onDragStart)
+    track.addEventListener("dragstart", this.#onNativeDrag)
     document.addEventListener("visibilitychange", this.#onVisibility)
 
     this.#mutations ??= new MutationObserver((records) => {
@@ -246,6 +257,9 @@ export class SurfaceCarousel extends HTMLElement {
       track.removeEventListener("keydown", this.#onKeyDown)
       track.removeEventListener("pointerdown", this.#onUserScroll)
       track.removeEventListener("wheel", this.#onUserScroll)
+      track.removeEventListener("pointerdown", this.#onDragStart)
+      track.removeEventListener("dragstart", this.#onNativeDrag)
+      this.#endDrag(track)
       this.#removeClones(track)
 
       for (const el of [track, ...track.children, ...this.#controls()]) {
@@ -662,6 +676,137 @@ export class SurfaceCarousel extends HTMLElement {
     }
   }
 
+  // ---- Drag -------------------------------------------------------------
+
+  #onDragStart = (event: PointerEvent): void => {
+    const track = this.#track
+
+    if (
+      !track ||
+      !this.hasAttribute("drag") ||
+      event.pointerType !== "mouse" ||
+      event.button !== 0 ||
+      !(event.target instanceof Element) ||
+      event.target.closest("input, select, textarea, [contenteditable]")
+    ) {
+      return
+    }
+
+    this.#drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startScroll: track.scrollLeft,
+      samples: [{ x: event.clientX, t: event.timeStamp }],
+      moved: false,
+    }
+    track.addEventListener("pointermove", this.#onDragMove)
+    track.addEventListener("pointerup", this.#onDragEnd)
+    track.addEventListener("pointercancel", this.#onDragEnd)
+  }
+
+  #onDragMove = (event: PointerEvent): void => {
+    const track = this.#track
+    const drag = this.#drag
+
+    if (!track || !drag || event.pointerId !== drag.pointerId) return
+
+    const dx = event.clientX - drag.startX
+
+    if (!drag.moved) {
+      if (Math.abs(dx) < DRAG_THRESHOLD) return
+
+      // Now a drag: the track follows the pointer, free of snapping.
+      drag.moved = true
+      drag.snapType = track.style.scrollSnapType
+      drag.behavior = track.style.scrollBehavior
+      track.style.scrollSnapType = "none"
+      track.style.scrollBehavior = "auto"
+      capture(track, event.pointerId)
+      getSelection()?.removeAllRanges()
+      this.#target = undefined
+      this.#setState("dragging", true)
+    }
+
+    track.scrollLeft = drag.startScroll - dx
+    drag.samples.push({ x: event.clientX, t: event.timeStamp })
+
+    if (drag.samples.length > 10) drag.samples.shift()
+
+    // With loop, swap a copy for its slide mid-drag, so the drag never ends.
+    if (this.#loops()) {
+      const nearest = this.#nearest(track)
+      const real = nearest && this.#realOf(nearest.el)
+
+      if (nearest && real && real !== nearest.el) {
+        const shift = offsetOf(track, real) - offsetOf(track, nearest.el)
+        track.scrollLeft += shift
+        drag.startScroll += shift
+      }
+    }
+  }
+
+  #onDragEnd = (event: PointerEvent): void => {
+    const track = this.#track
+    const drag = this.#drag
+
+    if (!track || !drag || event.pointerId !== drag.pointerId) return
+
+    this.#endDrag(track)
+
+    if (!drag.moved) return
+
+    // The click that ends a drag is not a click on the slide under it.
+    track.addEventListener("click", swallow, { capture: true, once: true })
+    setTimeout(() => track.removeEventListener("click", swallow, true))
+
+    const speed = releaseSpeed(drag.samples, event.timeStamp)
+
+    // Moving the pointer right (positive) scrolls toward smaller scrollLeft.
+    const flick =
+      Math.abs(speed) > FLICK_SPEED
+        ? ahead(track, speed > 0 ? -1 : 1)
+        : undefined
+
+    const to = flick ?? this.#nearest(track)?.el
+
+    const restore = () => {
+      track.style.scrollSnapType = drag.snapType ?? ""
+      track.style.scrollBehavior = drag.behavior ?? ""
+    }
+
+    // Snapping comes back once the track rests on a slide, so it cannot jump.
+    if (to) void this.#scrollTo(to).then(restore)
+    else restore()
+  }
+
+  // Stops listening for the drag; the scroll that ends it is the caller's.
+  #endDrag(track: HTMLElement): void {
+    const drag = this.#drag
+
+    track.removeEventListener("pointermove", this.#onDragMove)
+    track.removeEventListener("pointerup", this.#onDragEnd)
+    track.removeEventListener("pointercancel", this.#onDragEnd)
+    this.#setState("dragging", false)
+
+    if (drag && track.hasPointerCapture?.(drag.pointerId)) {
+      track.releasePointerCapture(drag.pointerId)
+    }
+
+    this.#drag = undefined
+  }
+
+  // Images and links would start a native drag and drop instead.
+  #onNativeDrag = (event: DragEvent): void => {
+    if (this.hasAttribute("drag")) event.preventDefault()
+  }
+
+  // The slide a copy stands for, or the slide itself.
+  #realOf(el: HTMLElement): HTMLElement | undefined {
+    const copied = el.getAttribute(CLONE_ATTRIBUTE)
+
+    return copied === null ? el : this.slides[Number(copied)]
+  }
+
   // ---- Autoplay ---------------------------------------------------------
 
   #setPlaying(on: boolean): void {
@@ -758,6 +903,68 @@ export class SurfaceCarousel extends HTMLElement {
     if (on) states.add(state)
     else states.delete(state)
   }
+}
+
+interface DragState {
+  pointerId: number
+  startX: number
+  startScroll: number
+  // The last few pointer positions, for the release speed.
+  samples: Array<{ x: number; t: number }>
+  moved: boolean
+  // The track's own inline values, given back after the drag.
+  snapType?: string
+  behavior?: string
+}
+
+// Keeps the drag when the pointer leaves the track. Throws for a pointer
+// that is no longer active (it was released in between).
+function capture(track: HTMLElement, pointerId: number): void {
+  try {
+    track.setPointerCapture(pointerId)
+  } catch {
+    // The release that follows ends the drag anyway.
+  }
+}
+
+const swallow = (event: Event): void => {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+// Pointer speed over the 100 ms before `release`, in px/ms; positive is to
+// the right. A pointer that stopped before letting go has no speed.
+function releaseSpeed(
+  samples: Array<{ x: number; t: number }>,
+  release: number
+): number {
+  const recent = samples.filter((sample) => sample.t >= release - 100)
+  const first = recent[0]
+  const last = recent.at(-1)
+
+  if (!first || !last || last.t - first.t <= 0) return 0
+
+  return (last.x - first.x) / (last.t - first.t)
+}
+
+// The first snap position ahead of the scroll position, as a touch flick
+// finds it: `direction` 1 needs a larger scrollLeft, -1 a smaller one.
+function ahead(track: HTMLElement, direction: 1 | -1): HTMLElement | undefined {
+  let best: HTMLElement | undefined
+  let distance = Infinity
+
+  for (const el of track.children) {
+    if (!(el instanceof HTMLElement)) continue
+
+    const d = offsetOf(track, el) * direction
+
+    if (d > 1 && d < distance) {
+      distance = d
+      best = el
+    }
+  }
+
+  return best
 }
 
 // A copy of `slide` for the loop: inert, hidden from assistive technology,

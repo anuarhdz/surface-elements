@@ -35,8 +35,8 @@ The track is a native scroll-snap container and its children are the slides. The
 
 Mark the parts with `data-surface-carousel`. Only `track` is required, and the parts can sit anywhere inside the element, so lay them out as you like.
 
-<Demo label="Swipe, scroll or use the buttons">
-  <surface-carousel class="carousel-demo" aria-label="Demo" loop>
+<Demo label="Swipe, drag, scroll or use the buttons">
+  <surface-carousel class="carousel-demo" aria-label="Demo" loop drag>
     <div data-surface-carousel="track">
       <figure id="demo-slide-1">1</figure>
       <figure id="demo-slide-2">2</figure>
@@ -89,6 +89,23 @@ Add `loop` and the carousel wraps around: next on the last slide goes on to the 
 The web component adds copies of the first slides after the last one and of the last slides before the first one, enough to fill the view. When a scroll comes to rest on a copy, it swaps it for the slide it copies by moving the scroll position, which looks the same. The copies are `inert`, `aria-hidden`, have no `id` or `name`, their form controls are disabled and their media do not autoplay, so screen readers, the tab order, find in page, forms and anchors only ever see the real slides. They carry `data-surface-carousel-clone` with the index of the slide they copy.
 
 Copies are taken when the slides change and when the view grows. Content that changes inside a slide afterwards (a playing video, a counter) is not mirrored in its copies, and an `<iframe>` in a slide loads once per copy.
+
+### Drag with the mouse
+
+Touch swipes are native. Add `drag` and a mouse can drag the track too:
+
+```html
+<surface-carousel aria-label="Featured" drag loop>…</surface-carousel>
+```
+
+- A press becomes a drag after 5 px, so clicks on links and buttons in a slide still work. The click that ends a drag is dropped.
+- While dragging, snapping is off and the track follows the pointer. The carousel matches `surface-carousel:state(dragging)`, the cursor is `grabbing` and text selection is off.
+- On release, a quick drag goes on to the next slide in that direction, like a touch flick, even after a few pixels. A slow one, or one that stopped before letting go, settles on the nearest slide. Snapping comes back once the track rests.
+- With `loop`, a drag past the first or last slide goes on through the copies.
+- Images and links in the slides do not start a native drag and drop. Presses on inputs, selects, text areas and editable content are left alone.
+- Only mouse presses with the main button count. Touch and pen keep the browser's own scrolling.
+
+The track shows a `grab` cursor on devices with a fine pointer. Override it in your styles if you prefer.
 
 ### Autoplay
 
@@ -235,6 +252,7 @@ What the JavaScript adds, and what happens without it:
 - **Current slide.** On every scroll frame it marks the nearest slide (`data-current`) and marker (`aria-current`), and disables prev and next at the edges. When the scroll ends (`scrollend`, or 150 ms without scroll events where that event is missing) it fires `surface-carousel-change`.
 - **Markers.** A click scrolls only the track, without a hash change or a page scroll. Without it, anchors still scroll to their slide (and the page, if the carousel is not in view).
 - **Loop.** Copies at both ends, as above, swapped for their slide once a scroll ends on them. A step past the last copy swaps first and goes on, so quick clicks never hit the end of the track.
+- **Drag.** Pointer events on the track: past a 5 px threshold, `scroll-snap-type: none` and `scrollLeft` follow the pointer (with `loop`, a copy in view is swapped for its slide mid-drag). On release, the speed over the last 100 ms picks the next snap position ahead or the nearest, and the track scrolls there before snapping comes back, so it cannot jump. A capturing click listener drops the click that ends the drag. Without it, a mouse scrolls with the wheel, the scrollbar or the buttons.
 - **Autoplay.** A timer that is re-armed after each step, cleared on hover, when off screen (`IntersectionObserver`) and in a hidden tab, and stopped on focus or reader input.
 
 Accessibility checklist:
