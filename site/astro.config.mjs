@@ -41,6 +41,19 @@ export default defineConfig({
           tag: "meta",
           attrs: { name: "color-scheme", content: "dark light" },
         },
+        // Inline, not in theme.css: Chrome aborts the transition when the rule
+        // arrives in a stylesheet that is still loading on the new page.
+        {
+          tag: "style",
+          content:
+            "@media (prefers-reduced-motion: no-preference) { @view-transition { navigation: auto; } }",
+        },
+        // Hold the new page's first paint until the title is parsed, so the
+        // transition does not fade to an empty page.
+        {
+          tag: "link",
+          attrs: { rel: "expect", href: "#_top", blocking: "render" },
+        },
       ],
       editLink: {
         baseUrl: "https://github.com/anuarhdz/surface-elements/edit/main/site/",
