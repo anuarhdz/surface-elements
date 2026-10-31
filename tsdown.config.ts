@@ -4,6 +4,7 @@ export default defineConfig({
   entry: {
     index: "src/index.ts",
     "accordion/accordion": "src/accordion/accordion.ts",
+    "carousel/carousel": "src/carousel/carousel.ts",
     "header/header": "src/header/header.ts",
     "drawer/drawer": "src/drawer/drawer.ts",
     "modal/modal": "src/modal/modal.ts",

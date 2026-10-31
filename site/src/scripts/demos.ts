@@ -1,11 +1,13 @@
 import {
   isScrollLocked,
   supportsDetailsAnimation,
+  supportsScrollEnd,
   supportsClosedBy,
   supportsTopLayerExit,
   type SurfaceDrawer,
 } from "surface-elements"
 import "surface-elements/accordion"
+import "surface-elements/carousel"
 import "surface-elements/drawer"
 import "surface-elements/header"
 import "surface-elements/modal"
@@ -61,6 +63,9 @@ for (const el of document.querySelectorAll<HTMLElement>("[data-support]")) {
     ["invoker commands", "commandForElement" in HTMLButtonElement.prototype],
     [":state()", "CustomStateSet" in globalThis],
     ["<details> animation (CSS)", supportsDetailsAnimation()],
+    ["scrollend", supportsScrollEnd()],
+    ["scroll-target-group", CSS.supports("scroll-target-group", "auto")],
+    ["scroll-state queries", CSS.supports("container-type", "scroll-state")],
   ]
   el.replaceChildren(
     ...rows.map(([name, native]) => {

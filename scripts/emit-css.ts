@@ -2,12 +2,14 @@
 import { mkdirSync, writeFileSync } from "node:fs"
 
 import { accordionStyles } from "../src/accordion/styles.ts"
+import { carouselStyles } from "../src/carousel/styles.ts"
 import { drawerStyles } from "../src/drawer/styles.ts"
 import { headerStyles } from "../src/header/styles.ts"
 import { modalStyles } from "../src/modal/styles.ts"
 
 mkdirSync("dist", { recursive: true })
 writeFileSync("dist/accordion.css", accordionStyles.trimStart())
+writeFileSync("dist/carousel.css", carouselStyles.trimStart())
 writeFileSync("dist/drawer.css", drawerStyles.trimStart())
 writeFileSync("dist/header.css", headerStyles.trimStart())
 writeFileSync("dist/modal.css", modalStyles.trimStart())
