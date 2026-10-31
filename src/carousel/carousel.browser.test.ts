@@ -191,6 +191,19 @@ describe("surface-carousel in a browser", () => {
     expect(Math.abs(el.track?.scrollLeft ?? 1)).toBeLessThan(1)
   })
 
+  it("lets a newer step replace one still under way", async () => {
+    const el = await carousel()
+
+    void el.next()
+    await frame()
+    await frame()
+    await el.goTo(3, { behavior: "instant" })
+    await sleep(600)
+
+    expect(el.index).toBe(3)
+    expect(inView(el, 3)).toBe(true)
+  })
+
   it("resolves steps with percentage scroll padding", async () => {
     const el = await carousel("", 4, "--surface-carousel-per-view: 2")
     const track = el.track

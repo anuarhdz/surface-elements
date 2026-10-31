@@ -458,11 +458,11 @@ export class SurfaceCarousel extends HTMLElement {
 
     // Already there, or as close as the track can scroll: no scroll, and so
     // no scrollend, would follow.
-    if (reached(track, el)) {
-      // A step under way (the next() that this prev() takes back) would
-      // still carry the track off: stop it where it is.
-      if (this.#target) stopScroll(track)
+    // A step still under way would carry the track off, or (Chromium 141)
+    // win over a newer instant one: stop it where it is first.
+    if (this.#target) stopScroll(track)
 
+    if (reached(track, el)) {
       this.#target = undefined
       this.#update()
 
