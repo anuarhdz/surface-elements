@@ -1,26 +1,30 @@
 import { defineElement } from "../utils/define.js"
+import { CLONE, CURRENT, PART } from "./attributes.js"
+import { Drag } from "./drag.js"
+import {
+  atEnd,
+  atStart,
+  maxScroll,
+  measurable,
+  offsetOf,
+  scrollByX,
+  sibling,
+} from "./geometry.js"
+import { copiedIndex, copies } from "./loop.js"
+import { Navigation, trackScroller } from "./navigation.js"
 import { adoptCarouselStyles } from "./styles.js"
 
 /** Marks the parts of a carousel: `track`, `prev`, `next`, `play`, `markers`. */
-export const PART_ATTRIBUTE = "data-surface-carousel"
+export const PART_ATTRIBUTE: string = PART
 
 /** Set on the copies `loop` adds at both ends of the track, with the index of the slide they copy. */
-export const CLONE_ATTRIBUTE = "data-surface-carousel-clone"
+export const CLONE_ATTRIBUTE: string = CLONE
 
 /** Set on the slide (or copy) that is snapped in view. */
-export const CURRENT_ATTRIBUTE = "data-current"
+export const CURRENT_ATTRIBUTE: string = CURRENT
 
 const DEFAULT_INTERVAL = 5000
 const MIN_INTERVAL = 1000
-
-// How far a mouse must move before a press becomes a drag, so clicks stay clicks.
-const DRAG_THRESHOLD = 5
-
-// Release speed, in px/ms, past which a drag goes on to the next slide.
-const FLICK_SPEED = 0.3
-
-// How long a scroll must be quiet to count as settled, without `scrollend`.
-const SETTLE_DELAY = 150
 
 /** Options for {@link SurfaceCarousel.goTo}. */
 export interface CarouselScrollOptions {
@@ -70,28 +74,20 @@ export class SurfaceCarousel extends HTMLElement {
 
   #internals: ElementInternals | undefined
   #track: HTMLElement | undefined
+  // The scrolls this element starts, and the mouse drag.
+  #nav: Navigation | undefined
+  #drag: Drag | undefined
   #index = 0
   // The index the last change event announced.
   #announced = 0
-  // Where a programmatic scroll is headed, so quick clicks step from there.
-  #target: HTMLElement | undefined
-  // A step waiting for the one before it to end, which quick steps chain from.
-  #queued: HTMLElement | undefined
   #cloneCount = 0
   #frame = 0
-  #settleTimer = 0
   #playTimer = 0
   #playing = false
   #hovered = false
   #onScreen = true
   // Whether the track had a size at the last resize; false while hidden.
   #measured = false
-  #drag: DragState | undefined
-  // The track's own inline snapping, saved by the first of a series of drags
-  // and given back once the last one comes to rest.
-  #unsnapped: { snapType: string; behavior: string } | undefined
-  #drags = 0
-  #settles: Array<() => void> = []
   // Attributes this element added, as opposed to the author.
   #added = new WeakMap<Element, Set<string>>()
   #mutations: MutationObserver | undefined
@@ -106,14 +102,14 @@ export class SurfaceCarousel extends HTMLElement {
 
   /** The scroll container, marked `data-surface-carousel="track"`. */
   get track(): HTMLElement | null {
-    return this.#own(`[${PART_ATTRIBUTE}="track"]`)[0] ?? null
+    return this.#own(`[${PART}="track"]`)[0] ?? null
   }
 
   /** The slides: the children of the track, without the copies `loop` adds. */
   get slides(): HTMLElement[] {
     return [...(this.track?.children ?? [])].filter(
       (el): el is HTMLElement =>
-        el instanceof HTMLElement && !el.hasAttribute(CLONE_ATTRIBUTE)
+        el instanceof HTMLElement && !el.hasAttribute(CLONE)
     )
   }
 
@@ -129,7 +125,8 @@ export class SurfaceCarousel extends HTMLElement {
 
   /**
    * Scrolls `index` of {@link SurfaceCarousel.slides} into view. Out of range
-   * it wraps with `loop` and clamps without. Resolves when the scroll settles.
+   * it wraps with `loop` and clamps without. Resolves when the scroll settles,
+   * or when something else takes over the track first.
    */
   goTo(index: number, options: CarouselScrollOptions = {}): Promise<void> {
     const slides = this.slides
@@ -140,7 +137,7 @@ export class SurfaceCarousel extends HTMLElement {
     const i = this.#loops() ? mod(index, n) : clamp(index, 0, n - 1)
     const slide = slides[i]
 
-    return slide ? this.#scrollTo(slide, options.behavior) : Promise.resolve()
+    return slide ? this.#go(slide, options.behavior) : Promise.resolve()
   }
 
   /** Scrolls to the next slide. With `loop`, the last one leads to the first. */
@@ -184,6 +181,8 @@ export class SurfaceCarousel extends HTMLElement {
 
     this.#waiting?.disconnect()
     this.#track = track
+    this.#nav = new Navigation(trackScroller(track), this.#rested)
+    this.#drag = new Drag(this.#dragHost(track))
     this.#index = this.#nearest(track)?.index ?? 0
     this.#announced = this.#index
 
@@ -203,15 +202,13 @@ export class SurfaceCarousel extends HTMLElement {
     track.addEventListener("keydown", this.#onKeyDown)
     track.addEventListener("pointerdown", this.#onUserScroll, { passive: true })
     track.addEventListener("wheel", this.#onUserScroll, { passive: true })
-    track.addEventListener("pointerdown", this.#onDragStart)
-    track.addEventListener("dragstart", this.#onNativeDrag)
     document.addEventListener("visibilitychange", this.#onVisibility)
+    this.#drag.connect()
 
     this.#mutations ??= new MutationObserver((records) => {
       const slidesChanged = records.some((record) =>
         [...record.addedNodes, ...record.removedNodes].some(
-          (node) =>
-            !(node instanceof Element && node.hasAttribute(CLONE_ATTRIBUTE))
+          (node) => !(node instanceof Element && node.hasAttribute(CLONE))
         )
       )
 
@@ -220,23 +217,7 @@ export class SurfaceCarousel extends HTMLElement {
     this.#mutations.observe(track, { childList: true })
 
     if ("ResizeObserver" in globalThis) {
-      this.#resizes ??= new ResizeObserver(() => {
-        const observed = this.#track
-        const visible = !!observed && measurable(observed)
-
-        // Copies are re-made around the current slide. Without that, a track
-        // that just became visible (it started in display: none, where the
-        // first jump measured 0) still has to be put on its slide.
-        if (this.#cloneCount !== this.#neededClones()) this.#renderClones()
-        else if (visible && !this.#measured) {
-          const slide = this.slides[this.#index]
-
-          if (slide) this.#jump(slide)
-        }
-
-        this.#measured = visible
-        this.#update()
-      })
+      this.#resizes ??= new ResizeObserver(() => this.#onResize())
       this.#resizes.observe(track)
     }
 
@@ -281,11 +262,12 @@ export class SurfaceCarousel extends HTMLElement {
     this.#resizes?.disconnect()
     this.#intersections?.disconnect()
     cancelAnimationFrame(this.#frame)
-    clearTimeout(this.#settleTimer)
     clearTimeout(this.#playTimer)
     this.#frame = 0
     this.#playing = false
     this.#setState("playing", false)
+    this.#drag?.disconnect()
+    this.#nav?.dispose()
 
     if (track) {
       track.removeEventListener("scroll", this.#onScroll)
@@ -293,27 +275,22 @@ export class SurfaceCarousel extends HTMLElement {
       track.removeEventListener("keydown", this.#onKeyDown)
       track.removeEventListener("pointerdown", this.#onUserScroll)
       track.removeEventListener("wheel", this.#onUserScroll)
-      track.removeEventListener("pointerdown", this.#onDragStart)
-      track.removeEventListener("dragstart", this.#onNativeDrag)
-      this.#endDrag(track)
-      this.#resnap(track)
       this.#removeClones(track)
 
       for (const el of [track, ...track.children, ...this.#controls()]) {
         this.#restore(el)
       }
 
-      for (const el of track.children) el.removeAttribute(CURRENT_ATTRIBUTE)
+      for (const el of track.children) el.removeAttribute(CURRENT)
 
-      for (const marker of this.#markers())
+      for (const marker of this.#markers()) {
         marker.removeAttribute("aria-current")
+      }
     }
 
-    this.#target = undefined
-    this.#queued = undefined
+    this.#nav = undefined
+    this.#drag = undefined
     this.#track = undefined
-
-    for (const resolve of this.#settles.splice(0)) resolve()
   }
 
   // Slides changed, or `loop` did: label them, rebuild the copies, sync.
@@ -322,16 +299,33 @@ export class SurfaceCarousel extends HTMLElement {
 
     if (!track) return
 
-    // A step headed for a slide that left the track can never arrive:
-    // drop it and settle its promise.
-    if ([this.#target, this.#queued].some((el) => el && !track.contains(el))) {
-      this.#dropSteps()
+    // A trip headed for a slide that left the track can never arrive.
+    if (this.#nav?.destinations.some((el) => !track.contains(el))) {
+      this.#nav.abandon()
     }
 
     const slides = this.slides
     this.#index = clamp(this.#index, 0, Math.max(0, slides.length - 1))
     this.#label(slides)
     this.#renderClones()
+    this.#update()
+  }
+
+  #onResize(): void {
+    const track = this.#track
+    const visible = !!track && measurable(track)
+
+    // Copies are re-made around the current slide. Without that, a track that
+    // just became visible (it started in display: none, where the first jump
+    // measured 0) still has to be put on its slide.
+    if (this.#cloneCount !== this.#neededClones()) this.#renderClones()
+    else if (visible && !this.#measured) {
+      const slide = this.slides[this.#index]
+
+      if (slide) this.#jump(slide)
+    }
+
+    this.#measured = visible
     this.#update()
   }
 
@@ -345,13 +339,11 @@ export class SurfaceCarousel extends HTMLElement {
 
       const ours = this.#added.get(slide)?.has("aria-label")
 
-      if (
-        ours ||
-        !(
-          slide.hasAttribute("aria-label") ||
-          slide.hasAttribute("aria-labelledby")
-        )
-      ) {
+      const labelled =
+        slide.hasAttribute("aria-label") ||
+        slide.hasAttribute("aria-labelledby")
+
+      if (ours || !labelled) {
         this.#set(slide, "aria-label", `${i + 1} of ${slides.length}`)
       }
     }
@@ -389,9 +381,8 @@ export class SurfaceCarousel extends HTMLElement {
     const count = this.#neededClones()
     this.#cloneCount = count
 
-    // Re-making the copies scrolls the track at once, which cuts short a step
-    // under way: drop it and settle its promise.
-    if (had || count > 0) this.#dropSteps()
+    // Re-making the copies scrolls the track at once, which cuts a trip short.
+    if (had || count > 0) this.#nav?.abandon()
 
     if (count === 0) return
 
@@ -404,17 +395,8 @@ export class SurfaceCarousel extends HTMLElement {
     if (current) this.#jump(current)
   }
 
-  // Gives up the step under way and the queued one, settling their promises.
-  #dropSteps(): void {
-    if (!this.#target && !this.#queued) return
-
-    this.#target = undefined
-    this.#queued = undefined
-    this.#armSettle()
-  }
-
   #removeClones(track: HTMLElement): void {
-    const clones = track.querySelectorAll(`:scope > [${CLONE_ATTRIBUTE}]`)
+    const clones = track.querySelectorAll(`:scope > [${CLONE}]`)
 
     if (clones.length === 0) return
 
@@ -428,41 +410,46 @@ export class SurfaceCarousel extends HTMLElement {
     if (real) scrollByX(track, offsetOf(track, real) - before, "instant")
   }
 
-  // Swaps a copy in view for the slide it copies, without a visible move.
-  #normalize(): void {
+  // How far to scroll to swap a copy in view for the slide it copies, which
+  // looks the same; 0 when a slide itself is in view.
+  #copyShift(): number {
     const track = this.#track
-    const nearest = track && this.#nearest(track)
+    const nearest = track && this.#loops() ? this.#nearest(track) : undefined
+    const real = nearest && this.#realOf(nearest.el)
 
-    if (!track || !nearest?.el.hasAttribute(CLONE_ATTRIBUTE)) return
+    if (!track || !nearest || !real || real === nearest.el) return 0
 
-    const real = this.slides[nearest.index]
+    return offsetOf(track, real) - offsetOf(track, nearest.el)
+  }
 
-    if (real) {
-      scrollByX(
-        track,
-        offsetOf(track, real) - offsetOf(track, nearest.el),
-        "instant"
-      )
-    }
+  // The slide a copy stands for, or the slide itself.
+  #realOf(el: HTMLElement): HTMLElement | undefined {
+    const copied = copiedIndex(el)
+
+    return copied === undefined ? el : this.slides[copied]
   }
 
   // ---- Scrolling --------------------------------------------------------
 
+  #go(el: HTMLElement, behavior?: ScrollBehavior): Promise<void> {
+    return this.#nav?.go(el, behavior ?? defaultBehavior()) ?? Promise.resolve()
+  }
+
   #step(direction: 1 | -1, behavior?: ScrollBehavior): Promise<void> {
     const track = this.#track
+    const heading = this.#nav?.heading
 
     if (!track) return Promise.resolve()
 
     if (this.#loops()) {
-      let from = this.#heading() ?? this.#nearest(track)?.el
+      let from = heading ?? this.#nearest(track)?.el
       let to = from && sibling(from, direction)
 
       // A copy at the very end of the track: swap it for the slide it copies,
       // in place, and step on from there.
-      const copied = from && !to ? from.getAttribute(CLONE_ATTRIBUTE) : null
-      const real = copied === null ? undefined : this.slides[Number(copied)]
+      const real = from && !to ? this.#realOf(from) : undefined
 
-      if (from && real) {
+      if (from && real && real !== from) {
         scrollByX(
           track,
           offsetOf(track, real) - offsetOf(track, from),
@@ -472,83 +459,21 @@ export class SurfaceCarousel extends HTMLElement {
         to = sibling(real, direction)
       }
 
-      return to ? this.#scrollTo(to, behavior) : Promise.resolve()
+      return to ? this.#go(to, behavior) : Promise.resolve()
     }
 
     const edge = direction > 0 ? atEnd(track) : atStart(track)
 
-    if (edge && !this.#heading()) return Promise.resolve()
+    if (edge && !heading) return Promise.resolve()
 
     const slides = this.slides
-    const heading = this.#heading()
     const from = heading ? slides.indexOf(heading) : this.#index
     const to = slides[clamp(from + direction, 0, slides.length - 1)]
 
-    return to ? this.#scrollTo(to, behavior) : Promise.resolve()
+    return to ? this.#go(to, behavior) : Promise.resolve()
   }
 
-  // Where the latest step is headed: the queued one, else the one under way.
-  #heading(): HTMLElement | undefined {
-    return this.#queued ?? this.#target
-  }
-
-  #scrollTo(
-    el: HTMLElement,
-    behavior: ScrollBehavior = defaultBehavior()
-  ): Promise<void> {
-    const track = this.#track
-
-    if (!track) return Promise.resolve()
-
-    const previous = this.#target
-
-    // A step that has arrived but not ended yet still snaps the track back
-    // to its own slide when it ends, over a newer scroll: let it end first.
-    // The step waits as the queued one, so a quicker step chains from it.
-    if (previous && reached(track, previous)) {
-      this.#queued = el
-
-      return new Promise<void>((resolve) => {
-        this.#settles.push(resolve)
-        this.#armSettle()
-      }).then(() => {
-        // A newer queued step replaced this one, or the reader took over.
-        if (this.#queued !== el) return
-
-        this.#queued = undefined
-
-        return this.#scrollTo(el, behavior)
-      })
-    }
-
-    // A step still on its way would carry the track off: stop it where it is.
-    // Stopping may not move the track, so settle its promise by the clock.
-    if (previous) {
-      stopScroll(track)
-      this.#armSettle()
-    }
-
-    // Already there, or as close as the track can scroll: no scroll, and so
-    // no scrollend, would follow.
-    if (reached(track, el)) {
-      this.#target = undefined
-      this.#update()
-
-      return Promise.resolve()
-    }
-
-    this.#target = el
-
-    return new Promise((resolve) => {
-      this.#settles.push(resolve)
-      scrollByX(track, offsetOf(track, el), behavior)
-
-      // An instant scroll may not wait for a frame to report itself.
-      if (behavior === "instant") this.#armSettle()
-    })
-  }
-
-  // Scrolls `el` into place at once, outside any settle bookkeeping.
+  // Scrolls `el` into place at once, outside any trip.
   #jump(el: HTMLElement): void {
     const track = this.#track
 
@@ -561,34 +486,25 @@ export class SurfaceCarousel extends HTMLElement {
       this.#update()
     })
 
-    if (!supportsScrollEnd()) this.#armSettle()
+    this.#nav?.scrolled()
   }
 
   #onScrollEnd = (): void => {
-    this.#armSettle(0)
+    this.#nav?.ended()
   }
 
-  #armSettle(delay = SETTLE_DELAY): void {
-    clearTimeout(this.#settleTimer)
-    this.#settleTimer = window.setTimeout(() => this.#settle(), delay)
-  }
-
-  // The scroll came to rest: swap a copy for its slide, sync and announce.
-  #settle(): void {
-    clearTimeout(this.#settleTimer)
+  // The track came to rest: swap a copy for its slide (unless a queued trip
+  // starts from here), sync and announce.
+  #rested = (final: boolean): void => {
     const track = this.#track
 
-    // A jump inside a quick series of steps ends a scroll of its own; keep
-    // going until the step that is under way arrives.
-    if (track && this.#target && !reached(track, this.#target)) return
+    if (!track) return
 
-    this.#target = undefined
+    const shift = final ? this.#copyShift() : 0
 
-    if (this.#loops()) this.#normalize()
+    if (shift !== 0) scrollByX(track, shift, "instant")
 
     this.#update(true)
-
-    for (const resolve of this.#settles.splice(0)) resolve()
   }
 
   // Syncs the current slide, the markers and the buttons with the scroll.
@@ -606,27 +522,27 @@ export class SurfaceCarousel extends HTMLElement {
     this.#index = index
 
     for (const el of track.children) {
-      el.toggleAttribute(CURRENT_ATTRIBUTE, el === current)
+      el.toggleAttribute(CURRENT, el === current)
     }
 
     for (const [i, marker] of this.#markers().entries()) {
-      if (this.#slideOf(marker, i) === index)
+      if (this.#slideOf(marker, i) === index) {
         marker.setAttribute("aria-current", "true")
-      else marker.removeAttribute("aria-current")
+      } else marker.removeAttribute("aria-current")
     }
 
     const loops = this.#loops()
     const overflows = maxScroll(track) > 0
 
-    for (const button of this.#own(`[${PART_ATTRIBUTE}="prev"]`)) {
+    for (const button of this.#own(`[${PART}="prev"]`)) {
       this.#disable(button, !overflows || (!loops && atStart(track)))
     }
 
-    for (const button of this.#own(`[${PART_ATTRIBUTE}="next"]`)) {
+    for (const button of this.#own(`[${PART}="next"]`)) {
       this.#disable(button, !overflows || (!loops && atEnd(track)))
     }
 
-    for (const toggle of this.#own(`[${PART_ATTRIBUTE}="play"]`)) {
+    for (const toggle of this.#own(`[${PART}="play"]`)) {
       this.#set(toggle, "aria-pressed", String(this.#playing))
     }
 
@@ -657,8 +573,7 @@ export class SurfaceCarousel extends HTMLElement {
 
       if (d >= distance) continue
 
-      const copied = el.getAttribute(CLONE_ATTRIBUTE)
-      const index = copied === null ? slides.indexOf(el) : Number(copied)
+      const index = copiedIndex(el) ?? slides.indexOf(el)
 
       if (index < 0) continue
 
@@ -667,6 +582,27 @@ export class SurfaceCarousel extends HTMLElement {
     }
 
     return best
+  }
+
+  // ---- Drag -------------------------------------------------------------
+
+  #dragHost(track: HTMLElement): ConstructorParameters<typeof Drag>[0] {
+    return {
+      track,
+      accepts: (target) =>
+        this.hasAttribute("drag") &&
+        // A carousel nested in a slide drags its own track.
+        target.closest(SurfaceCarousel.tagName) === this &&
+        !target.closest("input, select, textarea, [contenteditable]"),
+      copyShift: () => this.#copyShift(),
+      nearest: () => this.#nearest(track)?.el,
+      started: () => {
+        this.#nav?.abandon()
+        this.#setState("dragging", true)
+      },
+      ended: () => this.#setState("dragging", false),
+      go: (to) => this.#go(to),
+    }
   }
 
   // ---- Controls ---------------------------------------------------------
@@ -685,13 +621,13 @@ export class SurfaceCarousel extends HTMLElement {
       return
     }
 
-    const control = target.closest(`[${PART_ATTRIBUTE}]`)
+    const control = target.closest(`[${PART}]`)
 
     if (!control || control.closest(SurfaceCarousel.tagName) !== this) return
 
     if (control.getAttribute("aria-disabled") === "true") return
 
-    const part = control.getAttribute(PART_ATTRIBUTE)
+    const part = control.getAttribute(PART)
 
     if (part === "play") this.#setPlaying(!this.#playing)
     else if (part === "prev" || part === "next") {
@@ -742,7 +678,7 @@ export class SurfaceCarousel extends HTMLElement {
   }
 
   #markers(): HTMLElement[] {
-    return this.#own(`[${PART_ATTRIBUTE}="markers"]`).flatMap((group) =>
+    return this.#own(`[${PART}="markers"]`).flatMap((group) =>
       [...group.querySelectorAll<HTMLElement>("a[href], button")].filter(
         (el) => el.closest(SurfaceCarousel.tagName) === this
       )
@@ -751,7 +687,7 @@ export class SurfaceCarousel extends HTMLElement {
 
   #controls(): HTMLElement[] {
     return [
-      ...this.#own(`[${PART_ATTRIBUTE}]:not([${PART_ATTRIBUTE}="track"])`),
+      ...this.#own(`[${PART}]:not([${PART}="track"])`),
       ...this.#markers(),
     ]
   }
@@ -769,163 +705,6 @@ export class SurfaceCarousel extends HTMLElement {
       button.removeAttribute("aria-disabled")
       this.#added.get(button)?.delete("aria-disabled")
     }
-  }
-
-  // ---- Drag -------------------------------------------------------------
-
-  #onDragStart = (event: PointerEvent): void => {
-    const track = this.#track
-
-    if (
-      !track ||
-      !this.hasAttribute("drag") ||
-      event.pointerType !== "mouse" ||
-      event.button !== 0 ||
-      !(event.target instanceof Element) ||
-      event.target.closest("input, select, textarea, [contenteditable]") ||
-      // A carousel nested in a slide drags its own track.
-      event.target.closest(SurfaceCarousel.tagName) !== this
-    ) {
-      return
-    }
-
-    this.#drag = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startScroll: track.scrollLeft,
-      samples: [{ x: event.clientX, t: event.timeStamp }],
-      moved: false,
-    }
-    track.addEventListener("pointermove", this.#onDragMove)
-    track.addEventListener("pointerup", this.#onDragEnd)
-    track.addEventListener("pointercancel", this.#onDragEnd)
-  }
-
-  #onDragMove = (event: PointerEvent): void => {
-    const track = this.#track
-    const drag = this.#drag
-
-    if (!track || !drag || event.pointerId !== drag.pointerId) return
-
-    // Let go outside the track, where no pointerup reached it (the pointer is
-    // only captured once the press becomes a drag): end it here.
-    if ((event.buttons & 1) === 0) {
-      this.#onDragEnd(event)
-
-      return
-    }
-
-    const dx = event.clientX - drag.startX
-
-    if (!drag.moved) {
-      if (Math.abs(dx) < DRAG_THRESHOLD) return
-
-      // Now a drag: the track follows the pointer, free of snapping.
-      drag.moved = true
-      this.#drags++
-      this.#unsnapped ??= {
-        snapType: track.style.scrollSnapType,
-        behavior: track.style.scrollBehavior,
-      }
-      track.style.scrollSnapType = "none"
-      track.style.scrollBehavior = "auto"
-      capture(track, event.pointerId)
-      getSelection()?.removeAllRanges()
-      this.#target = undefined
-      this.#queued = undefined
-      this.#setState("dragging", true)
-    }
-
-    track.scrollLeft = drag.startScroll - dx
-    drag.samples.push({ x: event.clientX, t: event.timeStamp })
-
-    if (drag.samples.length > 10) drag.samples.shift()
-
-    // With loop, swap a copy for its slide mid-drag, so the drag never ends.
-    if (this.#loops()) {
-      const nearest = this.#nearest(track)
-      const real = nearest && this.#realOf(nearest.el)
-
-      if (nearest && real && real !== nearest.el) {
-        const shift = offsetOf(track, real) - offsetOf(track, nearest.el)
-        track.scrollLeft += shift
-        drag.startScroll += shift
-      }
-    }
-  }
-
-  #onDragEnd = (event: PointerEvent): void => {
-    const track = this.#track
-    const drag = this.#drag
-
-    if (!track || !drag || event.pointerId !== drag.pointerId) return
-
-    this.#endDrag(track)
-
-    if (!drag.moved) return
-
-    // The click that ends a drag is not a click on the slide under it.
-    track.addEventListener("click", swallow, { capture: true, once: true })
-    setTimeout(() => track.removeEventListener("click", swallow, true))
-
-    const speed = releaseSpeed(drag.samples, event.timeStamp)
-
-    // Moving the pointer right (positive) scrolls toward smaller scrollLeft.
-    const flick =
-      Math.abs(speed) > FLICK_SPEED
-        ? ahead(track, speed > 0 ? -1 : 1)
-        : undefined
-
-    const to = flick ?? this.#nearest(track)?.el
-
-    // Snapping comes back once the track rests on a slide, so it cannot jump,
-    // unless a newer drag grabbed the track before then.
-    const series = this.#drags
-
-    const resnap = () => {
-      if (series === this.#drags && !this.#drag) this.#resnap(track)
-    }
-
-    if (to) void this.#scrollTo(to).then(resnap)
-    else resnap()
-  }
-
-  #resnap(track: HTMLElement): void {
-    const saved = this.#unsnapped
-
-    if (!saved) return
-
-    track.style.scrollSnapType = saved.snapType
-    track.style.scrollBehavior = saved.behavior
-    this.#unsnapped = undefined
-  }
-
-  // Stops listening for the drag; the scroll that ends it is the caller's.
-  #endDrag(track: HTMLElement): void {
-    const drag = this.#drag
-
-    track.removeEventListener("pointermove", this.#onDragMove)
-    track.removeEventListener("pointerup", this.#onDragEnd)
-    track.removeEventListener("pointercancel", this.#onDragEnd)
-    this.#setState("dragging", false)
-
-    if (drag && track.hasPointerCapture?.(drag.pointerId)) {
-      track.releasePointerCapture(drag.pointerId)
-    }
-
-    this.#drag = undefined
-  }
-
-  // Images and links would start a native drag and drop instead.
-  #onNativeDrag = (event: DragEvent): void => {
-    if (this.hasAttribute("drag")) event.preventDefault()
-  }
-
-  // The slide a copy stands for, or the slide itself.
-  #realOf(el: HTMLElement): HTMLElement | undefined {
-    const copied = el.getAttribute(CLONE_ATTRIBUTE)
-
-    return copied === null ? el : this.slides[Number(copied)]
   }
 
   // ---- Autoplay ---------------------------------------------------------
@@ -966,19 +745,14 @@ export class SurfaceCarousel extends HTMLElement {
   #onFocusIn = (event: FocusEvent): void => {
     const target = event.target
 
-    if (
-      target instanceof Element &&
-      target.closest(`[${PART_ATTRIBUTE}="play"]`)
-    )
-      return
+    if (target instanceof Element && target.closest(`[${PART}="play"]`)) return
 
     this.pause()
   }
 
-  // The reader takes over: autoplay stops, and a scroll under way is theirs.
+  // The reader takes over: autoplay stops, and the trip under way is theirs.
   #onUserScroll = (): void => {
-    this.#target = undefined
-    this.#queued = undefined
+    this.#nav?.abandon()
     this.pause()
   }
 
@@ -1025,187 +799,6 @@ export class SurfaceCarousel extends HTMLElement {
     if (on) states.add(state)
     else states.delete(state)
   }
-}
-
-interface DragState {
-  pointerId: number
-  startX: number
-  startScroll: number
-  // The last few pointer positions, for the release speed.
-  samples: Array<{ x: number; t: number }>
-  moved: boolean
-}
-
-// Keeps the drag when the pointer leaves the track. Throws for a pointer
-// that is no longer active (it was released in between).
-function capture(track: HTMLElement, pointerId: number): void {
-  try {
-    track.setPointerCapture(pointerId)
-  } catch {
-    // The release that follows ends the drag anyway.
-  }
-}
-
-const swallow = (event: Event): void => {
-  event.preventDefault()
-  event.stopPropagation()
-}
-
-// Pointer speed over the 100 ms before `release`, in px/ms; positive is to
-// the right. A pointer that stopped before letting go has no speed.
-function releaseSpeed(
-  samples: Array<{ x: number; t: number }>,
-  release: number
-): number {
-  const recent = samples.filter((sample) => sample.t >= release - 100)
-  const first = recent[0]
-  const last = recent.at(-1)
-
-  if (!first || !last || last.t - first.t <= 0) return 0
-
-  return (last.x - first.x) / (last.t - first.t)
-}
-
-// The first snap position ahead of the scroll position, as a touch flick
-// finds it: `direction` 1 needs a larger scrollLeft, -1 a smaller one.
-function ahead(track: HTMLElement, direction: 1 | -1): HTMLElement | undefined {
-  let best: HTMLElement | undefined
-  let distance = Infinity
-
-  for (const el of track.children) {
-    if (!(el instanceof HTMLElement)) continue
-
-    const d = offsetOf(track, el) * direction
-
-    if (d > 1 && d < distance) {
-      distance = d
-      best = el
-    }
-  }
-
-  return best
-}
-
-// A copy of `slide` for the loop: inert, hidden from assistive technology,
-// and unable to clash with the original (ids, names, autoplaying media).
-function cloneSlide(slide: HTMLElement, index: number): HTMLElement {
-  // SAFETY: a deep clone of an HTMLElement is an HTMLElement of the same type.
-  const clone = slide.cloneNode(true) as HTMLElement
-  clone.setAttribute(CLONE_ATTRIBUTE, String(index))
-  clone.setAttribute("aria-hidden", "true")
-  clone.inert = true
-  clone.removeAttribute(CURRENT_ATTRIBUTE)
-
-  for (const el of within(clone, "[id]")) el.removeAttribute("id")
-
-  // A copied checked radio or open <details name> would steal its group.
-  for (const el of within(clone, "[name]")) el.removeAttribute("name")
-
-  for (const el of within(clone, "input, select, textarea, button")) {
-    el.setAttribute("disabled", "")
-  }
-
-  for (const media of within(clone, "video, audio")) {
-    media.removeAttribute("autoplay")
-  }
-
-  return clone
-}
-
-// `root` and its descendants that match `selector`.
-const within = (root: Element, selector: string): Element[] => [
-  ...(root.matches(selector) ? [root] : []),
-  ...root.querySelectorAll(selector),
-]
-
-// Copies of `slides` from `start` to `end` (exclusive).
-const copies = (
-  slides: HTMLElement[],
-  start: number,
-  end: number
-): HTMLElement[] =>
-  slides.slice(start, end).map((slide, i) => cloneSlide(slide, start + i))
-
-const sibling = (
-  el: HTMLElement,
-  direction: 1 | -1
-): HTMLElement | undefined => {
-  const next = direction > 0 ? el.nextElementSibling : el.previousElementSibling
-
-  return next instanceof HTMLElement ? next : undefined
-}
-
-// How far `el` is from its snap position in the track, in physical pixels
-// along x: scrolling the track by this much snaps it.
-function offsetOf(track: HTMLElement, el: HTMLElement): number {
-  const style = getComputedStyle(track)
-  const own = getComputedStyle(el)
-  const box = track.getBoundingClientRect()
-  const rect = el.getBoundingClientRect()
-  const rtl = style.direction === "rtl"
-
-  const origin = box.left + track.clientLeft
-  const width = track.clientWidth
-  const left = origin + px(style.scrollPaddingLeft, width)
-  const right = origin + width - px(style.scrollPaddingRight, width)
-
-  const start = rect.left - px(own.scrollMarginLeft)
-  const end = rect.right + px(own.scrollMarginRight)
-  const align = own.scrollSnapAlign.trim().split(/\s+/).at(-1)
-
-  if (align === "center") return (start + end) / 2 - (left + right) / 2
-
-  if (align === "end") return rtl ? start - left : end - right
-
-  return rtl ? end - right : start - left
-}
-
-// Whether `el` is in its snap position, or as close as the track can scroll.
-function reached(track: HTMLElement, el: HTMLElement): boolean {
-  const offset = offsetOf(track, el)
-
-  if (Math.abs(offset) < 1) return true
-
-  const max = maxScroll(track)
-  const rtl = getComputedStyle(track).direction === "rtl"
-  const low = rtl ? -max : 0
-  const high = rtl ? 0 : max
-
-  return offset > 0 ? track.scrollLeft >= high - 1 : track.scrollLeft <= low + 1
-}
-
-// A computed length in pixels. Scroll padding keeps percentages, which are
-// of the scrollport's width (`basis`); `auto` counts as 0.
-// Whether the track has a size; a hidden one (display: none) has none.
-const measurable = (track: HTMLElement): boolean => track.clientWidth > 0
-
-const px = (value: string, basis = 0): number => {
-  const number = Number.parseFloat(value) || 0
-
-  return value.trim().endsWith("%") ? (number * basis) / 100 : number
-}
-
-// scrollLeft runs negative in right-to-left tracks.
-const maxScroll = (track: HTMLElement): number =>
-  Math.max(0, track.scrollWidth - track.clientWidth)
-
-const atStart = (track: HTMLElement): boolean => Math.abs(track.scrollLeft) <= 1
-
-const atEnd = (track: HTMLElement): boolean =>
-  Math.abs(track.scrollLeft) >= maxScroll(track) - 1
-
-// An instant scroll to where the track is cancels a smooth one under way.
-function stopScroll(track: HTMLElement): void {
-  track.scrollTo?.({ left: track.scrollLeft, behavior: "instant" })
-}
-
-// jsdom has no Element.scrollBy.
-function scrollByX(
-  track: HTMLElement,
-  left: number,
-  behavior: ScrollBehavior
-): void {
-  if (left !== 0) track.scrollBy?.({ left, behavior })
 }
 
 const defaultBehavior = (): ScrollBehavior =>

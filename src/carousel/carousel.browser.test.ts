@@ -334,6 +334,27 @@ describe("surface-carousel loop", () => {
     expect(await until(() => el.index === 3 && inView(el, 3), 300)).toBe(true)
   })
 
+  it("steps on from a copy without a trip round the track", async () => {
+    const el = await carousel("loop")
+    await el.goTo(3, { behavior: "instant" })
+
+    const seen = new Set<number>()
+    el.track?.addEventListener("scroll", () => seen.add(el.index))
+
+    // The first lands on the copy of slide 0. The second must go on from that
+    // copy, not from slide 0 itself after the swap, which would scroll back
+    // across every slide on the way to slide 1.
+    await Promise.all([
+      el.next({ behavior: "instant" }),
+      el.next({ behavior: "smooth" }),
+    ])
+
+    expect(await until(() => el.index === 1 && inView(el, 1))).toBe(true)
+    // The wrong way round passes slide 2. (The first scroll event still
+    // reports 3: the index follows a frame later.)
+    expect(seen.has(2)).toBe(false)
+  })
+
   it("wraps goTo out of range", async () => {
     const el = await carousel("loop")
 

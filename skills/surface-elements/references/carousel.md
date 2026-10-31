@@ -150,7 +150,7 @@ carousel.addEventListener("surface-carousel-change", (event) => {
 })
 ```
 
-`goTo()`, `next()` and `prev()` resolve when the scroll comes to rest. `surface-carousel-change` fires once per slide that settles in view, from buttons, markers, keys, autoplay or the reader's own scroll.
+`goTo()`, `next()` and `prev()` resolve when the scroll comes to rest on the slide, or when something else takes over first: a newer step, the reader scrolling or dragging, or a change of slides. They never stay pending. `surface-carousel-change` fires once per slide that settles in view, from buttons, markers, keys, autoplay or the reader's own scroll.
 
 ## Copy
 
@@ -223,7 +223,7 @@ Minimal CSS. Scroll snap does the paging; the slide size sets how many are in vi
 
 What the JavaScript adds, and what happens without it:
 
-- **Prev and next.** Each finds the slide nearest its snap position, from the slide and track rectangles, scroll padding and margins and `scroll-snap-align`, and scrolls the track by the distance to the next one with `scrollBy()`. Physical distances work the same left to right and right to left. Quick clicks step on from where the scroll is headed, not from where it is. Without it, there are no buttons; the reader swipes, scrolls or uses the markers.
+- **Prev and next.** Each finds the slide nearest its snap position, from the slide and track rectangles, scroll padding and margins and `scroll-snap-align`, and scrolls the track by the distance to the next one with `scrollBy()`. Physical distances work the same left to right and right to left. Quick clicks step on from where the scroll is headed, not from where it is. A step that has arrived but not yet ended queues the next one behind it, since its end would snap the track back over a newer scroll; one still on its way is stopped where it is. Every step ends by arriving or by being given up, and either way its promise resolves; a step with no scroll for a second is given up. Without it, there are no buttons; the reader swipes, scrolls or uses the markers.
 - **Current slide.** On every scroll frame it marks the nearest slide (`data-current`) and marker (`aria-current`), and disables prev and next at the edges. When the scroll ends (`scrollend`, or 150 ms without scroll events where that event is missing) it fires `surface-carousel-change`.
 - **Markers.** A click scrolls only the track, without a hash change or a page scroll. Without it, anchors still scroll to their slide (and the page, if the carousel is not in view).
 - **Loop.** Copies at both ends, as above, swapped for their slide once a scroll ends on them. A step past the last copy swaps first and goes on, so quick clicks never hit the end of the track.
@@ -325,7 +325,7 @@ import "surface-elements/carousel"
 
 | Method | Returns | Description |
 | --- | --- | --- |
-| `goTo(index, options?)` | `Promise<void>` | Scrolls `index` of SurfaceCarousel.slides into view. Out of range it wraps with `loop` and clamps without. Resolves when the scroll settles. |
+| `goTo(index, options?)` | `Promise<void>` | Scrolls `index` of SurfaceCarousel.slides into view. Out of range it wraps with `loop` and clamps without. Resolves when the scroll settles, or when something else takes over the track first. |
 | `next(options?)` | `Promise<void>` | Scrolls to the next slide. With `loop`, the last one leads to the first. |
 | `prev(options?)` | `Promise<void>` | Scrolls to the previous slide. With `loop`, the first one leads to the last. |
 | `play()` | `void` | Starts autoplay, as the play button does. |
