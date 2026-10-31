@@ -501,6 +501,23 @@ describe("surface-carousel drag", () => {
     ).toBe(true)
   })
 
+  it("can be grabbed again while it settles", async () => {
+    const el = await carousel("drag")
+    const track = el.track
+
+    if (!track) throw new Error("Missing track")
+
+    track.style.scrollSnapType = "x mandatory"
+
+    // Let go, then grab again at once, before the track comes to rest.
+    await mouseDrag(el, -150, { pause: 100 })
+    await mouseDrag(el, -250, { pause: 150 })
+    expect(await until(() => el.index === 1 && inView(el, 1))).toBe(true)
+    expect(
+      await until(() => track.style.scrollSnapType === "x mandatory")
+    ).toBe(true)
+  })
+
   it("swallows the click that ends a drag, not a plain click", async () => {
     const el = await carousel("drag")
     let clicks = 0

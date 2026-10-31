@@ -157,6 +157,8 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 	#hovered = false;
 	#onScreen = true;
 	#drag;
+	#unsnapped;
+	#drags = 0;
 	#settles = [];
 	#added = /* @__PURE__ */ new WeakMap();
 	#mutations;
@@ -287,6 +289,7 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 			track.removeEventListener("pointerdown", this.#onDragStart);
 			track.removeEventListener("dragstart", this.#onNativeDrag);
 			this.#endDrag(track);
+			this.#resnap(track);
 			this.#removeClones(track);
 			for (const el of [
 				track,
@@ -553,8 +556,11 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		if (!drag.moved) {
 			if (Math.abs(dx) < DRAG_THRESHOLD) return;
 			drag.moved = true;
-			drag.snapType = track.style.scrollSnapType;
-			drag.behavior = track.style.scrollBehavior;
+			this.#drags++;
+			this.#unsnapped ??= {
+				snapType: track.style.scrollSnapType,
+				behavior: track.style.scrollBehavior
+			};
 			track.style.scrollSnapType = "none";
 			track.style.scrollBehavior = "auto";
 			capture(track, event.pointerId);
@@ -591,13 +597,20 @@ var SurfaceCarousel = class SurfaceCarousel extends HTMLElement {
 		setTimeout(() => track.removeEventListener("click", swallow, true));
 		const speed = releaseSpeed(drag.samples, event.timeStamp);
 		const to = (Math.abs(speed) > FLICK_SPEED ? ahead(track, speed > 0 ? -1 : 1) : void 0) ?? this.#nearest(track)?.el;
-		const restore = () => {
-			track.style.scrollSnapType = drag.snapType ?? "";
-			track.style.scrollBehavior = drag.behavior ?? "";
+		const series = this.#drags;
+		const resnap = () => {
+			if (series === this.#drags && !this.#drag) this.#resnap(track);
 		};
-		if (to) this.#scrollTo(to).then(restore);
-		else restore();
+		if (to) this.#scrollTo(to).then(resnap);
+		else resnap();
 	};
+	#resnap(track) {
+		const saved = this.#unsnapped;
+		if (!saved) return;
+		track.style.scrollSnapType = saved.snapType;
+		track.style.scrollBehavior = saved.behavior;
+		this.#unsnapped = void 0;
+	}
 	#endDrag(track) {
 		const drag = this.#drag;
 		track.removeEventListener("pointermove", this.#onDragMove);

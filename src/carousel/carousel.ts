@@ -83,6 +83,10 @@ export class SurfaceCarousel extends HTMLElement {
   #hovered = false
   #onScreen = true
   #drag: DragState | undefined
+  // The track's own inline snapping, saved by the first of a series of drags
+  // and given back once the last one comes to rest.
+  #unsnapped: { snapType: string; behavior: string } | undefined
+  #drags = 0
   #settles: Array<() => void> = []
   // Attributes this element added, as opposed to the author.
   #added = new WeakMap<Element, Set<string>>()
@@ -260,6 +264,7 @@ export class SurfaceCarousel extends HTMLElement {
       track.removeEventListener("pointerdown", this.#onDragStart)
       track.removeEventListener("dragstart", this.#onNativeDrag)
       this.#endDrag(track)
+      this.#resnap(track)
       this.#removeClones(track)
 
       for (const el of [track, ...track.children, ...this.#controls()]) {
@@ -717,8 +722,11 @@ export class SurfaceCarousel extends HTMLElement {
 
       // Now a drag: the track follows the pointer, free of snapping.
       drag.moved = true
-      drag.snapType = track.style.scrollSnapType
-      drag.behavior = track.style.scrollBehavior
+      this.#drags++
+      this.#unsnapped ??= {
+        snapType: track.style.scrollSnapType,
+        behavior: track.style.scrollBehavior,
+      }
       track.style.scrollSnapType = "none"
       track.style.scrollBehavior = "auto"
       capture(track, event.pointerId)
@@ -769,14 +777,26 @@ export class SurfaceCarousel extends HTMLElement {
 
     const to = flick ?? this.#nearest(track)?.el
 
-    const restore = () => {
-      track.style.scrollSnapType = drag.snapType ?? ""
-      track.style.scrollBehavior = drag.behavior ?? ""
+    // Snapping comes back once the track rests on a slide, so it cannot jump,
+    // unless a newer drag grabbed the track before then.
+    const series = this.#drags
+
+    const resnap = () => {
+      if (series === this.#drags && !this.#drag) this.#resnap(track)
     }
 
-    // Snapping comes back once the track rests on a slide, so it cannot jump.
-    if (to) void this.#scrollTo(to).then(restore)
-    else restore()
+    if (to) void this.#scrollTo(to).then(resnap)
+    else resnap()
+  }
+
+  #resnap(track: HTMLElement): void {
+    const saved = this.#unsnapped
+
+    if (!saved) return
+
+    track.style.scrollSnapType = saved.snapType
+    track.style.scrollBehavior = saved.behavior
+    this.#unsnapped = undefined
   }
 
   // Stops listening for the drag; the scroll that ends it is the caller's.
@@ -912,9 +932,6 @@ interface DragState {
   // The last few pointer positions, for the release speed.
   samples: Array<{ x: number; t: number }>
   moved: boolean
-  // The track's own inline values, given back after the drag.
-  snapType?: string
-  behavior?: string
 }
 
 // Keeps the drag when the pointer leaves the track. Throws for a pointer
