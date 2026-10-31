@@ -1,6 +1,6 @@
 import { fixture, fixtureCleanup } from "@open-wc/testing-helpers"
 import axe from "axe-core"
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import "./carousel.js"
 import {
@@ -259,8 +259,58 @@ describe("surface-carousel loop", () => {
   })
 })
 
+// Autoplay waits while the carousel is off screen. Test files can run in
+// iframes outside the viewport (CI), so these tests say what is on screen.
+const visibility: Array<(visible: boolean) => void> = []
+
+class FakeIntersectionObserver implements IntersectionObserver {
+  readonly root = null
+  readonly rootMargin = "0px"
+  readonly scrollMargin = "0px"
+  readonly thresholds = [0]
+  readonly #callback: IntersectionObserverCallback
+
+  constructor(callback: IntersectionObserverCallback) {
+    this.#callback = callback
+  }
+
+  observe(target: Element): void {
+    const report = (visible: boolean) =>
+      this.#callback(
+        // SAFETY: the web component reads only isIntersecting.
+        [{ isIntersecting: visible, target } as IntersectionObserverEntry],
+        this
+      )
+
+    visibility.push(report)
+    report(true)
+  }
+
+  disconnect(): void {}
+
+  unobserve(): void {}
+
+  takeRecords(): IntersectionObserverEntry[] {
+    return []
+  }
+}
+
+const setVisible = (visible: boolean) => {
+  for (const report of visibility) report(visible)
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 describe("surface-carousel autoplay", () => {
-  afterEach(() => fixtureCleanup())
+  beforeEach(() => {
+    visibility.length = 0
+    vi.stubGlobal("IntersectionObserver", FakeIntersectionObserver)
+  })
+
+  afterEach(() => {
+    fixtureCleanup()
+    vi.unstubAllGlobals()
+  })
 
   it("advances on its own and stops for good on focus", async () => {
     const el = await carousel('autoplay interval="1000" loop')
@@ -289,6 +339,18 @@ describe("surface-carousel autoplay", () => {
 
     toggle.click()
     expect(el.playing).toBe(false)
+  })
+
+  it("waits while off screen", async () => {
+    const el = await carousel('autoplay interval="1000" loop')
+    setVisible(false)
+
+    await sleep(1300)
+    expect(el.index).toBe(0)
+    expect(el.playing).toBe(true)
+
+    setVisible(true)
+    expect(await until(() => el.index === 1, 120)).toBe(true)
   })
 
   it("rewinds to the first slide without loop", async () => {
