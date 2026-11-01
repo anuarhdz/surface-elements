@@ -28,6 +28,9 @@ interface PlacementOptions {
   offset: number
 }
 
+const fits = (start: number, size: number, room: number): boolean =>
+  start >= 0 && start + size <= room
+
 // The first position that fits, else the first, kept inside the viewport.
 function fit(
   preferred: number,
@@ -35,8 +38,10 @@ function fit(
   size: number,
   room: number
 ): number {
-  const fits = (start: number): boolean => start >= 0 && start + size <= room
-  const start = fits(preferred) || !fits(flipped) ? preferred : flipped
+  const start =
+    fits(preferred, size, room) || !fits(flipped, size, room)
+      ? preferred
+      : flipped
 
   return Math.max(0, Math.min(start, room - size))
 }
@@ -54,10 +59,15 @@ export function placement(
   const alignStart = rtl ? anchor.right - panel.width : anchor.left
   const alignEnd = rtl ? anchor.left : anchor.right - panel.width
 
-  if (nested) {
-    const after = anchor.right + offset
-    const before = anchor.left - offset - panel.width
+  const after = anchor.right + offset
+  const before = anchor.left - offset - panel.width
 
+  // Where neither side fits, a flyout falls through to below its button.
+  if (
+    nested &&
+    (fits(after, panel.width, viewport.width) ||
+      fits(before, panel.width, viewport.width))
+  ) {
     return {
       top: fit(
         anchor.top,

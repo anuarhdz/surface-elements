@@ -103,6 +103,17 @@ describe("placement", () => {
     ).toBe(696)
   })
 
+  it("places a nested panel below the button when neither side fits", () => {
+    expect(
+      placement(
+        { top: 100, right: 256, bottom: 120, left: 64 },
+        { width: 192, height: 80 },
+        { width: 320, height: 800 },
+        { ...options, nested: true }
+      )
+    ).toEqual({ top: 124, left: 64 })
+  })
+
   it("opens a nested panel on the left in right-to-left text", () => {
     expect(
       placement(
