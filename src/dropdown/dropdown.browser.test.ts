@@ -272,6 +272,32 @@ describe("surface-dropdown in a browser", () => {
     expect(dropdown("products").open).toBe(false)
   })
 
+  it("stays open for a link that targets another window", async () => {
+    await nav()
+    const el = dropdown("products")
+    const link = get<HTMLAnchorElement>("editor")
+    link.target = "_blank"
+    // Only the handler matters here, not a real new tab.
+    link.addEventListener("click", (event) => event.preventDefault())
+    el.show()
+
+    link.click()
+
+    expect(el.open).toBe(true)
+  })
+
+  it("closes for a link that targets this window", async () => {
+    await nav()
+    const el = dropdown("products")
+    const link = get<HTMLAnchorElement>("editor")
+    link.target = "_self"
+    el.show()
+
+    link.click()
+
+    expect(el.open).toBe(false)
+  })
+
   it("stays open for a link opened in a new tab", async () => {
     await nav()
     const el = dropdown("products")

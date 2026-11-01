@@ -35,6 +35,12 @@ const nameAnchor = (element: HTMLElement): string => {
   return name
 }
 
+// A target that navigates another window rather than this one.
+const opensElsewhere = (link: Element): boolean =>
+  !["", "_self", "_parent", "_top"].includes(
+    link.getAttribute("target")?.toLowerCase() ?? ""
+  )
+
 const removeStyle = (element: Element | null, property: string): void => {
   if (!(element instanceof HTMLElement)) return
 
@@ -223,7 +229,8 @@ export class SurfaceDropdown extends HTMLElement {
     const link =
       event.target instanceof Element ? event.target.closest("a[href]") : null
 
-    if (link && this.panel?.contains(link)) this.close()
+    if (link && !opensElsewhere(link) && this.panel?.contains(link))
+      this.close()
   }
 
   // Popovers have no focus trap, so Tab could leave one open behind the reader.

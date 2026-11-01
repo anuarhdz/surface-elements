@@ -51,9 +51,9 @@ function watchHover(host, actions) {
 function supportsAnchorPositioning() {
 	return "CSS" in globalThis && CSS.supports("anchor-name: --a");
 }
+const fits = (start, size, room) => start >= 0 && start + size <= room;
 function fit(preferred, flipped, size, room) {
-	const fits = (start) => start >= 0 && start + size <= room;
-	const start = fits(preferred) || !fits(flipped) ? preferred : flipped;
+	const start = fits(preferred, size, room) || !fits(flipped, size, room) ? preferred : flipped;
 	return Math.max(0, Math.min(start, room - size));
 }
 /**
@@ -63,14 +63,12 @@ function fit(preferred, flipped, size, room) {
 function placement(anchor, panel, viewport, { nested, rtl, offset }) {
 	const alignStart = rtl ? anchor.right - panel.width : anchor.left;
 	const alignEnd = rtl ? anchor.left : anchor.right - panel.width;
-	if (nested) {
-		const after = anchor.right + offset;
-		const before = anchor.left - offset - panel.width;
-		return {
-			top: fit(anchor.top, anchor.bottom - panel.height, panel.height, viewport.height),
-			left: fit(rtl ? before : after, rtl ? after : before, panel.width, viewport.width)
-		};
-	}
+	const after = anchor.right + offset;
+	const before = anchor.left - offset - panel.width;
+	if (nested && (fits(after, panel.width, viewport.width) || fits(before, panel.width, viewport.width))) return {
+		top: fit(anchor.top, anchor.bottom - panel.height, panel.height, viewport.height),
+		left: fit(rtl ? before : after, rtl ? after : before, panel.width, viewport.width)
+	};
 	return {
 		top: fit(anchor.bottom + offset, anchor.top - offset - panel.height, panel.height, viewport.height),
 		left: fit(alignStart, alignEnd, panel.width, viewport.width)
@@ -268,6 +266,12 @@ const nameAnchor = (element) => {
 	element.style.setProperty("anchor-name", name);
 	return name;
 };
+const opensElsewhere = (link) => ![
+	"",
+	"_self",
+	"_parent",
+	"_top"
+].includes(link.getAttribute("target")?.toLowerCase() ?? "");
 const removeStyle = (element, property) => {
 	if (!(element instanceof HTMLElement)) return;
 	element.style.removeProperty(property);
@@ -395,7 +399,7 @@ var SurfaceDropdown = class SurfaceDropdown extends HTMLElement {
 	#onClick = (event) => {
 		if (event.metaKey || event.ctrlKey || event.shiftKey) return;
 		const link = event.target instanceof Element ? event.target.closest("a[href]") : null;
-		if (link && this.panel?.contains(link)) this.close();
+		if (link && !opensElsewhere(link) && this.panel?.contains(link)) this.close();
 	};
 	#onFocusOut = (event) => {
 		const next = event.relatedTarget;
