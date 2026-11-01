@@ -232,6 +232,29 @@ surface-modal > dialog {
   padding-block: 0 1rem;
 }
 
+.dropdown-demo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dropdown-demo button {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--sl-color-gray-5);
+  background: var(--sl-color-bg);
+  color: inherit;
+  cursor: pointer;
+}
+
+.dropdown-demo [popover] {
+  margin-block-end: 0;
+}
+
+.dropdown-demo li {
+  margin: 0;
+  padding: 0.25rem 0.5rem;
+}
+
 .carousel-demo {
   display: grid;
   grid-template-columns: 1fr auto auto;

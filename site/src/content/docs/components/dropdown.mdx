@@ -1,0 +1,250 @@
+---
+title: Dropdown
+description: The surface-dropdown web component, a native popover tethered to its button, for navigation links and nested flyouts.
+---
+
+import { Aside } from "@astrojs/starlight/components"
+import ApiReference from "../../../components/api-reference.astro"
+import CopyFile from "../../../components/copy-file.astro"
+import Demo from "../../../components/demo.astro"
+
+## Install and use
+
+```js
+import "surface-elements/dropdown"
+```
+
+```html
+<surface-dropdown>
+  <button popovertarget="products">Products</button>
+  <ul id="products" popover="auto">
+    <li><a href="/editor">Editor</a></li>
+    <li><a href="/analytics">Analytics</a></li>
+  </ul>
+</surface-dropdown>
+```
+
+Put a `<button popovertarget>` and, right after it, its `[popover]` directly inside `<surface-dropdown>`. The popover stays the source of truth: the browser opens and closes it from the button, closes it on Esc and on a click outside, and keeps one open at a time. The web component places it, adds the rest of the behavior below, and adds its styles to the document, so you do not import the CSS.
+
+The `<nav>` around your dropdowns is yours to write: the tag wraps one dropdown.
+
+<Demo label="Open one, then the nested one">
+  <nav class="dropdown-demo" aria-label="Demo">
+    <surface-dropdown>
+      <button popovertarget="demo-products">Products</button>
+      <ul id="demo-products" popover="auto">
+        <li><a href="#install-and-use">Editor</a></li>
+        <li><a href="#install-and-use">Analytics</a></li>
+        <li>
+          <surface-dropdown>
+            <button popovertarget="demo-more">More</button>
+            <ul id="demo-more" popover="auto">
+              <li><a href="#install-and-use">API</a></li>
+              <li><a href="#install-and-use">Integrations</a></li>
+            </ul>
+          </surface-dropdown>
+        </li>
+      </ul>
+    </surface-dropdown>
+    <surface-dropdown hover>
+      <button popovertarget="demo-company">Company (hover)</button>
+      <ul id="demo-company" popover="auto">
+        <li><a href="#install-and-use">About</a></li>
+        <li><a href="#install-and-use">Careers</a></li>
+      </ul>
+    </surface-dropdown>
+  </nav>
+</Demo>
+
+### Dropdown or menu
+
+They can look alike, and the content does not decide: both can hold links. The difference is the keyboard. A reader moves through a dropdown with Tab, with no special roles. A menu has one tab stop, `role="menu"` and arrow keys. Do not add `role="menu"` or `aria-haspopup` here: they promise a keyboard contract this component does not implement.
+
+### Nested dropdowns
+
+Nest the whole tag, not only the popover. A nested dropdown opens as a flyout beside the panel around it, level with its button, and flips at the viewport edges.
+
+```html
+<surface-dropdown>
+  <button popovertarget="products">Products</button>
+  <ul id="products" popover="auto">
+    <li><a href="/editor">Editor</a></li>
+    <li>
+      <surface-dropdown>
+        <button popovertarget="more">More</button>
+        <ul id="more" popover="auto">
+          <li><a href="/api">API</a></li>
+        </ul>
+      </surface-dropdown>
+    </li>
+  </ul>
+</surface-dropdown>
+```
+
+Keep to one nested level. Each level adds Tab stops and another panel to keep track of, so anything deeper is better served by a menu with arrow keys.
+
+The keyboard moves through the levels like this:
+
+- **Esc** closes one level and returns focus to that level's button.
+- **Tab** follows the document order. Past the end of a nested panel, focus moves to what comes after its button, and only that panel closes. If its button is the last thing in the panel around it too, focus leaves both and both close.
+
+### Open on hover
+
+Add `hover` to also open and close with the mouse. Tap, click and keyboard keep working.
+
+```html
+<surface-dropdown hover>…</surface-dropdown>
+```
+
+The attribute only takes effect with a mouse, on a device that matches `(hover: hover) and (pointer: fine)`. On a phone it does nothing, and a touch on a touch-screen laptop counts as a tap. It is set per dropdown, so a nested one can differ from its parent. The panel stays open while keyboard focus is inside it.
+
+### Small screens
+
+The behavior is the same on every viewport: there is no accordion mode and no breakpoint. On a phone, two panels side by side rarely fit, so a flyout ends up below its button, over the panel. For a mobile navigation, compose another pattern and choose with your own CSS, for example a [drawer](/components/drawer/) with an [accordion](/components/accordion/) inside.
+
+```css
+@media (width < 48rem) {
+  .desktop-nav {
+    display: none;
+  }
+}
+
+@media (width >= 48rem) {
+  .mobile-nav {
+    display: none;
+  }
+}
+```
+
+### Open and close from JavaScript
+
+```js
+const dropdown = document.querySelector("surface-dropdown")
+
+dropdown.show()
+dropdown.close()
+dropdown.toggle()
+dropdown.toggle(true) // only opens
+```
+
+### Position
+
+It opens below the button. Change the side with `position-area` on the panel, and the fallbacks with `position-try-fallbacks`:
+
+```css
+surface-dropdown > [popover] {
+  position-area: block-end span-inline-start;
+}
+```
+
+The JavaScript fallback for browsers without anchor positioning does not read these properties.
+
+### Style it
+
+```css
+surface-dropdown {
+  --surface-dropdown-offset: 0.5rem;
+  --surface-dropdown-background: #111;
+  --surface-dropdown-color: #fff;
+  --surface-dropdown-radius: 0;
+}
+
+surface-dropdown:state(open) > button {
+  text-decoration: underline;
+}
+```
+
+Without the script, `:state(open)` does not exist. `button:has(+ :popover-open)` works in both cases.
+
+The panel fades and scales from the corner next to its button, more slowly on the way in than on the way out:
+
+```css
+surface-dropdown {
+  --surface-dropdown-open-duration: 0.25s;
+  --surface-dropdown-close-duration: 0.15s;
+  --surface-dropdown-scale: 0.9;
+}
+```
+
+With `prefers-reduced-motion`, it appears and disappears at once.
+
+## Copy
+
+<CopyFile tag="surface-dropdown" />
+
+## API
+
+<ApiReference tag="surface-dropdown" />
+
+The browser fires `beforetoggle` and `toggle` on the panel. They do not bubble.
+
+The styles are in the `surface-elements` cascade layer, so your own rules win. For CSS-only use, import `surface-elements/dropdown.css`.
+
+## If you implement it by hand
+
+Minimal markup: a button and the popover right after it. Placing it right after keeps browsers from adding an implicit `aria-details`, and keeps the tab order natural.
+
+```html
+<button popovertarget="products">Products</button>
+<ul id="products" popover="auto">
+  <li><a href="/editor">Editor</a></li>
+</ul>
+```
+
+Minimal CSS. A `popovertarget` button is its popover's implicit anchor, so `position-area` needs no names. Logical keywords keep it right in right-to-left text.
+
+```css
+@supports (anchor-name: --a) {
+  [popover] {
+    inset: auto;
+    margin: 0.25rem 0 0;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+  }
+
+  /* A flyout clears the panel around it, so that panel needs a name. */
+  #products {
+    anchor-name: --products;
+  }
+
+  [popover] [popover] {
+    margin: 0 0 0 0.25rem;
+    position-area: none;
+    inset-block-start: anchor(start);
+    inset-inline-start: anchor(--products end);
+    position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+  }
+}
+```
+
+The browser already gives you, with no JavaScript: opening and closing from the button, Esc, a click outside, one open at a time, nested popovers that keep their parent open, the top layer (so no ancestor's `overflow` clips the panel), and the button's expanded state.
+
+What the JavaScript adds, and what happens without it:
+
+- **Explicit anchors.** `show()` and hover open the panel without its button, which drops the implicit anchor. Before each opening the button gets a unique `anchor-name`, and the panel the matching `position-anchor`. A flyout's outer panel gets a name too, so the flyout can clear it. Without the script, a flyout sits beside its button, over the panel.
+- **Position without anchor positioning.** The panel is placed with `top` and `left` from the button's rectangle, flipping at the edges, and follows it on scroll and resize. Without it, the panel appears centered in the viewport.
+- **Transform origin.** The panel should grow out of its button, and that corner changes when the browser flips it. An anchored container query can tell which fallback is active, but it only styles the panel's descendants, not the panel. So the origin comes from comparing both rectangles. Without it, the panel scales from the top corner at the start of the line.
+- **Focus in nested panels.** The browser only restores focus for the first popover of a stack, so closing a nested one with focus inside would drop it to the body. The button takes it just before the panel closes.
+- **Closing when Tab leaves.** A popover has no focus trap, so Tab could leave one open behind the reader. A `focusout` to somewhere outside the tag closes it.
+- **Closing on a link.** A full page load closes the panel anyway, but a router or a `#` link would not. A click on a link closes the whole chain, unless it opens a new tab or window.
+- **Hover.** A short delay before opening, and a longer one before closing to cross the gap. It needs `pointerType === "mouse"` as well as the media query, because a touch on a touch-screen laptop sends `pointerenter` and then `click`, which would open and at once close the panel.
+
+Accessibility checklist:
+
+- Use a real `<button>` as the trigger. It is the one that gets the expanded state.
+- Use real `<a href>` for links, so they open in a new tab and copy as URLs.
+- No `role="menu"`, `role="menuitem"` or `aria-haspopup`. Readers move with Tab.
+- Name each `<nav>` with `aria-label` when a page has more than one.
+- Never make hover the only way in.
+- Respect `prefers-reduced-motion`.
+
+Browser support and fallbacks:
+
+- `popover` is Baseline newly available. No polyfill ships; where it is missing, the panel never opens unless you load [`@oddbird/popover-polyfill`](https://github.com/oddbird/popover-polyfill).
+- Anchor positioning is not fully Baseline yet. It is feature-detected, and the web component places the panel where it is missing.
+- `@starting-style` and `overlay` only animate the fade and the scale. Without them the panel appears and disappears at once.
+
+<Aside>
+  The web component manages only its direct child button and panel. Each nested
+  `<surface-dropdown>` manages its own.
+</Aside>

@@ -9,6 +9,7 @@ import {
 import "surface-elements/accordion"
 import "surface-elements/carousel"
 import "surface-elements/drawer"
+import "surface-elements/dropdown"
 import "surface-elements/header"
 import "surface-elements/modal"
 

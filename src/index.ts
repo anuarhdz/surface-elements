@@ -30,6 +30,10 @@ export {
   type EnhanceDialogOptions,
 } from "./dialog/dialog.js"
 
+export { SurfaceDropdown } from "./dropdown/dropdown.js"
+
+export { adoptDropdownStyles, dropdownStyles } from "./dropdown/styles.js"
+
 export { SurfaceModal } from "./modal/modal.js"
 
 export { adoptModalStyles, modalStyles } from "./modal/styles.js"

@@ -103,6 +103,7 @@ export default defineConfig({
             "components/accordion",
             "components/carousel",
             "components/drawer",
+            "components/dropdown",
             "components/header",
             "components/modal",
           ],

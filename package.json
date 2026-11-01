@@ -8,6 +8,7 @@
     "custom-elements",
     "dialog",
     "drawer",
+    "dropdown",
     "header",
     "modal",
     "slider",
@@ -35,6 +36,7 @@
     "./dist/accordion/*.js",
     "./dist/carousel/*.js",
     "./dist/drawer/*.js",
+    "./dist/dropdown/*.js",
     "./dist/header/*.js",
     "./dist/modal/*.js",
     "*.css"
@@ -67,6 +69,11 @@
       "import": "./dist/drawer/drawer.js"
     },
     "./drawer.css": "./dist/drawer.css",
+    "./dropdown": {
+      "types": "./dist/dropdown/dropdown.d.ts",
+      "import": "./dist/dropdown/dropdown.js"
+    },
+    "./dropdown.css": "./dist/dropdown.css",
     "./modal": {
       "types": "./dist/modal/modal.d.ts",
       "import": "./dist/modal/modal.js"
