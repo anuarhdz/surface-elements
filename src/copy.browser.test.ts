@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import "../copy/surface-accordion.js"
 import "../copy/surface-carousel.js"
 import "../copy/surface-drawer.js"
+import "../copy/surface-dropdown.js"
 import "../copy/surface-header.js"
 import "../copy/surface-modal.js"
 
@@ -21,6 +22,7 @@ describe("copy files", () => {
     expect(customElements.get("surface-accordion")).toBeDefined()
     expect(customElements.get("surface-carousel")).toBeDefined()
     expect(customElements.get("surface-drawer")).toBeDefined()
+    expect(customElements.get("surface-dropdown")).toBeDefined()
     expect(customElements.get("surface-header")).toBeDefined()
     expect(customElements.get("surface-modal")).toBeDefined()
   })

@@ -12,6 +12,8 @@ The target is [Baseline](https://web.dev/baseline) newly available. Newer featur
 | Exit transitions out of the top layer | `overlay` and `transition-behavior: allow-discrete` | `routeCloseRequests()` and `closeAnimated()` via `data-closing`  |
 | Entry transitions                     | `@starting-style`                                   | None. The drawer appears without sliding in.                     |
 | Invoker commands (`commandfor`)       | Opens and closes from HTML                          | **Not included.** Load a polyfill (below).                       |
+| Anchor positioning                    | Tethers `<surface-dropdown>` panels with CSS        | `<surface-dropdown>` places the panel with `top` and `left`      |
+| Popover                               | Opens, closes and layers `<surface-dropdown>` panels | **Not included.** Load `@oddbird/popover-polyfill`.              |
 | `<details>` open/close animation      | `::details-content` and `interpolate-size`          | `<surface-accordion>` animates with Web Animations               |
 | `scrollend`                           | Settles the carousel after a scroll                 | `<surface-carousel>` waits for 150 ms without scroll events      |
 | `scroll-target-group`                 | Carousel anchor markers match `:target-current` without JavaScript | `<surface-carousel>` sets `aria-current` on the marker  |

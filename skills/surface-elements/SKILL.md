@@ -1,6 +1,6 @@
 ---
 name: surface-elements
-description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<surface-accordion>, <surface-carousel>, <surface-drawer>, <surface-header>, <surface-modal> and supportsDetailsAnimation(), adoptAccordionStyles(), supportsScrollEnd(), adoptCarouselStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptDrawerStyles(), adoptHeaderStyles(), adoptModalStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
+description: Use when writing HTML, CSS or JavaScript with the surface-elements package (<surface-accordion>, <surface-carousel>, <surface-drawer>, <surface-dropdown>, <surface-header>, <surface-modal> and supportsDetailsAnimation(), adoptAccordionStyles(), supportsScrollEnd(), adoptCarouselStyles(), enhanceDialog(), lightDismiss(), routeCloseRequests(), closeAnimated(), showModal(), lockScrollWhileOpen(), supportsClosedBy(), supportsTopLayerExit(), adoptDrawerStyles(), adoptDropdownStyles(), adoptHeaderStyles(), adoptModalStyles(), lockScroll(), isScrollLocked()). Covers imports, markup, attributes, methods, styling hooks, accessibility and browser fallbacks for native dialogs and drawers.
 ---
 
 # surface-elements
@@ -28,6 +28,8 @@ pnpm add surface-elements
 | `surface-elements/header.css` | Stylesheet for CSS-only use. |
 | `surface-elements/drawer` | `<surface-drawer>` (registers itself on import) |
 | `surface-elements/drawer.css` | Stylesheet for CSS-only use. |
+| `surface-elements/dropdown` | `<surface-dropdown>` (registers itself on import) |
+| `surface-elements/dropdown.css` | Stylesheet for CSS-only use. |
 | `surface-elements/modal` | `<surface-modal>` (registers itself on import) |
 | `surface-elements/modal.css` | Stylesheet for CSS-only use. |
 | `surface-elements/dialog` | `CLOSING_ATTRIBUTE`, `enhanceDialog`, `lightDismiss`, `routeCloseRequests`, `closeAnimated`, `showModal`, `lockScrollWhileOpen`, `supportsClosedBy`, `supportsTopLayerExit` |
@@ -73,6 +75,7 @@ A centered modal is the same markup with `<surface-modal>`. `size` is `small`, `
 | `<surface-accordion>` | Web component that animates the native `<details>` elements directly inside it as they open and close. | [surface-accordion.md](references/accordion.md) |
 | `<surface-carousel>` | Web component for a carousel or slider built on a native scroll-snap container. | [surface-carousel.md](references/carousel.md) |
 | `<surface-drawer>` | Web component that turns its direct child `<dialog>` into a drawer. | [surface-drawer.md](references/drawer.md) |
+| `<surface-dropdown>` | Web component that turns a button and the native popover after it into a dropdown of links or other content. | [surface-dropdown.md](references/dropdown.md) |
 | `<surface-header>` | A page header that sticks to the top of its scroll container. | [surface-header.md](references/header.md) |
 | `<surface-modal>` | Web component that turns its direct child `<dialog>` into a centered modal. | [surface-modal.md](references/modal.md) |
 
@@ -85,6 +88,7 @@ Read only the one you need.
 - [references/carousel.md](references/carousel.md): The surface-carousel web component, a native scroll-snap carousel or slider with buttons, markers, an infinite loop and autoplay.
 - [references/dialog.md](references/dialog.md): Enhance any native dialog with light-dismiss and exit-animation fallbacks and a scroll lock.
 - [references/drawer.md](references/drawer.md): The surface-drawer web component, a native dialog that slides in from any edge.
+- [references/dropdown.md](references/dropdown.md): The surface-dropdown web component, a native popover tethered to its button, for navigation links and nested flyouts.
 - [references/header.md](references/header.md): A page header that sticks to the top, reports when it is stuck, and can hide while you scroll down.
 - [references/modal.md](references/modal.md): The surface-modal web component, a native dialog centered over the page, with sizes and alert dialogs.
 - [references/scroll-lock.md](references/scroll-lock.md): A ref-counted lock that stops the page from scrolling.

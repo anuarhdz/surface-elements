@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="data:," />
+    <title>surface-dropdown · playground</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, sans-serif;
+        line-height: 1.5;
+      }
+
+      body {
+        max-inline-size: 60rem;
+        min-block-size: 200vh;
+        margin: 0 auto;
+        padding: 1rem;
+        background: Canvas;
+        color: CanvasText;
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      nav > ul,
+      [popover] {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+      }
+
+      [popover]:not(:popover-open) {
+        display: none;
+      }
+
+      li {
+        list-style: none;
+      }
+
+      surface-dropdown:state(open) > button {
+        outline: 2px solid currentColor;
+      }
+
+      #edges {
+        display: flex;
+        justify-content: space-between;
+        position: fixed;
+        inset-block-end: 3rem;
+        inset-inline: 1rem;
+      }
+
+      #clip {
+        overflow: hidden;
+        block-size: 3rem;
+        border: 1px dashed;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>surface-dropdown</h1>
+
+    <p>
+      <a href="?fallback" data-fallback-link>Force the positioning fallback</a>
+      · <a href="#">No JS? disable it: the panels still open and close.</a>
+    </p>
+
+    <h2>Navigation, nested, hover</h2>
+    <nav aria-label="Main">
+      <a href="#one">Home</a>
+      <surface-dropdown id="products">
+        <button popovertarget="products-panel">Products</button>
+        <ul id="products-panel" popover="auto">
+          <li><a href="#editor">Editor</a></li>
+          <li><a href="#analytics">Analytics</a></li>
+          <li>
+            <surface-dropdown id="more">
+              <button popovertarget="more-panel">More</button>
+              <ul id="more-panel" popover="auto">
+                <li><a href="#api">API</a></li>
+                <li>
+                  <surface-dropdown>
+                    <button popovertarget="deep-panel">Even more</button>
+                    <ul id="deep-panel" popover="auto">
+                      <li><a href="#deep">Deep link</a></li>
+                    </ul>
+                  </surface-dropdown>
+                </li>
+                <li><a href="#sdk">After Even more: closes one level</a></li>
+              </ul>
+            </surface-dropdown>
+          </li>
+          <li><a href="#pricing">After More: closes one level</a></li>
+        </ul>
+      </surface-dropdown>
+      <surface-dropdown id="company" hover>
+        <button popovertarget="company-panel">Company (hover)</button>
+        <ul id="company-panel" popover="auto">
+          <li><a href="#about">About</a></li>
+          <li>
+            <surface-dropdown hover>
+              <button popovertarget="careers-panel">Careers (hover)</button>
+              <ul id="careers-panel" popover="auto">
+                <li><a href="#jobs">Jobs</a></li>
+              </ul>
+            </surface-dropdown>
+          </li>
+        </ul>
+      </surface-dropdown>
+      <a href="#two">After</a>
+    </nav>
+
+    <h2>Inside <code>overflow: hidden</code></h2>
+    <p>The top layer means this panel is not clipped.</p>
+    <div id="clip">
+      <surface-dropdown>
+        <button popovertarget="clip-panel">Open</button>
+        <div id="clip-panel" popover="auto">Not clipped by the dashed box.</div>
+      </surface-dropdown>
+    </div>
+
+    <h2>From JavaScript</h2>
+    <button type="button" data-action="show">show()</button>
+    <button type="button" data-action="close">close()</button>
+    <button type="button" data-action="toggle">toggle()</button>
+
+    <div id="edges">
+      <surface-dropdown>
+        <button popovertarget="corner-start">Flips up</button>
+        <ul id="corner-start" popover="auto">
+          <li><a href="#a">Above the button</a></li>
+          <li><a href="#b">Near the bottom edge</a></li>
+        </ul>
+      </surface-dropdown>
+      <surface-dropdown>
+        <button popovertarget="corner-end">Flips up, ends aligned</button>
+        <ul id="corner-end" popover="auto">
+          <li><a href="#c">Close to the inline edge</a></li>
+          <li>
+            <surface-dropdown>
+              <button popovertarget="corner-nested">Flyout flips</button>
+              <ul id="corner-nested" popover="auto">
+                <li><a href="#d">To the other side</a></li>
+              </ul>
+            </surface-dropdown>
+          </li>
+        </ul>
+      </surface-dropdown>
+    </div>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
