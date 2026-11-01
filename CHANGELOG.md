@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Conventional Commits](https://www.conventionalcommits.org/).
 
+## [0.3.0] - 2026-11-01
+
+### Added
+
+- `surface-dropdown`: dropdown on a native `popover`, tethered to its button with CSS anchor positioning and placed from JavaScript where that is missing. The browser keeps opening and closing it; the web component also closes it when Tab leaves or a link is followed, and returns focus from nested panels.
+- `surface-dropdown` nesting: a nested dropdown opens as a flyout beside the panel around it and flips at the viewport edges.
+- `surface-dropdown` `hover`: also opens and closes with a mouse, where the device can hover. Tap, click and keyboard keep working.
+- `surface-dropdown` methods `show()`, `close()` and `toggle()`, the `open` custom state, and custom properties for offset, size, colors and motion. The panel scales from the corner next to its button, and appears at once with `prefers-reduced-motion`.
+- `SurfaceDropdown`, `dropdownStyles` and `adoptDropdownStyles()` from the root entry; `surface-elements/dropdown` and `surface-elements/dropdown.css` entry points.
+
 ## [0.2.0] - 2026-10-31
 
 ### Added
