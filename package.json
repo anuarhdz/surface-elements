@@ -101,6 +101,7 @@
     "build": "tsdown && node scripts/emit-css.ts && pnpm run skills && pnpm run copies",
     "skills": "cem analyze && node scripts/emit-skills.ts",
     "copies": "node scripts/emit-copies.ts",
+    "og-image": "node scripts/emit-og-image.ts",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint .",
     "lint:fix": "oxlint --fix .",

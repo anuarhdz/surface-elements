@@ -7,6 +7,8 @@
 import { gzipSync } from "node:zlib"
 import { getCollection } from "astro:content"
 import { LinkButton } from "@astrojs/starlight/components"
+import Check from "@lucide/astro/icons/check"
+import Copy from "@lucide/astro/icons/copy"
 
 // Starlight's PAGE_TITLE_ID, which its package does not export.
 const PAGE_TITLE_ID = "_top"
@@ -34,6 +36,14 @@ const components = (
     return { href: `/${id}/`, title: page.title, tag, size }
   })
   .toSorted((a, b) => a.tag.localeCompare(b.tag))
+
+const commands = [
+  { command: "pnpm add surface-elements", label: "install command" },
+  {
+    command: "npx skills add anuarhdz/surface-elements",
+    label: "agent skill command",
+  },
+]
 ---
 
 <div class="hero not-content">
@@ -45,10 +55,29 @@ const components = (
     </p>
     <h1 id={PAGE_TITLE_ID} set:html={title} />
     {tagline && <p class="tagline" set:html={tagline} />}
-    <p class="install">
-      <span class="prompt" aria-hidden="true">$</span>
-      <code>pnpm add surface-elements</code>
-    </p>
+    <div class="commands">
+      {
+        commands.map(({ command, label }) => (
+          <p class="install">
+            <span class="prompt" aria-hidden="true">
+              $
+            </span>
+            <code>{command}</code>
+            <button
+              type="button"
+              class="copy"
+              data-copy={command}
+              aria-label={`Copy ${label}`}
+              hidden
+            >
+              <Copy class="icon-copy" size={16} stroke-width={1.75} />
+              <Check class="icon-done" size={16} stroke-width={1.75} />
+            </button>
+            <span class="sr-only" role="status" />
+          </p>
+        ))
+      }
+    </div>
     {
       actions.length > 0 && (
         <div class="actions">
@@ -82,6 +111,42 @@ const components = (
     </ol>
   </nav>
 </div>
+
+<script>
+  // The copy buttons ship hidden: they only appear where the Clipboard API
+  // does, so a page without it never shows a button that does nothing.
+  const RESET_AFTER = 2000
+
+  if (navigator.clipboard) {
+    for (const button of document.querySelectorAll<HTMLButtonElement>(
+      ".hero [data-copy]"
+    )) {
+      const status = button.nextElementSibling
+      const text = button.dataset.copy
+
+      if (!status || !text) continue
+
+      let timer: ReturnType<typeof setTimeout> | undefined
+
+      button.hidden = false
+      button.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(text)
+          status.textContent = "Copied"
+          button.dataset.copied = ""
+        } catch {
+          status.textContent = "Failed"
+        }
+
+        clearTimeout(timer)
+        timer = setTimeout(() => {
+          status.textContent = ""
+          delete button.dataset.copied
+        }, RESET_AFTER)
+      })
+    }
+  }
+</script>
 
 <style>
   /* Two sides that wrap on their own: the index keeps its width until the
@@ -150,23 +215,78 @@ const components = (
     color: var(--sl-color-gray-3);
   }
 
+  /* A grid so both commands take the width of the longer one. */
+  .commands {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+    max-inline-size: 100%;
+  }
+
+  /* The command scrolls on its own, so the copy button stays in view. */
   .install {
     display: flex;
+    align-items: center;
     gap: 0.75rem;
-    max-inline-size: 100%;
-    padding: 0.75rem 1rem;
+    margin: 0;
+    padding: 0.75rem 0.5rem 0.75rem 1rem;
     border: 1px solid var(--sl-color-gray-5);
     background: var(--sl-color-gray-7);
     font-family: var(--site-font-ui);
     font-size: var(--sl-text-sm);
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
   }
 
   .install code {
+    flex: 1;
+    min-inline-size: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
     color: var(--sl-color-white);
     user-select: all;
     white-space: nowrap;
+  }
+
+  /* Both icons share one grid cell; the state shows one of them. */
+  .copy {
+    display: grid;
+    place-items: center;
+    flex: none;
+    margin-block: -0.5rem;
+    padding: 0.5rem;
+    border: 1px solid transparent;
+    background: none;
+    color: var(--sl-color-gray-3);
+    cursor: pointer;
+  }
+
+  .copy svg {
+    grid-area: 1 / 1;
+  }
+
+  .copy:not([data-copied]) .icon-done,
+  .copy[data-copied] .icon-copy {
+    visibility: hidden;
+  }
+
+  .copy[hidden] {
+    display: none;
+  }
+
+  .copy:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: -2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .copy:hover {
+      border-color: var(--sl-color-gray-5);
+      color: var(--sl-color-white);
+    }
+  }
+
+  /* After the hover rule, so the confirmation shows under the pointer. */
+  .copy[data-copied] {
+    color: var(--sl-color-accent);
   }
 
   .prompt {

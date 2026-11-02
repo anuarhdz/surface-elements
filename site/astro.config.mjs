@@ -54,6 +54,29 @@ export default defineConfig({
           tag: "link",
           attrs: { rel: "expect", href: "#_top", blocking: "render" },
         },
+        // One social preview for every page, rendered by `pnpm og-image`.
+        // Starlight already emits the title, description and URL tags.
+        {
+          tag: "meta",
+          attrs: {
+            property: "og:image",
+            content: "https://surface-elements.anuar.dev/og.png",
+          },
+        },
+        { tag: "meta", attrs: { property: "og:image:width", content: "1200" } },
+        { tag: "meta", attrs: { property: "og:image:height", content: "630" } },
+        {
+          tag: "meta",
+          attrs: {
+            property: "og:image:alt",
+            content:
+              "surface-elements: interface surfaces, built on the platform.",
+          },
+        },
+        {
+          tag: "meta",
+          attrs: { name: "twitter:card", content: "summary_large_image" },
+        },
       ],
       editLink: {
         baseUrl: "https://github.com/anuarhdz/surface-elements/edit/main/site/",
