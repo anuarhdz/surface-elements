@@ -1,0 +1,202 @@
+<!doctype html>
+<!--
+  Template for site/public/og.png, rendered by scripts/emit-og-image.ts.
+  Mirrors the docs hero in its dark theme; the element list is filled in by
+  the script from the component pages.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @font-face {
+        font-family: "Geist Mono";
+        src: url("../site/node_modules/@fontsource-variable/geist-mono/files/geist-mono-latin-wght-normal.woff2")
+          format("woff2");
+        font-weight: 100 900;
+      }
+
+      :root {
+        --white: oklch(97% 0 none);
+        --gray-3: oklch(64.6% 0 none);
+        --gray-5: oklch(29.2% 0 none);
+        --gray-7: oklch(18.2% 0 none);
+        --black: oklch(14.9% 0 none);
+        --accent: oklch(68.4% 0.21 38.8);
+        --grid: color-mix(in oklch, var(--white) 5%, transparent);
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+      }
+
+      body {
+        inline-size: 1200px;
+        block-size: 630px;
+        overflow: clip;
+        background: var(--black);
+        color: var(--white);
+        font-family: "Geist Mono", monospace;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .frame {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        grid-template-rows: auto 1fr auto;
+        gap: 0 64px;
+        block-size: 100%;
+        padding: 64px 72px;
+        background-image:
+          linear-gradient(var(--grid) 1px, transparent 1px),
+          linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+        background-size: 40px 40px;
+        background-position: -1px -1px;
+      }
+
+      .brand {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 26px;
+        font-weight: 600;
+      }
+
+      /* The site-title glyph: a surface over a surface. */
+      .mark {
+        display: grid;
+        inline-size: 30px;
+        block-size: 30px;
+        padding: 4px;
+        border: 3px solid currentColor;
+      }
+
+      .mark::after {
+        content: "";
+        justify-self: end;
+        inline-size: 50%;
+        background: var(--accent);
+      }
+
+      .intro {
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+        gap: 28px;
+      }
+
+      .meta {
+        display: flex;
+        font-size: 16px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gray-3);
+      }
+
+      .meta span + span::before {
+        content: "/";
+        margin-inline: 0.75em;
+        color: var(--accent);
+      }
+
+      h1 {
+        font-size: 64px;
+        font-weight: 600;
+        line-height: 1.05;
+        letter-spacing: -0.045em;
+        text-wrap: balance;
+      }
+
+      .index {
+        align-self: end;
+        border: 1px solid var(--gray-5);
+        background: var(--black);
+        font-size: 18px;
+      }
+
+      .index-head {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 20px;
+        border-block-end: 1px solid var(--gray-5);
+        font-size: 13px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gray-3);
+      }
+
+      ol {
+        padding: 0;
+        list-style: none;
+        counter-reset: element;
+      }
+
+      li {
+        counter-increment: element;
+        display: flex;
+        gap: 20px;
+        padding: 11px 20px;
+        font-weight: 500;
+      }
+
+      li + li {
+        border-block-start: 1px solid var(--gray-5);
+      }
+
+      li::before {
+        content: counter(element, decimal-leading-zero);
+        font-weight: 400;
+        color: var(--gray-3);
+      }
+
+      .foot {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-block-start: 40px;
+        font-size: 20px;
+        color: var(--gray-3);
+      }
+
+      .install {
+        display: flex;
+        gap: 14px;
+        padding: 14px 20px;
+        border: 1px solid var(--gray-5);
+        background: var(--gray-7);
+        color: var(--white);
+      }
+
+      .install::before {
+        content: "$";
+        color: var(--accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <p class="brand"><span class="mark"></span>surface-elements</p>
+
+      <div class="intro">
+        <p class="meta">
+          <span>Web components</span>
+          <span>Light DOM</span>
+          <span>0 dependencies</span>
+        </p>
+        <h1>Interface surfaces, built on the platform.</h1>
+      </div>
+
+      <div class="index">
+        <p class="index-head">Elements</p>
+        <ol id="elements"></ol>
+      </div>
+
+      <div class="foot">
+        <p class="install">pnpm add surface-elements</p>
+        <p>surface-elements.anuar.dev</p>
+      </div>
+    </div>
+  </body>
+</html>
